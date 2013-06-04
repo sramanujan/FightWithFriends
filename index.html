@@ -89,9 +89,68 @@
         <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
         <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
         <link rel="shortcut icon" href="assets/ico/favicon.png">
+    </head>
+    <body>
+        <div id="fb-root"></div>
         <script>
+            var socket_io_loaded = false;
+            var fb_connected = false;
+            var fb_response = null;
 
-            var clientName = prompt('Enter clientName: ');
+            if(typeof io == "undefined") {
+                $.getScript('http://' + window.location.hostname + ':8028/socket.io/socket.io.js', function() {
+                    socketIoLoaded();
+                });
+            }
+
+            window.fbAsyncInit = function() {
+                FB.init({
+                    appId      : '165829500255032', // App ID
+                    channelUrl : '//fwf.localhost.com/channel.html', // Channel File
+                    status     : true, // check login status
+                    cookie     : true, // enable cookies to allow the server to access the session
+                    xfbml      : true  // parse XFBML
+                });
+                FB.Event.subscribe('auth.authResponseChange', function(response) {
+                    // Here we specify what we do with the response anytime this event occurs. 
+                    if (response.status === 'connected') {
+                        fbConnected();
+                    } else if (response.status === 'not_authorized') {
+                        FB.login();
+                    } else {
+                        FB.login();
+                    }
+                });
+            };
+
+            // Load the SDK asynchronously
+            (function(d){
+                var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+                if (d.getElementById(id)) {return;}
+                js = d.createElement('script'); js.id = id; js.async = true;
+                js.src = "//connect.facebook.net/en_US/all.js";
+                ref.parentNode.insertBefore(js, ref);
+            }(document));
+
+            function socketIoLoaded() {
+                socket_io_loaded = true;
+                if(fb_connected) {
+                    loadCompleted();
+                }
+            }
+
+            function fbConnected() {
+                FB.api('/me', function(response) {
+                    fb_response = response;
+                    fb_connected = true;
+                    if(socket_io_loaded) {
+                        loadCompleted();
+                    }
+                });
+            }
+
+            var clientName = 'unknown-no-login';
+            var clientId = 'unknown-id-no-login';
             var socket = null;
             var listOfRooms = {};
             var currentRoom = null;
@@ -99,16 +158,14 @@
             var positionArray = new Array();
             var currentServerPositionArray = new Array();
 
-            if(typeof io == "undefined") {
-                $.getScript('http://' + window.location.hostname + ':8028/socket.io/socket.io.js', function() {
-                    socket = io.connect('http://' + window.location.hostname + ':8028', { 'connect timeout': 10000 });
-                    makeEventListeners();
-                });
+            function loadCompleted() {
+                socket = io.connect('http://' + window.location.hostname + ':8028', { 'connect timeout': 10000 });
+                makeEventListeners();
             }
 
             function makeEventListeners() {
                 socket.on('connect', function() {
-                    setClientName(clientName);
+                    setClientDetails(fb_response.id, fb_response.first_name);
                 });
 
                 socket.on('disconnect', function() {
@@ -149,8 +206,8 @@
                 });
             }
 
-            function setClientName(clientName) {
-                socket.emit('setClientName', { clientName: clientName });
+            function setClientDetails(id, name) {
+                socket.emit('setClientDetails', { id: id, name: name });
             }
 
             function joinRoom(roomName) {
@@ -166,11 +223,12 @@
             }
 
         </script>
-    </head>
-    <body>
 		<div class="container-fluid">
             <div class="row-fluid">
                 <div class="span2">
+                    <fb:login-button show-faces="true" width="200" max-rows="1"></fb:login-button>
+                    <br />
+                    <br />
                     <select id='roomList' name='roomListSelect'>
                     </select>
                     <a class="btn" id="joinSelected" href="#">JOIN</a>

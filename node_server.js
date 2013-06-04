@@ -48,9 +48,12 @@ io.sockets.on('connection', function (socket) {
         //io.sockets.in(room).emit('roomUpdate', { clientName: clientName, eventName: eventType, value: value});
     }
 
-    socket.on('setClientName', function (data) {
-        console.log("setting client name...");
-        socket[data_namespace].clientName = data.clientName;
+    socket.on('setClientDetails', function (data) {
+        console.log("setting client name and id");
+        socket[data_namespace].clientName = data.name;
+        socket[data_namespace].clientId = data.name;
+        //at this point, connect to couchbase and check if this id is there, else add it.
+
         data.existingRooms = io.sockets.manager.rooms;
         socket.emit('registered', data);
     });
@@ -116,8 +119,6 @@ setInterval(function() {
                     clientList[i][data_namespace].currentPosition.y += remY; 
                 }  
             }
-
-
             value.push( { clientName: clientList[i][data_namespace].clientName, position: clientList[i][data_namespace].currentPosition } );
         }
         io.sockets.in(properName).emit('reAdjust', { value: value }); 
