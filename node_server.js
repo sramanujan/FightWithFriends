@@ -1,4 +1,4 @@
-var db = require('./db.js');
+require('./db.js');
 var app = require('http').createServer(handler);
 var io = require('socket.io').listen(app);
 
@@ -26,7 +26,6 @@ var roomArray = new Array();
 io.sockets.on('connection', function (socket) {
 
     socket[data_namespace] = {};
-
     console.log("Connection initiated.....");
     socket.roomUpdate = function(eventType) {
         room = socket[data_namespace].room;
@@ -50,12 +49,11 @@ io.sockets.on('connection', function (socket) {
     socket.on('setClientDetails', function (data) {
         console.log("setting client name and id");
         socket[data_namespace].clientName = data.name;
-        socket[data_namespace].clientId = data.id;
-        //at this point, connect to couchbase and check if this id is there, else add it.
+        socket[data_namespace].clientId = data.id.toString();
         if(db.bucket != null) {
             db.bucket.get(socket[data_namespace].clientId, function (err, doc, meta) {
                 if(!doc || err || !db.isValidPlayerObject(doc)) {
-                    doc = couchbase.playerTemplate;
+                    doc = db.playerTemplate;
                     doc.id = data.id;
                     doc.first_name = data.first_name;
                     doc.last_name = data.last_name;
@@ -69,7 +67,6 @@ io.sockets.on('connection', function (socket) {
                     });  
                 } else {
                     console.log("Player object...");
-                    console.log(doc);
                 }
             }); 
         } else {

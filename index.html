@@ -207,8 +207,8 @@
                 });
             }
 
-            function setClientDetails(id, name) {
-                socket.emit('setClientDetails', { id: id, name: name });
+            function setClientDetails(data) {
+                socket.emit('setClientDetails', data);
             }
 
             function joinRoom(roomName) {
