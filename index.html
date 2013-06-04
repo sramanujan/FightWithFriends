@@ -142,6 +142,7 @@
             function fbConnected() {
                 FB.api('/me', function(response) {
                     fb_response = response;
+                    console.log(fb_response);
                     fb_connected = true;
                     if(socket_io_loaded) {
                         loadCompleted();
@@ -165,7 +166,7 @@
 
             function makeEventListeners() {
                 socket.on('connect', function() {
-                    setClientDetails(fb_response.id, fb_response.first_name);
+                    setClientDetails(fb_response);
                 });
 
                 socket.on('disconnect', function() {

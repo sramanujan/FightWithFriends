@@ -1,0 +1,6 @@
+{
+   "hosts" : [ "localhost:8091" ],
+   "user" : "root",
+   "password" : "rootpwd",
+   "bucket" : "default"
+}

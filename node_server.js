@@ -1,6 +1,6 @@
-var app = require('http').createServer(handler)
-  , io = require('socket.io').listen(app)
-  , fs = require('fs')
+var db = require('./db.js');
+var app = require('http').createServer(handler);
+var io = require('socket.io').listen(app);
 
 app.listen(8028);
 
@@ -21,7 +21,6 @@ function handler (req, res) {
     });
 }
 
-var room = 'defaultRoom';
 var data_namespace = 'IOSOCKET';
 var roomArray = new Array();
 io.sockets.on('connection', function (socket) {
@@ -51,9 +50,31 @@ io.sockets.on('connection', function (socket) {
     socket.on('setClientDetails', function (data) {
         console.log("setting client name and id");
         socket[data_namespace].clientName = data.name;
-        socket[data_namespace].clientId = data.name;
+        socket[data_namespace].clientId = data.id;
         //at this point, connect to couchbase and check if this id is there, else add it.
-
+        if(db.bucket != null) {
+            db.bucket.get(socket[data_namespace].clientId, function (err, doc, meta) {
+                if(!doc || err || !db.isValidPlayerObject(doc)) {
+                    doc = couchbase.playerTemplate;
+                    doc.id = data.id;
+                    doc.first_name = data.first_name;
+                    doc.last_name = data.last_name;
+                    doc.gender = data.gender;
+                    doc.timezone = data.timezone;
+                    doc.username = data.username;
+                    db.bucket.set(socket[data_namespace].clientId, doc, function(err, meta) {
+                        if(err) {
+                            console.log("GOT AN ERROR WHILE SETTING TO COUCHBASE");
+                        }
+                    });  
+                } else {
+                    console.log("Player object...");
+                    console.log(doc);
+                }
+            }); 
+        } else {
+            console.log("COUCHBASE GLOBAL BUCKET NOT AVAILABLE!!");
+        }
         data.existingRooms = io.sockets.manager.rooms;
         socket.emit('registered', data);
     });
