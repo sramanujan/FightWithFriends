@@ -1,5 +1,5 @@
 require('./db.js');
-var app = require('http').createServer(handler);
+var app = require('http').createServer();
 var io = require('socket.io').listen(app);
 
 app.listen(8028);
@@ -7,19 +7,7 @@ app.listen(8028);
 io.configure('development', function() {
     io.set('transports', ['xhr-polling']);
 });
-
-function handler (req, res) {
-    fs.readFile(__dirname + '/index.html',
-    function (err, data) {
-    if (err) {
-        res.writeHead(500);
-        return res.end('Error loading index.html');
-    }
-
-    res.writeHead(200);
-    res.end(data);
-    });
-}
+io.set('log level', 1); // reduce logging
 
 var data_namespace = 'IOSOCKET';
 var roomArray = new Array();
@@ -48,6 +36,7 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('setClientDetails', function (data) {
         console.log("setting client name and id");
+        var data2 = { };
         socket[data_namespace].clientName = data.name;
         socket[data_namespace].clientId = data.id.toString();
         if(db.bucket != null) {
@@ -66,14 +55,14 @@ io.sockets.on('connection', function (socket) {
                         }
                     });  
                 } else {
-                    console.log("Player object...");
+                    data2.userDetails = doc;
                 }
             }); 
+            data2.existingRooms = io.sockets.manager.rooms;
+            socket.emit('registered', data2);
         } else {
             console.log("COUCHBASE GLOBAL BUCKET NOT AVAILABLE!!");
         }
-        data.existingRooms = io.sockets.manager.rooms;
-        socket.emit('registered', data);
     });
         
     socket.on('joinRoom', function (data) {

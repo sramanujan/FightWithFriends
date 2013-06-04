@@ -150,8 +150,7 @@
                 });
             }
 
-            var clientName = 'unknown-no-login';
-            var clientId = 'unknown-id-no-login';
+            var userDetails = null;
             var socket = null;
             var listOfRooms = {};
             var currentRoom = null;
@@ -177,7 +176,7 @@
                 });
 
                 socket.on('registered', function(data) {
-                    clientName = data.clientName;
+                    userDetails = data.userDetails;
                     listOfRooms = data.existingRooms;
                     populateListOfRooms();
                 });
