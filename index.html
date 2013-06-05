@@ -91,6 +91,7 @@
             var socket = null;
             var listOfRooms = {};
             var currentRoom = null;
+            var ownTowers = new Array();
 			
             var positionArray = new Array();
             var currentServerPositionArray = new Array();
@@ -98,7 +99,8 @@
 			var playersOnBoard 	= {};
 			var currentSelectedUnit = null;
 			
-			var whoami			= categories.Attacker;
+			//var whoami			= categories.Attacker;
+            var whoami          = categories.Defender;
 			var batchedStates 	= new Array();
 
             function loadCompleted() {
@@ -123,6 +125,8 @@
                     userDetails = data.userDetails;
                     listOfRooms = data.existingRooms;
                     populateListOfRooms();
+                    populateTowers(data.towers);
+                    enableButtons();
                 });
 
                 socket.on('joined', function(data) {
@@ -130,8 +134,10 @@
 					$.each(data.value, function(index, state) {
 						playersOnBoard[state.id].updatePosition(state);
 					});
-					
-					enableButtons();
+
+
+					whoami          = categories.Attacker;
+                    enableButtons();
                 });
 
                 socket.on('roomUpdate', function (data) {
@@ -199,8 +205,11 @@
 			function enableButtons() {
 				if (whoami == categories.Attacker) {
 					$("#attacker_dashboard").show();
+                    $("#defender_dashboard").hide();
 				}
 				else {
+                    $("#attacker_dashboard").hide();
+                    $("#defender_dashboard").show();
 				}
 			}
         </script>
@@ -227,6 +236,10 @@
 				<div class="span2" style="display:none" id="attacker_dashboard">
 					<input type="text" id="addUnit" class="btn" value="Add Unit">
 				</div>
+                <div class="span2" style="display:none" id="defender_dashboard">
+                    <input type="text" id="designMode" class="btn" value="Design Mode">
+                    <input type="text" id="addTower" class="btn" value="Add Tower">
+                </div>
             </div>
         </div>
         <script>
@@ -253,6 +266,14 @@
 			
 			
 			/* defender dashboard */
+            $('#addTower').click( function() {
+                var towersOnBoard = me.towersOnBoard();
+                if (towersOnBoard < TOTAL_TOWERS) {
+                    var unit = new Tower(towersOnBoard+1, true, { x: 20, y: 0 }, false);
+                    me.addTower(unit, false);
+                }
+                return false;
+            });
 			
 
             var canvasDoc = document.getElementById('canvas1');
@@ -324,6 +345,21 @@
             function populateListOfRooms() {
                 for (var roomName in listOfRooms) {
                     $("#roomList").append("<option value='1'>" + roomName.replace('/','') + "</option>") 
+                }
+            }
+
+            function populateTowers(listOfTowers) {
+                for (var i = listOfTowers.length - 1; i >= 0; i--) {
+                    var imageObj = new Image();
+                    imageObj.onload = function() {
+                        var tower = mainScene.createElement(100,100);
+                        button.drawImage(imageObj);
+                        button.x = listOfTowers[i].position.x;
+                        button.y = listOfTowers[i].position.y;
+                        ownTowers.push(button);
+                        mainScene.getStage().append(button);
+                    };
+                    imageObj.src = listOfTowers[i].image;
                 }
             }
 
