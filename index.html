@@ -353,11 +353,11 @@
                     var imageObj = new Image();
                     imageObj.onload = function() {
                         var tower = mainScene.createElement(100,100);
-                        button.drawImage(imageObj);
-                        button.x = listOfTowers[i].position.x;
-                        button.y = listOfTowers[i].position.y;
-                        ownTowers.push(button);
-                        mainScene.getStage().append(button);
+                        tower.drawImage(imageObj);
+                        tower.x = listOfTowers[i].position.x;
+                        tower.y = listOfTowers[i].position.y;
+                        ownTowers.push(tower);
+                        mainScene.getStage().append(tower);
                     };
                     imageObj.src = listOfTowers[i].image;
                 }
