@@ -18,7 +18,7 @@ db.playerTemplate = {
     kingdom: {
         theme: {
             background: "assets/img/background_map.png"
-        }
+        },
         buildings: []
     }
 };
