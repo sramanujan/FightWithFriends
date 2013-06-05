@@ -16,24 +16,24 @@
     {
 
     },
- "tileheight":41,
+ "tileheight":32,
  "tilesets":[
         {
          "firstgid":1,
-         "image":"assets/img/tile.png",
-         "imageheight":41,
-         "imagewidth":82,
+         "image":"assets/img/first.png",
+         "imageheight":32,
+         "imagewidth":32,
          "margin":0,
-         "name":"green_patch",
+         "name":"bkgrndmap",
          "properties":
             {
 
             },
          "spacing":0,
-         "tileheight":41,
-         "tilewidth":82
+         "tileheight":32,
+         "tilewidth":32
         }],
- "tilewidth":82,
+ "tilewidth":32,
  "version":1,
  "width":5
 }
