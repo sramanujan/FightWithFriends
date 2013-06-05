@@ -83,6 +83,12 @@ io.sockets.on('connection', function (socket) {
         }
     });
     
+
+    socket.on('saveTowers', function (data) {
+        console.log("Saving towers...");
+        console.log(data);
+        //do db update here.
+    });
 	
 	// this is called when 'I' join a room
     socket.on('joinRoom', function (data) {

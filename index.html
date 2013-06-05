@@ -92,6 +92,7 @@
             var listOfRooms = {};
             var currentRoom = null;
             var ownTowers = new Array();
+            var towersOnBoard = new Array();
 			
             var positionArray = new Array();
             var currentServerPositionArray = new Array();
@@ -237,6 +238,7 @@
 					<input type="text" id="addUnit" class="btn" value="Add Unit">
 				</div>
                 <div class="span2" style="display:none" id="defender_dashboard">
+                    <input type="text" id="saveMode" class="btn" value="Save">
                     <input type="text" id="designMode" class="btn" value="Design Mode">
                     <input type="text" id="addTower" class="btn" value="Add Tower">
                 </div>
@@ -267,11 +269,17 @@
 			
 			/* defender dashboard */
             $('#addTower').click( function() {
-                var towersOnBoard = me.towersOnBoard();
-                if (towersOnBoard < TOTAL_TOWERS) {
-                    var unit = new Tower(towersOnBoard+1, true, { x: 20, y: 0 }, false);
-                    me.addTower(unit, false);
-                }
+                addTower({
+                    id: "001",
+                    position: { x: 100, y: 30 },
+                    image: "assets/img/tower1.png",
+                    projectileImage: "assets/img/arrow1.png"
+                });
+                return false;
+            });
+
+            $('#saveMode').click( function() {
+                socket.emit('saveTowers', towersOnBoard);
                 return false;
             });
 			
@@ -350,17 +358,22 @@
 
             function populateTowers(listOfTowers) {
                 for (var i = listOfTowers.length - 1; i >= 0; i--) {
-                    var imageObj = new Image();
-                    imageObj.onload = function() {
-                        var tower = mainScene.createElement(100,100);
-                        tower.drawImage(imageObj);
-                        tower.x = listOfTowers[i].position.x;
-                        tower.y = listOfTowers[i].position.y;
-                        ownTowers.push(tower);
-                        mainScene.getStage().append(tower);
-                    };
-                    imageObj.src = listOfTowers[i].image;
+                    addTower(listOfTowers[i], false)
                 }
+            }
+
+            function addTower(tower) {
+                var imageObj = new Image();
+                imageObj.onload = function() {
+                    var towerObj = mainScene.createElement(100,100);
+                    towerObj.drawImage(imageObj);
+                    towerObj.x = tower.position.x;
+                    towerObj.y = tower.position.y;
+                    ownTowers.push(towerObj);
+                    towersOnBoard.push(tower);
+                    mainScene.getStage().append(towerObj);
+                };
+                imageObj.src = tower.image;
             }
 
             function loadKingdom(kingdom) {
