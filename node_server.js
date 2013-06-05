@@ -20,20 +20,22 @@ io.sockets.on('connection', function (socket) {
     console.log("Connection initiated.....");
     socket.roomUpdate = function(eventType) {
         room = socket[data_namespace].room;
-        clientName = socket[data_namespace].clientName;
+        clientName = socket[data_namespace].player.name;
+        clientId = socket[data_namespace].player.id;
         var value = 'unknown';
         switch(eventType) {
-            case 'join': value = { position: socket[data_namespace].targetPosition }; break;
+            case 'join': value = socket[data_namespace].player.getState(); break;
             case 'leave': value = 'somerandomleave'; break;
             case 'update': 
                           value = new Array();
                           var clientList = io.sockets.clients(room);
                           for (var i = 0; i < clientList.length; i++) {
-                              value.push( { clientName: clientList[i][data_namespace].clientName, position: clientList[i][data_namespace].targetPosition } );
+                              value.push( clientList[i][data_namespace].player.getState() );
                           }
                           break;
         }
-        socket.broadcast.to(room).emit('roomUpdate', { clientName: clientName, eventName: eventType, value: value});
+		console.log("sending event " + eventType);
+        socket.broadcast.to(room).emit('roomUpdate', { clientName: clientName, clientId: clientId, eventName: eventType, value: value});
         //io.sockets.in(room).emit('roomUpdate', { clientName: clientName, eventName: eventType, value: value});
     }
 
@@ -42,7 +44,7 @@ io.sockets.on('connection', function (socket) {
         var data2 = { };
         socket[data_namespace].clientName = data.name;
         socket[data_namespace].clientId = data.id.toString();
-        socket[data_namespace].player = new Player(data.name, data.id.toString());
+        socket[data_namespace].player = new Player(data.name, data.id, true);
         if(true) {
 			/*
             db.bucket.get(socket[data_namespace].clientId, function (err, doc, meta) {
@@ -70,7 +72,9 @@ io.sockets.on('connection', function (socket) {
             console.log("COUCHBASE GLOBAL BUCKET NOT AVAILABLE!!");
         }
     });
-        
+    
+	
+	// this is called when 'I' join a room
     socket.on('joinRoom', function (data) {
         socket.join(data.room);
         socket[data_namespace].room = data.room;
@@ -79,8 +83,9 @@ io.sockets.on('connection', function (socket) {
         value = new Array();
         var clientList = io.sockets.clients(data.room);
         for (var i = 0; i < clientList.length; i++) {
-            value.push( { clientName: clientList[i][data_namespace].clientName, position: clientList[i][data_namespace].targetPosition } );
+            value.push( clientList[i][data_namespace].player.getState() );
         }
+		console.log("user " + socket[data_namespace].player.name + " just joined - " + data.room);
         socket.emit('joined', { room: data.room, value: value });
         socket.roomUpdate('join');
     });
@@ -95,20 +100,23 @@ io.sockets.on('connection', function (socket) {
     socket.on('stateUpdate', function (update) {
         console.log("Sent state update data...");
         socket[data_namespace].targetPosition = update.position;
-        socket.roomUpdate('update');
+        //socket.roomUpdate('update');
     });
 
     socket.on('updateState', function (update) {
-        console.log("received update data...");
-        socket[data_namespace].player.updatePosition(update.states);
-        socket.roomUpdate('update');
+		if (null != socket[data_namespace].player) {
+			socket[data_namespace].player.updatePosition(update.states);
+			//socket.roomUpdate('update');
+		}
     });
 
     socket.on('disconnect', function () {
-        console.log("disconnect...");
-        socket.roomUpdate('leave');
-        socket.leave(socket[data_namespace].room);
-        socket[data_namespace].room = null;
+		if (null != socket[data_namespace].player) {
+			console.log("disconnect... " + socket[data_namespace].player.name);
+			socket.roomUpdate('leave');
+			socket.leave(socket[data_namespace].room);
+			socket[data_namespace].room = null;
+		}
     });
 
 });
@@ -123,7 +131,9 @@ setInterval(function() {
         }
         var clientList = io.sockets.clients(properName);
         var value = new Array();
+		var states = new Array();
         for (var i = 0; i < clientList.length; i++) {
+			/*
             var remX = clientList[i][data_namespace].targetPosition.x - clientList[i][data_namespace].currentPosition.x;
             var remY = clientList[i][data_namespace].targetPosition.y - clientList[i][data_namespace].currentPosition.y;
             //dist is maximum distance you can move in one interval (in this case 100 ms) - lets say you can move 1/150th of game board... which would be 0.006
@@ -136,11 +146,12 @@ setInterval(function() {
                 } else {
                     clientList[i][data_namespace].currentPosition.x += remX;
                     clientList[i][data_namespace].currentPosition.y += remY; 
-                }  
+                }
             }
-            value.push( { clientName: clientList[i][data_namespace].clientName, position: clientList[i][data_namespace].currentPosition } );
+			*/
+            value.push( clientList[i][data_namespace].player.getState() );
         }
-        io.sockets.in(properName).emit('reAdjust', { value: value }); 
+        io.sockets.in(properName).emit('reAdjust', { value : value }); 
     }
 }, 100);
 

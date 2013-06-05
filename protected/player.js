@@ -5,14 +5,15 @@
  * @param helpers
  */
 
-Player = function(name, id) {
+Player = function(name, id, isServer) {
 	this.name 	= name;
-	this.id 	= id;
+	this.id 	= id.toString();
 	this.units = {};
 	this.totalUnits = 0;
+	this.isServer = isServer;
 	
 	this.addUnit = function(unit) {
-		if (!SERVER)
+		if (!this.isServer)
 			mainScene.getStage().append(unit.mapResource);
 		this.units[unit.id] = unit;
 		this.totalUnits++
@@ -27,40 +28,49 @@ Player = function(name, id) {
 	};
 	
 	this.updatePosition = function(states) {
-		$.each(states, function(index, state) {
+		// $.each(states, function(index, state) {
+		// for(i = 0; i < states.length; i++) {
+			// state = states[i];
+			state = states;
 			for(var key in state.units) {
-				if (null == this.units[key]) {
-					var unit = new Unit(state.units[key].id, state.units[key].attacker, state.units[key].position);
-					this.addUnit(unit);
-				}
-				else {
-					this.units[key].updatePosition(state.units[key].position);
+				if (key != 'undefined') {
+					if (null == this.units[key]) {
+						var unit = new Unit(state.units[key].id, state.units[key].attacker, state.units[key].position, this.isServer);
+						this.addUnit(unit);
+					}
+					else {
+						if (this.id != state.id) {
+							this.units[key].updatePosition(state.units[key].position);
+						}
+					}
 				}
 			}
-		});
+		// }
 	};
 	this.update = function() {
 		for(var key in this.units) {
-			this.units[key].update();
+			if (typeof key != 'undefined')
+				this.units[key].update();
 		}
 	};
 	
 	this.getState = function() {
 		unitPositions = {};
 		for(var key in this.units) {
-			unitPositions[key] = this.units[key].getState();
+			if (typeof key != 'undefined')
+				unitPositions[key] = this.units[key].getState();
 		}
 		return {name : this.name, id : this.id, units : unitPositions}
 	}
 };
 
 
-Unit = function(id, attacker, position) {
+Unit = function(id, attacker, position, isServer) {
 	this.id = id;
 	this.isAttacker = attacker;
 	this.currentPosition = position;
 	this.targetPosition = {x : 0, y : 0};
-	if (!SERVER) {
+	if (!isServer) {
 		this.mapResource = Box(this.currentPosition);
 		this.mapResource.cparent = this;
 		this.mapResource.on("mousedown", function(e) {
@@ -101,7 +111,7 @@ Unit = function(id, attacker, position) {
 	};
 
 	this.getState = function() {
-		return {position : this.currentPosition, target : this.targetPosition, attacker : isAttacker};
+		return {position : this.currentPosition, target : this.targetPosition, attacker : this.isAttacker};
 	};
 	
 	this.mouseDown = function(event) {
@@ -113,7 +123,7 @@ Unit = function(id, attacker, position) {
 	this.mouseUp = function(event) {
 		// check if the coordinates are not out of the canvas
 		//if (currentSelectedUnit && currentSelectedUnit == this) {
-			currentSelectedUnit.updateTarget({x : relX, y : relY});
+		currentSelectedUnit.updateTarget({x : relX, y : relY});
 		//}
 		//var relX = event.offsetX / canvasDoc.width;
 		//var relY = event.offsetY / canvasDoc.height;
