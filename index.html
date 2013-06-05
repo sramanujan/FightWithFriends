@@ -1,82 +1,13 @@
 <html>
+<head> 
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/ocanvas-2.4.0.min.js"></script>
-    <head> 
+    <script src="protected/player.js"></script>
         <title> Testing Web Socket... </title> 
         <!-- Le styles -->
         <link href="assets/css/bootstrap.css" rel="stylesheet">
-        <style type="text/css">
-          body {
-            padding-top: 20px;
-            padding-bottom: 60px;
-          }
-
-          /* Custom container */
-          .container {
-            margin: 0 auto;
-            max-width: 1000px;
-          }
-          .container > hr {
-            margin: 60px 0;
-          }
-
-          /* Main marketing message and sign up button */
-          .jumbotron {
-            margin: 80px 0;
-            text-align: center;
-          }
-          .jumbotron h1 {
-            font-size: 100px;
-            line-height: 1;
-          }
-          .jumbotron .lead {
-            font-size: 24px;
-            line-height: 1.25;
-          }
-          .jumbotron .btn {
-            font-size: 21px;
-            padding: 14px 24px;
-          }
-
-          /* Supporting marketing content */
-          .marketing {
-            margin: 60px 0;
-          }
-          .marketing p + h4 {
-            margin-top: 28px;
-          }
-
-
-          /* Customize the navbar links to be fill the entire space of the .navbar */
-          .navbar .navbar-inner {
-            padding: 0;
-          }
-          .navbar .nav {
-            margin: 0;
-            display: table;
-            width: 100%;
-          }
-          .navbar .nav li {
-            display: table-cell;
-            width: 1%;
-            float: none;
-          }
-          .navbar .nav li a {
-            font-weight: bold;
-            text-align: center;
-            border-left: 1px solid rgba(255,255,255,.75);
-            border-right: 1px solid rgba(0,0,0,.1);
-          }
-          .navbar .nav li:first-child a {
-            border-left: 0;
-            border-radius: 3px 0 0 3px;
-          }
-          .navbar .nav li:last-child a {
-            border-right: 0;
-            border-radius: 0 3px 3px 0;
-          }
-        </style>
         <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
+        <link href="assets/css/main.css" rel="stylesheet">
 
         <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
         <!--[if lt IE 9]>
@@ -89,7 +20,7 @@
         <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
         <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
         <link rel="shortcut icon" href="assets/ico/favicon.png">
-    </head>
+</head>
     <body>
         <div id="fb-root"></div>
         <script>
@@ -134,7 +65,7 @@
 
             function socketIoLoaded() {
                 socket_io_loaded = true;
-                if(fb_connected) {
+                if(fb_connected || true) {
                     loadCompleted();
                 }
             }
@@ -150,22 +81,32 @@
                 });
             }
 
+			var TOTAL_UNITS = 4;
+			var SERVER = false;
+			var categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
+			var COLORS = new Array("blue", "red", "green", "yellow");
+			
             var userDetails = null;
             var socket = null;
             var listOfRooms = {};
             var currentRoom = null;
-
+			
             var positionArray = new Array();
             var currentServerPositionArray = new Array();
+			var me 				= null;
+			var playersOnBoard 	= new Array();
+			var whoami			= categories.Attacker;
+			var batchedStates 	= new Array();
 
             function loadCompleted() {
                 socket = io.connect('http://' + window.location.hostname + ':8028', { 'connect timeout': 10000 });
                 makeEventListeners();
             }
-
+			
             function makeEventListeners() {
                 socket.on('connect', function() {
-                    setClientDetails(fb_response);
+					var rand = Math.floor(Math.random()*11);
+                    setClientDetails({name : "anand" + rand, id : rand});
                 });
 
                 socket.on('disconnect', function() {
@@ -183,8 +124,10 @@
 
                 socket.on('joined', function(data) {
                     currentRoom = data.room;
-                    positionArray = data.value;
-                    createBoxes(data.value)
+                    //positionArray = data.value;
+                    //createBoxes(data.value);
+					enableButtons();
+					canvasLoop.start();
                 });
 
                 socket.on('roomUpdate', function (data) {
@@ -192,7 +135,7 @@
                     var updateType = data.eventName;
                     var value = data.value;
                     if(updateType == 'update') {
-                        positionArray = value;
+                        positionArray =  value;
                     } else if(updateType == 'join') {
                         addBox(value.position);
                     } else if(updateType == 'leave') {
@@ -207,6 +150,8 @@
             }
 
             function setClientDetails(data) {
+				me = new Player(data.name, data.id);
+				playersOnBoard.push(me);
                 socket.emit('setClientDetails', data);
             }
 
@@ -221,7 +166,24 @@
             function stateUpdate(posX, posY) {
                 socket.emit('stateUpdate', { position: { x: posX, y: posY } });
             }
+			
+			function updateState(state, force = false) {
+				if (state != null) {
+					batchedStates.push(state);
+				}
+				socket.emit('updateState', { states: batchedStates });
+				
+				// empty the array - find the right way
+				batchedStates = new Array();
+			}
 
+			function enableButtons() {
+				if (whoami == categories.Attacker) {
+					$("#attacker_dashboard").show();
+				}
+				else {
+				}
+			}
         </script>
 		<div class="container-fluid">
             <div class="row-fluid">
@@ -231,11 +193,11 @@
                     <br />
                     <select id='roomList' name='roomListSelect'>
                     </select>
-                    <a class="btn" id="joinSelected" href="#">JOIN</a>
+                    <a class="btn" id="joinSelected" href="">JOIN</a>
                     <br />
                     <br />
                     <input type='text' id='roomName' align='left' name='roomNameBtn'/>
-                    <a class="btn" id="createRoom" href="#">CREATE</a>
+                    <a class="btn" id="createRoom" href="">CREATE</a>
                 </div>
                 <div class="span6">
                     <div id="main_canvas">
@@ -243,17 +205,36 @@
                         </canvas>
                     </div>
                 </div>
+				<div class="span2" style="display:none" id="attacker_dashboard">
+					<input type="text" id="addUnit" class="btn" value="Add Unit">
+				</div>
             </div>
         </div>
         <script>
 
             $('#joinSelected').click( function() {
                 joinRoom($("#roomList option:selected").text());
+				return false;
             });
 
             $('#createRoom').click( function() {
                 joinRoom($('#roomName').val());
+				return false;
             });
+			
+			/* attacker dashboard */
+            $('#addUnit').click( function() {
+				var unitsOnBoard = me.unitsOnBoard();
+                if (unitsOnBoard < TOTAL_UNITS) {
+					var unit = new Unit(unitsOnBoard+1, true, { x: 20, y: 0 });
+					me.addUnit(unit);
+				}
+				return false;
+            });
+			
+			
+			/* defender dashboard */
+			
 
             var canvasDoc = document.getElementById('canvas1');
             var canvasWidth = canvasDoc.width;
@@ -267,14 +248,21 @@
             var boxes = new Array();
 
             canvasDoc.onmousedown = function (event) {
+				/*
                 var relX = event.offsetX / canvasDoc.width;
                 var relY = event.offsetY / canvasDoc.height;
                 stateUpdate( relX, relY );
+				*/
+				units = me.getUnits();
+				units[1].mouseClick();
             }
 
             var canvasLoop = canvas.setLoop(function () {
                 //check currentServerPositionArray also, if its very different, proportionally move it to that instead. Lets keep it at 5% of game board.
-                for (var i = 0; i < positionArray.length; i++) {
+                for (var i = 0; i < playersOnBoard.length; i++) {
+					playersOnBoard[i].update();
+					
+					/*
                     var remX = (positionArray[i].position.x * canvasDoc.width) - boxes[i].x;
                     var remY = (positionArray[i].position.y * canvasDoc.height)- boxes[i].y;
                     var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
@@ -290,7 +278,7 @@
                     if( Math.abs((boxes[i].y / canvasDoc.height) - currentServerPositionArray[i].position.y) > 0.005 ) {
                         boxes[i].y = currentServerPositionArray[i].position.y * canvasDoc.height;
                     }
-
+					*/
                 }
             });
 
@@ -315,7 +303,7 @@
                     }
                 }
             }
-
+/*
             function createBoxes(value) {
                 for (var i = 0; i < value.length; i++) {
                     addBox(value[i].position);
@@ -327,7 +315,7 @@
                 boxes.push(Box(position));
                 canvas.addChild(boxes[boxes.length - 1]);
             }
-
+*/
             function populateListOfRooms() {
                 for (var roomName in listOfRooms) {
                     $("#roomList").append("<option value='1'>" + roomName.replace('/','') + "</option>") 

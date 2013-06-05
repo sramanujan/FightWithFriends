@@ -1,4 +1,6 @@
-require('./db.js');
+var SERVER = true;
+//require('./db.js');
+require('./protected/player.js');
 var app = require('http').createServer();
 var io = require('socket.io').listen(app);
 
@@ -39,7 +41,9 @@ io.sockets.on('connection', function (socket) {
         var data2 = { };
         socket[data_namespace].clientName = data.name;
         socket[data_namespace].clientId = data.id.toString();
-        if(db.bucket != null) {
+        socket[data_namespace].player = new Player(data.name, data.id.toString());
+        if(true) {
+			/*
             db.bucket.get(socket[data_namespace].clientId, function (err, doc, meta) {
                 if(!doc || err || !db.isValidPlayerObject(doc)) {
                     doc = db.playerTemplate;
@@ -57,7 +61,8 @@ io.sockets.on('connection', function (socket) {
                 } else {
                     data2.userDetails = doc;
                 }
-            }); 
+            });
+			*/
             data2.existingRooms = io.sockets.manager.rooms;
             socket.emit('registered', data2);
         } else {
@@ -89,6 +94,12 @@ io.sockets.on('connection', function (socket) {
     socket.on('stateUpdate', function (update) {
         console.log("Sent state update data...");
         socket[data_namespace].targetPosition = update.position;
+        socket.roomUpdate('update');
+    });
+
+    socket.on('updateState', function (update) {
+        console.log("received update data...");
+        socket[data_namespace].player.updatePosition(update.states);
         socket.roomUpdate('update');
     });
 
