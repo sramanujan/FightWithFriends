@@ -32,7 +32,7 @@ Setup
 9. Edit global.js (part of assets/js/) with the appropriate Facebook APP ID.
 10. Copy fwf.conf to USERNAME.fwf.conf and replace the following
     /mnt/FightWithFriends; -----> /home/USERNAME/FightWithFriends;
-    server_name *.fwf.dev2-hackathon.zc2.zynga.com fwf.dev2-hackathon.zc2.zynga.com localhost; -----> server_name *.USERNAME.fwf.dev2-hackathon.zc2.zynga.com USERNAME.fwf.dev2-hackathon.zc2.zynga.com localhost;
+    server_name *.fwf.dev2-hackathon.zc2.zynga.com fwf.dev2-hackathon.zc2.zynga.com localhost; -----> server_name *.USERNAME-fwf.dev2-hackathon.zc2.zynga.com USERNAME-fwf.dev2-hackathon.zc2.zynga.com localhost;
 11. Run: sudo ln -s /home/USERNAME/FightWithFriends/USERNAME.fwf.conf /etc/nginx/conf.d/USERNAME.fwf.conf
 12. In /home/USERNAME/FightWithFriends/ folder, run the following:
     npm install socket.io
