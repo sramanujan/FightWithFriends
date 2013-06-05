@@ -2,6 +2,7 @@
 <head> 
 	<script src="assets/js/global.js"></script>
     <script src="assets/js/jquery.js"></script>
+    <script src="assets/js/extends/Tiled.js"></script>
     <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
     <script src="protected/player.js"></script>
         <title> Testing Web Socket... </title> 
@@ -242,7 +243,7 @@
             var canvasWidth = canvasDoc.width;
             var canvasHeight = canvasDoc.height;
 
-            var canvas = CE.defines("canvas1").
+            var canvas = CE.defines("canvas1").extend(Tiled).
             ready(function() {
                 canvas.Scene.call("MainScene");
             });
@@ -262,10 +263,20 @@
                 name: "MainScene",
                 materials: {
                     images: {
-                        knight: "assets/img/knight.png"
+                        knight: "assets/img/knight.png",
+                        green_patch: "assets/img/tile.png"
                     }
                 },
                 ready: function(stage) {
+                    var el = this.createElement();
+                    var tiled = canvas.Tiled.new();
+                    tiled.load(this, el, "{{ asset('map.json') }}");
+                    tiled.ready(function() {
+                        var tile_w = this.getTileWidth(),
+                        tile_h = this.getTileHeight(),
+                        layer_object = this.getLayerObject();
+                        stage.append(el);
+                    });
                 },
                 render: function(stage) {
                     for (var i = 0; i < playersOnBoard.length; i++) {

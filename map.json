@@ -1,0 +1,39 @@
+{ "height":5,
+ "layers":[
+        {
+         "data":[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+         "height":5,
+         "name":"Calque de Tile 1",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":5,
+         "x":0,
+         "y":0
+        }],
+ "orientation":"isometric",
+ "properties":
+    {
+
+    },
+ "tileheight":41,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "image":"assets/img/tile.png",
+         "imageheight":41,
+         "imagewidth":82,
+         "margin":0,
+         "name":"green_patch",
+         "properties":
+            {
+
+            },
+         "spacing":0,
+         "tileheight":41,
+         "tilewidth":82
+        }],
+ "tilewidth":82,
+ "version":1,
+ "width":5
+}
