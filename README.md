@@ -24,8 +24,8 @@ Setup
 1. Go to http://developers.facebook.com/ and create a new APP.
 2. Namespace: <username>_fwf
 3. App Domains: dev2-hackathon.zc2.zynga.com
-4. Site URL: http://fb.<username>-fwf.dev2-hackathon.zc2.zynga.com
-5. Canvas URL: http://fb.<username>-fwf.dev2-hackathon.zc2.zynga.com
+4. Site URL: http://fb.\<username>-fwf.dev2-hackathon.zc2.zynga.com
+5. Canvas URL: http://fb.\<username>-fwf.dev2-hackathon.zc2.zynga.com
 6. Secure Canvas URL: https://fb.<username>-fwf.dev2-hackathon.zc2.zynga.com
 7. Clone this git repo into /home/<username>/FightWithFriends (run git clone git@github.com:sramanujan/FightWithFriends.git at /home/<username>)
 8. Create a new branch for yourself. (run git checkout -b dev_<username>)
