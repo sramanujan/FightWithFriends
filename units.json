@@ -1,6 +1,8 @@
 [{
-    "code": 001
+    "code": 001,
+    "image": "assets/img/knight.png"
 },
 {
-    "code": 002
-    }]
+    "code": 002,
+    "image": "assets/img/knight.png"
+}]
