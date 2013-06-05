@@ -1,6 +1,7 @@
 var SERVER = true;
 //require('./db.js');
 require('./protected/player.js');
+
 var app = require('http').createServer();
 var io = require('socket.io').listen(app);
 

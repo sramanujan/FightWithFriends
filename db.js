@@ -14,7 +14,13 @@ db.playerTemplate = {
     username: "",
     level: 1,
     defence_xp: 1,
-    attack_xp: 1
+    attack_xp: 1,
+    kingdom: {
+        theme: {
+            background: "assets/img/background_map.png"
+        },
+        buildings: []
+    }
 };
 
 db.isValidPlayerObject = function(playerObject) {

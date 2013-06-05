@@ -5,7 +5,7 @@
  * @param helpers
  */
 
-var Player = function(name, id) {
+Player = function(name, id) {
 	this.name 	= name;
 	this.id 	= id;
 	this.units = {};
@@ -13,7 +13,7 @@ var Player = function(name, id) {
 	
 	this.addUnit = function(unit) {
 		if (!SERVER)
-			canvas.addChild(unit.mapResource);
+			mainScene.getStage().append(unit.mapResource);
 		this.units[unit.id] = unit;
 		this.totalUnits++
 	};
@@ -54,24 +54,35 @@ var Player = function(name, id) {
 	}
 };
 
-var Unit = function(id, attacker, position) {
+
+Unit = function(id, attacker, position) {
 	this.id = id;
 	this.isAttacker = attacker;
 	this.currentPosition = position;
 	this.targetPosition = {x : 0, y : 0};
-	if (!SERVER)
+	if (!SERVER) {
 		this.mapResource = Box(this.currentPosition);
+		this.mapResource.cparent = this;
+		this.mapResource.on("mousedown", function(e) {
+			this.cparent.mouseDown(e);
+		});
+		/*
+		this.mapResource.on("mouseup", function(e) {
+			this.cparent.mouseUp(e);
+		});
+		*/
+	}
 
 	this.updatePosition = function(position) {
 		this.currentPosition = position;
 	};
 	this.update = function() {
-		var remX = (targetPosition.x * canvasDoc.width) - currentPosition.x;
-		var remY = (targetPosition.y * canvasDoc.height)- currentPosition.y;
+		var remX = (this.targetPosition.x * canvasDoc.width) - this.currentPosition.x;
+		var remY = (this.targetPosition.y * canvasDoc.height)- this.currentPosition.y;
 		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 		if(dist != 0) {
-			currentPosition.x += (remX / dist);
-			currentPosition.y += (remY / dist);
+			this.currentPosition.x += (remX / dist);
+			this.currentPosition.y += (remY / dist);
 		}
 		/*
 		if( Math.abs((currentPosition.x / canvasDoc.width) - currentServertargetPosition.x) > 0.005 ) {
@@ -82,8 +93,8 @@ var Unit = function(id, attacker, position) {
 			currentPosition.y = currentServertargetPosition.y * canvasDoc.height;
 		}
 		*/
-		this.mapResource.x = currentPosition.x;
-		this.mapResource.y = currentPosition.y;
+		this.mapResource.x = this.currentPosition.x;
+		this.mapResource.y = this.currentPosition.y;
 	};
 	this.updateTarget = function(position) {
 		this.targetPosition = position;
@@ -93,9 +104,20 @@ var Unit = function(id, attacker, position) {
 		return {position : this.currentPosition, target : this.targetPosition, attacker : isAttacker};
 	};
 	
-	this.mouseClick = function() {
-		var relX = event.offsetX / canvasDoc.width;
-		var relY = event.offsetY / canvasDoc.height;
-		this.updateTarget({x : relX, y : relY});
+	this.mouseDown = function(event) {
+		currentSelectedUnit = this;
+		//var relX = event.offsetX / canvasDoc.width;
+		//var relY = event.offsetY / canvasDoc.height;
+		//this.updateTarget({x : relX, y : relY});
+	}
+	this.mouseUp = function(event) {
+		// check if the coordinates are not out of the canvas
+		//if (currentSelectedUnit && currentSelectedUnit == this) {
+			currentSelectedUnit.updateTarget({x : relX, y : relY});
+		//}
+		//var relX = event.offsetX / canvasDoc.width;
+		//var relY = event.offsetY / canvasDoc.height;
+		//this.updateTarget({x : relX, y : relY});
+		currentSelectedUnit = null;
 	}
 };

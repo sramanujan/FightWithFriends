@@ -1,7 +1,8 @@
 <html>
 <head> 
+	<script src="assets/js/global.js"></script>
     <script src="assets/js/jquery.js"></script>
-    <script src="assets/js/ocanvas-2.4.0.min.js"></script>
+    <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
     <script src="protected/player.js"></script>
         <title> Testing Web Socket... </title> 
         <!-- Le styles -->
@@ -36,8 +37,8 @@
 
             window.fbAsyncInit = function() {
                 FB.init({
-                    appId      : '165829500255032', // App ID
-                    channelUrl : '//fwf.localhost.com/channel.html', // Channel File
+                    appId      : FB_APP_ID, // App ID
+                    channelUrl : '//' + window.location.hostname + '/channel.html', // Channel File
                     status     : true, // check login status
                     cookie     : true, // enable cookies to allow the server to access the session
                     xfbml      : true  // parse XFBML
@@ -95,6 +96,8 @@
             var currentServerPositionArray = new Array();
 			var me 				= null;
 			var playersOnBoard 	= new Array();
+			var currentSelectedUnit = null;
+			
 			var whoami			= categories.Attacker;
 			var batchedStates 	= new Array();
 
@@ -127,7 +130,6 @@
                     //positionArray = data.value;
                     //createBoxes(data.value);
 					enableButtons();
-					canvasLoop.start();
                 });
 
                 socket.on('roomUpdate', function (data) {
@@ -167,7 +169,7 @@
                 socket.emit('stateUpdate', { position: { x: posX, y: posY } });
             }
 			
-			function updateState(state, force = false) {
+			function updateState(state, force) {
 				if (state != null) {
 					batchedStates.push(state);
 				}
@@ -240,65 +242,69 @@
             var canvasWidth = canvasDoc.width;
             var canvasHeight = canvasDoc.height;
 
-            var canvas = oCanvas.create({
-                canvas: "#canvas1",
-                fps: 10
+            var canvas = CE.defines("canvas1").
+            ready(function() {
+                canvas.Scene.call("MainScene");
             });
 
             var boxes = new Array();
 
-            canvasDoc.onmousedown = function (event) {
-				/*
-                var relX = event.offsetX / canvasDoc.width;
-                var relY = event.offsetY / canvasDoc.height;
-                stateUpdate( relX, relY );
-				*/
-				units = me.getUnits();
-				units[1].mouseClick();
+            canvasDoc.onmouseup = function (event) {
+				if (null != currentSelectedUnit) {
+					var relX = event.offsetX / canvasDoc.width;
+					var relY = event.offsetY / canvasDoc.height;
+					currentSelectedUnit.updateTarget({x : relX, y : relY });
+					currentSelectedUnit = null;
+				}
             }
 
-            var canvasLoop = canvas.setLoop(function () {
-                //check currentServerPositionArray also, if its very different, proportionally move it to that instead. Lets keep it at 5% of game board.
-                for (var i = 0; i < playersOnBoard.length; i++) {
-					playersOnBoard[i].update();
-					
-					/*
-                    var remX = (positionArray[i].position.x * canvasDoc.width) - boxes[i].x;
-                    var remY = (positionArray[i].position.y * canvasDoc.height)- boxes[i].y;
-                    var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-                    if(dist != 0) {
-                        boxes[i].x += (remX / dist);
-                        boxes[i].y += (remY / dist);
+            var mainScene = canvas.Scene.new({
+                name: "MainScene",
+                materials: {
+                    images: {
+                        knight: "assets/img/knight.png"
                     }
+                },
+                ready: function(stage) {
+                },
+                render: function(stage) {
+                    for (var i = 0; i < playersOnBoard.length; i++) {
+						playersOnBoard[i].update();
+						/*
+                        var remX = (positionArray[i].position.x * canvasDoc.width) - boxes[i].x;
+                        var remY = (positionArray[i].position.y * canvasDoc.height)- boxes[i].y;
+                        var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+                        if(dist != 0) {
+                            boxes[i].x += (remX / dist);
+                            boxes[i].y += (remY / dist);
+                        }
 
-                    if( Math.abs((boxes[i].x / canvasDoc.width) - currentServerPositionArray[i].position.x) > 0.005 ) {
-                        boxes[i].x = currentServerPositionArray[i].position.x * canvasDoc.width;
-                    }
+                        if(currentServerPositionArray && currentServerPositionArray[i] && currentServerPositionArray.position) {
+                            if( Math.abs((boxes[i].x / canvasDoc.width) - currentServerPositionArray[i].position.x) > 0.005 ) {
+                                boxes[i].x = currentServerPositionArray[i].position.x * canvasDoc.width;
+                            }
 
-                    if( Math.abs((boxes[i].y / canvasDoc.height) - currentServerPositionArray[i].position.y) > 0.005 ) {
-                        boxes[i].y = currentServerPositionArray[i].position.y * canvasDoc.height;
+                            if( Math.abs((boxes[i].y / canvasDoc.height) - currentServerPositionArray[i].position.y) > 0.005 ) {
+                                boxes[i].y = currentServerPositionArray[i].position.y * canvasDoc.height;
+                            }
+                        }
+						*/
+
                     }
-					*/
+                    stage.refresh();
                 }
             });
 
             function Box(position) {
-                var button = canvas.display.rectangle({
-                    x: position.x,
-                    y: position.y,
-                    origin: { x: "center", y: "center" },
-                    width: 60,
-                    height: 40,
-                    fill: "linear-gradient(315deg, #079, #013)",
-                    shadow: "0 0 20px rgba(0,0,0, 0.8)"
-                });
+                var button = mainScene.createElement(64,64);
+                button.drawImage("knight");
                 return button;
             }
 
             function removeBox(clientName) {
                 for (var i = 0; i < positionArray.length; i++) {
                     if(positionArray[i].clientName == clientName) {
-                        canvas.removeChild(boxes[i]);
+                        //canvas.removeChild(boxes[i]);
                         boxes.splice(i,1);
                     }
                 }
@@ -308,17 +314,54 @@
                 for (var i = 0; i < value.length; i++) {
                     addBox(value[i].position);
                 }
-                canvasLoop.start();
+                //canvasLoop.start();
             }
 
             function addBox(position) {
                 boxes.push(Box(position));
-                canvas.addChild(boxes[boxes.length - 1]);
+                mainScene.getStage().append(boxes[boxes.length - 1])
+                //canvas.addChild(boxes[boxes.length - 1]);
             }
 */
             function populateListOfRooms() {
                 for (var roomName in listOfRooms) {
                     $("#roomList").append("<option value='1'>" + roomName.replace('/','') + "</option>") 
+                }
+            }
+
+            function loadKingdom(kingdom) {
+                var staticUnits = kingdom.buildings;
+                var background = kingdom.theme.background;
+                //background must be a URL
+                //canvas.background.set("image('" + background + "'");
+                //staticUnits is an array of units with each having an x and a y.
+                for( var i = staticUnits.length - 1; i >= 0; i--) {
+                    loadStaticUnit(staticUnits[i]);
+                }
+            }
+            
+            var currentStaticUnits = new Array();
+
+            function loadStaticUnit(staticUnit) {
+                /*
+                var staticUnit = canvas.display.rectangle({
+                    x: position.x,
+                    y: position.y,
+                    origin: { x: "center", y: "center" },
+                    width: 60,
+                    height: 40,
+                    fill: "linear-gradient(315deg, #079, #013)",
+                    shadow: "0 0 20px rgba(0,0,0, 0.8)"
+                });
+                canvas.addChild(staticUnit);
+                */
+                currentStaticUnits.push(staticUnit);
+            }
+
+            function removeAllStaticUnits() {
+                for( var i = currentStaticUnits.length - 1; i >= 0; i--) {
+                    //canvas.removeChild(currentStaticUnits[i]);
+                    currentStaticUnits.splice(i,1);
                 }
             }
 
