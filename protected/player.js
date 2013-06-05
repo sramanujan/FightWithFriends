@@ -15,6 +15,7 @@ Player = function(name, id, isServer) {
 	this.addUnit = function(unit) {
 		if (!this.isServer)
 			mainScene.getStage().append(unit.mapResource);
+		console.log("add new unit " + unit.id);
 		this.units[unit.id] = unit;
 		this.totalUnits++
 	};
@@ -31,15 +32,19 @@ Player = function(name, id, isServer) {
 		// $.each(states, function(index, state) {
 		// for(i = 0; i < states.length; i++) {
 			// state = states[i];
-			state = states;
+			var state = states;
 			for(var key in state.units) {
 				if (key != 'undefined') {
 					if (null == this.units[key]) {
-						var unit = new Unit(state.units[key].id, state.units[key].attacker, state.units[key].position, this.isServer);
+						// console.log("unit is null " + key);
+						// console.log("position " + JSON.stringify(state.units[key]));
+						var unit = new Unit(key, state.units[key].attacker, state.units[key].position, this.isServer);
 						this.addUnit(unit);
 					}
 					else {
-						if (this.id != state.id) {
+						// console.log("unit is NOT null " + this.id);
+						// console.log("position " + JSON.stringify(state.units[key]));
+						if (this.isServer || me.id != state.id) {
 							this.units[key].updatePosition(state.units[key].position);
 						}
 					}
@@ -49,7 +54,7 @@ Player = function(name, id, isServer) {
 	};
 	this.update = function() {
 		for(var key in this.units) {
-			if (typeof key != 'undefined')
+			if (key != 'undefined')
 				this.units[key].update();
 		}
 	};
@@ -57,8 +62,9 @@ Player = function(name, id, isServer) {
 	this.getState = function() {
 		unitPositions = {};
 		for(var key in this.units) {
-			if (typeof key != 'undefined')
+			if (key != 'undefined') {
 				unitPositions[key] = this.units[key].getState();
+			}
 		}
 		return {name : this.name, id : this.id, units : unitPositions}
 	}
@@ -73,6 +79,8 @@ Unit = function(id, attacker, position, isServer) {
 	if (!isServer) {
 		this.mapResource = Box(this.currentPosition);
 		this.mapResource.cparent = this;
+		
+		// check if it is my unit only then add mouse listener
 		this.mapResource.on("mousedown", function(e) {
 			this.cparent.mouseDown(e);
 		});
@@ -111,7 +119,7 @@ Unit = function(id, attacker, position, isServer) {
 	};
 
 	this.getState = function() {
-		return {position : this.currentPosition, target : this.targetPosition, attacker : this.isAttacker};
+		return {id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : this.isAttacker};
 	};
 	
 	this.mouseDown = function(event) {
