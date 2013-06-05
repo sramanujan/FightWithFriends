@@ -96,7 +96,7 @@
             var positionArray = new Array();
             var currentServerPositionArray = new Array();
 			var me 				= null;
-			var playersOnBoard 	= new Array();
+			var playersOnBoard 	= {};
 			var currentSelectedUnit = null;
 			
 			var whoami			= categories.Attacker;
@@ -128,33 +128,41 @@
 
                 socket.on('joined', function(data) {
                     currentRoom = data.room;
-                    //positionArray = data.value;
-                    //createBoxes(data.value);
+					$.each(data.value, function(index, state) {
+						playersOnBoard[state.id].updatePosition(state);
+					});
+					
 					enableButtons();
                 });
 
                 socket.on('roomUpdate', function (data) {
                     var updateFrom = data.clientName;
+                    var updateFromId = data.clientId;
                     var updateType = data.eventName;
                     var value = data.value;
                     if(updateType == 'update') {
                         positionArray =  value;
                     } else if(updateType == 'join') {
-                        addBox(value.position);
+                        // create an opponent player object
+						var opp = new Player(updateFrom, updateFromId, false);
+						playersOnBoard[opp.id] = opp;
                     } else if(updateType == 'leave') {
-                        removeBox(updateFrom);
+                        //removeBox(updateFrom);
                     }
                     console.log("Client: " + updateFrom + " Event: " + updateType + " Value: " + value);
                 });
 
                 socket.on('reAdjust', function (data) {
-                    currentServerPositionArray = data.value;
+                    //currentServerPositionArray = data.value;
+					$.each(data.value, function(index, state) {
+						playersOnBoard[state.id].updatePosition(state);
+					});
                 });
             }
 
             function setClientDetails(data) {
-				me = new Player(data.name, data.id);
-				playersOnBoard.push(me);
+				me = new Player(data.name, data.id, false);
+				playersOnBoard[me.id] = me;
                 socket.emit('setClientDetails', data);
             }
 
@@ -174,10 +182,19 @@
 				if (state != null) {
 					batchedStates.push(state);
 				}
-				socket.emit('updateState', { states: batchedStates });
+				//socket.emit('updateState', { states: batchedStates });
 				
 				// empty the array - find the right way
-				batchedStates = new Array();
+				//batchedStates = new Array();
+			}
+			
+			function pushToServer() {
+				if (null != me && me.unitsOnBoard() > 0) {
+					socket.emit('updateState', { states: me.getState() });
+				
+					// empty the array - find the right way
+					batchedStates = new Array();
+				}
 			}
 
 			function enableButtons() {
@@ -229,8 +246,8 @@
             $('#addUnit').click( function() {
 				var unitsOnBoard = me.unitsOnBoard();
                 if (unitsOnBoard < TOTAL_UNITS) {
-					var unit = new Unit(unitsOnBoard+1, true, { x: 20, y: 0 });
-					me.addUnit(unit);
+					var unit = new Unit(unitsOnBoard+1, true, { x: 20, y: 0 }, false);
+					me.addUnit(unit, false);
 				}
 				return false;
             });
@@ -279,30 +296,11 @@
                     });
                 },
                 render: function(stage) {
-                    for (var i = 0; i < playersOnBoard.length; i++) {
-						playersOnBoard[i].update();
-						/*
-                        var remX = (positionArray[i].position.x * canvasDoc.width) - boxes[i].x;
-                        var remY = (positionArray[i].position.y * canvasDoc.height)- boxes[i].y;
-                        var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-                        if(dist != 0) {
-                            boxes[i].x += (remX / dist);
-                            boxes[i].y += (remY / dist);
-                        }
-
-                        if(currentServerPositionArray && currentServerPositionArray[i] && currentServerPositionArray.position) {
-                            if( Math.abs((boxes[i].x / canvasDoc.width) - currentServerPositionArray[i].position.x) > 0.005 ) {
-                                boxes[i].x = currentServerPositionArray[i].position.x * canvasDoc.width;
-                            }
-
-                            if( Math.abs((boxes[i].y / canvasDoc.height) - currentServerPositionArray[i].position.y) > 0.005 ) {
-                                boxes[i].y = currentServerPositionArray[i].position.y * canvasDoc.height;
-                            }
-                        }
-						*/
-
+                    for (var key in window.playersOnBoard) {
+						window.playersOnBoard[key].update();
                     }
                     stage.refresh();
+					pushToServer();
                 }
             });
 
