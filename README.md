@@ -37,4 +37,4 @@ Setup
 12. In /home/USERNAME/FightWithFriends/ folder, run the following:
     npm install socket.io
     npm install couchbase
-13. You can start your node js server as and when you want manually. Remember, it will try to use port 8028 by default. This will not work if multiple people are trying to use the same port. The other available ports are: 8090 and 8097.
+13. You can start your node js server as and when you want manually. Remember, it will try to use port 8028 by default. This will not work if multiple people are trying to use the same port. The other available ports are: 8080 and 8097.
