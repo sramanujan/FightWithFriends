@@ -334,6 +334,40 @@
                 }
             }
 
+            function loadKingdom(kingdom) {
+                var staticUnits = kingdom.buildings;
+                var background = kingdom.theme.background;
+                //background must be a URL
+                canvas.background.set("image('" + background + "'");
+                //staticUnits is an array of units with each having an x and a y.
+                for( var i = staticUnits.length - 1; i >= 0; i--) {
+                    loadStaticUnit(staticUnits[i]);
+                }
+            }
+            
+            var currentStaticUnits = new Array();
+
+            function loadStaticUnit(staticUnit) {
+                var staticUnit = canvas.display.rectangle({
+                    x: position.x,
+                    y: position.y,
+                    origin: { x: "center", y: "center" },
+                    width: 60,
+                    height: 40,
+                    fill: "linear-gradient(315deg, #079, #013)",
+                    shadow: "0 0 20px rgba(0,0,0, 0.8)"
+                });
+                canvas.addChild(staticUnit);
+                currentStaticUnits.push(staticUnit);
+            }
+
+            function removeAllStaticUnits() {
+                for( var i = currentStaticUnits.length - 1; i >= 0; i--) {
+                    canvas.removeChild(currentStaticUnits[i]);
+                    currentStaticUnits.splice(i,1);
+                }
+            }
+
         </script>
     </body>
 </html>
