@@ -134,7 +134,11 @@
                 socket.on('joined', function(data) {
                     currentRoom = data.room;
 					$.each(data.value, function(index, state) {
-						playersOnBoard[state.id].updatePosition(state);
+						if (state.id != me.id) {
+							var opp = new Player(state.name, state.id, false);
+							playersOnBoard[state.id] = opp;
+							playersOnBoard[state.id].updatePosition(state);
+						}
 					});
 
 
@@ -197,6 +201,7 @@
 			
 			function pushToServer() {
 				if (null != me && me.unitsOnBoard() > 0) {
+					states = me.getState();
 					socket.emit('updateState', { states: me.getState() });
 				
 					// empty the array - find the right way
@@ -261,7 +266,7 @@
             $('#addUnit').click( function() {
 				var unitsOnBoard = me.unitsOnBoard();
                 if (unitsOnBoard < TOTAL_UNITS) {
-					var unit = new Unit(unitsOnBoard+1, true, { x: 20, y: 0 }, false);
+					var unit = new Unit(unitsOnBoard+1, true, { x: 200, y: 0 }, false, true);
 					me.addUnit(unit, false);
 				}
 				return false;
@@ -323,8 +328,8 @@
                 ready: function(stage) {
                 },
                 render: function(stage) {
-                    for (var key in window.playersOnBoard) {
-						window.playersOnBoard[key].update();
+                    for (var key in playersOnBoard) {
+						playersOnBoard[key].update();
                     }
                     stage.refresh();
 					pushToServer();
