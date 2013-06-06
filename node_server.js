@@ -39,11 +39,11 @@ io.sockets.on('connection', function (socket) {
         //io.sockets.in(room).emit('roomUpdate', { clientName: clientName, eventName: eventType, value: value});
     }
 
-    socket.on('setClientDetails', function (data) {
+    socket.on('login', function (data) {
+        console.log("login name and id [" + data.name + ":" + data.id +"]");
         var data2 = {};
-        socket[data_namespace].clientName = data.name;
-        socket[data_namespace].clientId = data.id.toString();
-        console.log("setting client name and id [" + data.name + ":" + data.id +"]");
+//        socket[data_namespace].clientName = data.name;
+//        socket[data_namespace].clientId = data.id.toString();
         socket[data_namespace].player = new Player(data.name, data.id, true);
         if(true) {
 			/*
@@ -77,6 +77,9 @@ io.sockets.on('connection', function (socket) {
             });
 
             data2.existingRooms = io.sockets.manager.rooms;
+			
+			// join my own room first
+			socket.join(socket[data_namespace].player.name);
             socket.emit('registered', data2);
         } else {
             console.log("COUCHBASE GLOBAL BUCKET NOT AVAILABLE!!");
