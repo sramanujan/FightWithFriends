@@ -73,10 +73,11 @@ io.sockets.on('connection', function (socket) {
             data2.towers = new Array();
             data2.towers.push({
                 code: "001",
-                position: { x: 50, y: 100 }
+                position: { x: 0.50, y: 0.100 }
             });
 
             data2.existingRooms = io.sockets.manager.rooms;
+            data2.room = socket[data_namespace].player.name;
 			
 			// join my own room first
 			socket.join(socket[data_namespace].player.name);
@@ -87,10 +88,15 @@ io.sockets.on('connection', function (socket) {
     });
     
 
-    socket.on('saveTowers', function (data) {
+    socket.on('saveTowers', function (update) {
         console.log("Saving towers...");
-        console.log(data);
+        console.log(update);
         //do db update here.
+		if (null != socket[data_namespace].player) {
+			socket[data_namespace].player.updatePosition(update.states);
+			//socket.roomUpdate('update');
+		}
+
     });
 	
 	// this is called when 'I' join a room
