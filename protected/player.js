@@ -50,6 +50,7 @@ Player = function(name, id, isServer) {
 			var state = states;
 			for(var key in state.units) {
 				if (key != 'undefined') {
+<<<<<<< HEAD
 					if (null == this.units[key] || undefined == this.units[key] ) {
 						console.log("CREATE A UNIT position " + JSON.stringify(state.units[key]));
 						if(states.units[key].state != "dead") {
@@ -58,6 +59,14 @@ Player = function(name, id, isServer) {
 								console.log("unit is null " + key);
 								this.addUnit(unit);
 							}
+=======
+					if (null == this.units[key]) {
+						console.log("unit is null " + key);
+						console.log("position " + JSON.stringify(state.units[key]));
+						var unit = new Unit(this, key, {code: "001", position: state.units[key].position}, this.isServer, false);
+						if (this.isServer) {
+							this.addUnit(unit);
+>>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
 						}
 					}
 					else {
@@ -112,6 +121,25 @@ Player = function(name, id, isServer) {
 					}
 				}
 			}
+			for(var key in state.towers) {
+				if (key != 'undefined') {
+					if (null == this.towers[key]) {
+						console.log("tower is null " + key);
+						console.log("position " + JSON.stringify(state.towers[key]));
+						var tower = new Tower(this, key, {code: "001", position: state.towers[key].position}, this.isServer, false);
+						if (this.isServer) {
+							this.addTower(tower);
+						}
+					}
+					else {
+						// console.log("unit is NOT null " + this.id);
+						// console.log("position " + JSON.stringify(state.towers[key]));
+						if (this.isServer || me.id != state.id) {
+							this.towers[key].updateTower(state.towers[key]);
+						}
+					}
+				}
+			}
 		// }
 	};
 	this.update = function() {
@@ -140,21 +168,39 @@ Player = function(name, id, isServer) {
 	
 	this.getState = function() {
 		unitPositions = {};
+		towerPositions = {};
 		for(var key in this.units) {
 			if (key != 'undefined') {
 				unitPositions[key] = this.units[key].getState();
 			}
 		}
+<<<<<<< HEAD
 		towerPositions = {};
+=======
+>>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
 		for(var key in this.towers) {
 			if (key != 'undefined') {
 				towerPositions[key] = this.towers[key].getState();
 			}
 		}
+<<<<<<< HEAD
 		return {name : this.name, id : this.id, units : unitPositions, towers:towerPositions};
+=======
+		return {name : this.name, id : this.id, units : unitPositions, towers : towerPositions}
+>>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
 	};
 	
 	this.leaveRoom = function() {
+		for(var key in this.units) {
+			if (key != 'undefined') {
+				this.units[key].mapResource.remove();
+			}
+		}
+		for(var key in this.towers) {
+			if (key != 'undefined') {
+				this.towers[key].mapResource.remove();
+			}
+		}
 		this.units = {};
 		this.towers = {};
 	}
@@ -224,6 +270,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
     this.targetPosition = tower.position;
     this.isTower = true;
     this.id = id;
+<<<<<<< HEAD
     
 
     this.updateTower = function(state) {
@@ -232,6 +279,8 @@ Tower = function(player, id, tower, isServer, isOwner) {
     		this.mapResource.remove();
     	}
     }
+=======
+>>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
 
     this.mouseDown = function(event) {
 		currentSelectedUnit = this;
@@ -244,14 +293,18 @@ Tower = function(player, id, tower, isServer, isOwner) {
 		//this.updateTarget({x : relX, y : relY});
 	}
     
+	this.updateTower = function(state) {
+		this.updateTarget(state.target);
+		// update health and stuff
+	};
+	
 	this.updatePosition = function(position) {
 		this.currentPosition = position;
 	};
 	this.updateTarget = function(position) {
 		this.targetPosition = position;
+		this.currentPosition = position;
 	};
-
-
 
 	this.update = function() {
 		if(this.state == "dead") {
@@ -259,9 +312,8 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			return false;
 		}
 		if(this && this.mapResource ) {
-			this.mapResource.x = (this.targetPosition.x * canvasDoc.width);
-			this.mapResource.y = (this.targetPosition.y * canvasDoc.height);
-			this.currentPosition = this.targetPosition;
+			this.mapResource.x = (this.currentPosition.x * canvasDoc.width);
+			this.mapResource.y = (this.currentPosition.y * canvasDoc.height);
 			var unitToAttack = this.getUnitInRange();
 			/*if(unitToAttack != null) {
 				unitToAttack.health = unitToAttack.health - 10;
@@ -271,6 +323,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 	};
 
 	this.getState = function() {
+<<<<<<< HEAD
 		return {id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : false, state: this.state};
 	};
 
@@ -301,6 +354,9 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			}
         }
         return null;
+=======
+		return {id : this.id, position : this.currentPosition, target : this.targetPosition, isTower : this.isTower};
+>>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
 	};
 
 	this.fireProjectile = function(target) {
@@ -484,7 +540,11 @@ Unit = function(player, id, unit, isServer, isOwner) {
 
 
 	this.getState = function() {
+<<<<<<< HEAD
 		return {id : this.id, position : this.currentPosition, target : this.targetPosition, state: this.state};
+=======
+		return {id : this.id, position : this.currentPosition, target : this.targetPosition, isTower : this.isTower};
+>>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
 	};
 	
 	this.mouseDown = function(event) {
