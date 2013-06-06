@@ -23,14 +23,32 @@
         <link rel="shortcut icon" href="assets/ico/favicon.png">
 </head>
     <body>
+        <div id="fb-root"></div>
         <script>
             var socket_io_loaded = false;
             var fb_connected = false;
+            var towers_loaded = false;
+            var units_loaded = false;
             var fb_response = null;
+            var unit_data = null;
+            var tower_data = null;
+
+            $.getJSON('units.json', function(data) {
+                unit_data = data;
+                units_loaded = true;
+                checkIfLoadComplete();
+            });
+
+            $.getJSON('towers.json', function(data) {
+                tower_data = data;
+                towers_loaded = true;
+                checkIfLoadComplete();
+            });
 
             if(typeof io == "undefined") {
                 $.getScript('http://' + window.location.hostname + ':8028/socket.io/socket.io.js', function() {
-                    socketIoLoaded();
+                    socket_io_loaded = true;
+                    checkIfLoadComplete();
                 });
             }
 
@@ -63,22 +81,19 @@
                 ref.parentNode.insertBefore(js, ref);
             }(document));
 
-            function socketIoLoaded() {
-                socket_io_loaded = true;
-                if(fb_connected || true) {
-                    loadCompleted();
-                }
-            }
-
             function fbConnected() {
                 FB.api('/me', function(response) {
                     fb_response = response;
                     console.log(fb_response);
                     fb_connected = true;
-                    if(socket_io_loaded) {
-                        loadCompleted();
-                    }
+                    checkIfLoadComplete();
                 });
+            }
+
+            function checkIfLoadComplete() {
+                if(units_loaded && towers_loaded && socket_io_loaded && fb_connected) {
+                    loadCompleted();
+                }
             }
 
 			var TOTAL_UNITS = 4;
@@ -250,7 +265,7 @@
         </div>
 		<div class="container-fluid">
             <div id="main_canvas">
-                <canvas id="canvas1" width="760" height="465" style="border:1px; background-image: url(assets/img/background_map.png);">
+                <canvas id="canvas1" width="760" height="465" style="border:1px; background-image: url(assets/img/background_map_2.png);">
                 </canvas>
             </div>
         </div>
@@ -298,7 +313,7 @@
             $('#addUnit').click( function() {
 				var unitsOnBoard = me.unitsOnBoard();
                 if (unitsOnBoard < TOTAL_UNITS) {
-					var unit = new Unit(unitsOnBoard+1, true, { x: 200, y: 0 }, false, true);
+					var unit = new Unit(unitsOnBoard+1, {code: 001, position:{ x: 200, y: 0 }}, false, true);
 					me.addUnit(unit, false);
 				}
 				return false;
@@ -309,9 +324,7 @@
             $('#addTower').click( function() {
                 addTower({
                     id: "001",
-                    position: { x: 100, y: 30 },
-                    image: "assets/img/tower1.png",
-                    projectileImage: "assets/img/arrow1.png"
+                    position: { x: 100, y: 30 }
                 });
                 return false;
             });
@@ -378,7 +391,12 @@
 
             function AttackUnitResource(position) {
                 var button = mainScene.createElement(64,64);
-                button.drawImage("knight");
+                var imageObj = new Image();
+                imageObj.onload = function() {
+                    button.drawImage(imageObj);
+                }
+                //TODO: MUST USE ACTUAL UNIT CODE HERE!!!
+                imageObj.src = unit_data["001"].image;
                 return button;
             }
 
@@ -398,28 +416,11 @@
             }
 
             function addTower(tower) {
-                var imageObj = new Image();
-                imageObj.onload = function() {
-                    var position = {x:200,y:200};
-                    
-                    var towersOnBoard = me.towersOnBoard();
-                    var myTowerObj = new Tower(towersOnBoard+1,imageObj, tower, position);
-                    myTowerObj.addListener();
-                    
-                    if (towersOnBoard < TOTAL_UNITS) {
-                    
-                        me.addTower(myTowerObj, false);
-                    }
-                    /*towerObj.on("mousedown", function(e) {
-                        //if not in design mode, do nothing.
-                        if(isInDesignMode) {
-                            
-                        }
-
-                        //this.cparent.mouseDown(e);
-                    });*/
+                var towersOnBoard = me.towersOnBoard();
+                var myTowerObj = new Tower(towersOnBoard+1, tower, false, true);              
+                if (towersOnBoard < TOTAL_UNITS) {
+                    me.addTower(myTowerObj);
                 }
-                imageObj.src = tower.image;
             }
 
             function loadKingdom(kingdom) {
@@ -459,6 +460,5 @@
             }
 
         </script>
-        <div id="fb-root"></div>
     </body>
 </html>

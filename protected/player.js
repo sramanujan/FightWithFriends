@@ -52,8 +52,7 @@ Player = function(name, id, isServer) {
 					if (null == this.units[key]) {
 						// console.log("unit is null " + key);
 						// console.log("position " + JSON.stringify(state.units[key]));
-						
-						var unit = new Unit(key, state.units[key].attacker, state.units[key].position, this.isServer, false);
+						var unit = new Unit(key, {code: "001", position: state.units[key].position}, this.isServer, false);
 						this.addUnit(unit);
 					}
 					else {
@@ -94,25 +93,33 @@ Player = function(name, id, isServer) {
 	}
 };
 
-Tower = function(id,imgObject, tower, position) {
-	var towerObj =  mainScene.createElement(100,100);
-    towerObj.drawImage(imgObject);
-    towerObj.x = position.x;
-    towerObj.y = position.y;
-    this.currentPosition = position;
-    this.targetPosition = position;
+Tower = function(id, tower, isServer, isOwner) {
+	this.isOwner = isOwner;
+    if (!isServer) {
+	    var imgObject = new Image();
+	    imgObject.dparent = this;
+	    imageObj.onload = function() {
+			var towerObj =  mainScene.createElement(100,100);
+		    towerObj.drawImage(imgObject);
+		    towerObj.x = tower.position.x;
+		    towerObj.y = tower.position.y;
+		    this.dparent.mapResource = towerObj;
+		    this.dparent.mapResource.cparent = this.dparent;
+    		// check if it is my unit only then add mouse listener
+			if (this.dparent.isOwner) {
+				this.dparent.mapResource.on("mousedown", function(e) {
+					this.cparent.mouseDown(e);
+				});
+			}
+	    }
+	    imgObject.src = tower_data[tower.code].image;
+	}
+
+    this.currentPosition = tower.position;
+    this.targetPosition = tower.position;
     this.isTower = 1;
-    /*ownTowers.push(towerObj);
-    towersOnBoard.push(tower);*/
-    //mainScene.getStage().append(towerObj, position);
-    this.mapResource = towerObj;
-    this.mapResource.cparent = this;
     this.id = id;
-    this.addListener = function() {
-    	this.mapResource.on("mousedown", function(e) {
-    		this.cparent.mousedown(e);
-    	});
-    };
+
 
     this.mousedown = function(event) {
 		currentSelectedUnit = this;
@@ -140,40 +147,34 @@ Tower = function(id,imgObject, tower, position) {
 	this.getState = function() {
 		return {id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : false};
 	};
-
-
 };
 
-Unit = function(id, attacker, position, isServer, isOwner) {
+Unit = function(id, unit, isServer, isOwner) {
 	this.id = id;
-	this.isAttacker = attacker;
+	this.isAttacker = true;
 	this.isOwner = isOwner;
-	this.currentPosition = position;
+	this.currentPosition = unit.position;
 	this.isTower = 0;
 	this.targetPosition = {x : 0, y : 0};
 	if (!isServer) {
 		this.mapResource = null;
-		if (this.isAttacker) {
-			this.mapResource = AttackUnitResource(this.currentPosition);
-		}
-		
-		this.mapResource.cparent = this;
-		
-		// check if it is my unit only then add mouse listener
-		if (isOwner) {
-			this.mapResource.on("mousedown", function(e) {
-				this.cparent.mouseDown(e);
-			});
-		}
-		/*
-		this.mapResource.on("mouseup", function(e) {
-			this.cparent.mouseUp(e);
-		});
-		*/
+	    var imgObject = new Image();
+	    imgObject.dparent = this;
+	    imageObj.onload = function() {
+			var unitObj =  mainScene.createElement(64,64);
+		    unitObj.drawImage(imgObject);
+		    this.dparent.mapResource = unitObj;
+		    this.dparent.mapResource.cparent = this.dparent;
+    		// check if it is my unit only then add mouse listener
+			if (this.dparent.isOwner) {
+				this.dparent.mapResource.on("mousedown", function(e) {
+					this.cparent.mouseDown(e);
+				});
+			}
+	    }
+	    imgObject.src = unit_data[unit.code].image;
 	}
 
-
-	
 	this.updateUnit = function(state) {
 		this.updatePosition(state.position);
 		if (this.isAttacker) {

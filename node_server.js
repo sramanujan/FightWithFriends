@@ -70,10 +70,8 @@ io.sockets.on('connection', function (socket) {
             //this should have an array of tower id and position.
             data2.towers = new Array();
             data2.towers.push({
-                id: "001",
-                position: { x: 50, y: 100 },
-                image: "assets/img/tower1.png",
-                projectileImage: "assets/img/arrow1.png"
+                code: "001",
+                position: { x: 50, y: 100 }
             });
 
             data2.existingRooms = io.sockets.manager.rooms;
