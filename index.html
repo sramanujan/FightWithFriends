@@ -29,7 +29,8 @@
             var fb_connected = false;
             var towers_loaded = false;
             var units_loaded = false;
-            var images_loaded = false;
+            var unit_images_loaded = false;
+            var tower_images_loaded = false;
             var fb_response = null;
             var unit_data = null;
             var tower_data = null;
@@ -37,56 +38,70 @@
             var unitImages = {};
             var projectileImages = {};
 
-            var imagesLoaded = 0;
-            var imagesToLoad = 0;
-
-            for(var key in unit_data) {
-                var imgsrc = unit_data[key].image;
-                unitImages[key] = new Image();
-                imagesToLoad++;
-                unitImages[key].onload = function(){
-                    imagesLoaded ++;
-                };
-                unitImages[key].src = imgsrc;
-            }
-
-            for(var key in tower_data) {
-                var imgsrc = tower_data[key].image;
-                towerImages[key] = new Image();
-                imagesToLoad++;
-                towerImages[key].onload = function(){
-                    imagesLoaded ++;
-                };
-                towerImages[key].src = imgsrc;
-            }
-
-            for(var key in tower_data) {
-                var imgsrc = tower_data[key].projectileImage;
-                var img = new Image();
-                img.key = key;
-                imagesToLoad++;
-                img.onload = function(){
-                    imagesLoaded ++;
-                    projectileImages[this.key] = this;
-                    if(imagesLoaded == imagesToLoad) {
-                        images_loaded = true;
-                        checkIfLoadComplete();
-                    }
-                };
-                img.src = imgsrc;
-            }
+            var towerImagesLoaded = 0;
+            var towerImagesToLoad = 0;
+            var unitImagesLoaded = 0;
+            var unitImagesToLoad = 0;
 
             $.getJSON('units.json', function(data) {
                 unit_data = data;
                 units_loaded = true;
+                loadUnitImages();
                 checkIfLoadComplete();
             });
 
             $.getJSON('towers.json', function(data) {
                 tower_data = data;
                 towers_loaded = true;
+                loadTowerImages();
                 checkIfLoadComplete();
             });
+
+            function loadUnitImages() {
+                for(var key in unit_data) {
+                    var imgsrc = unit_data[key].image;
+                    var img = new Image();
+                    img.key = key;
+                    unitImagesToLoad++;
+                    img.onload = function(){
+                        unitImagesLoaded ++;
+                        unitImages[this.key] = this;
+                        if(unitImagesLoaded == unitImagesToLoad) {
+                            unit_images_loaded = true;
+                            checkIfLoadComplete();
+                        }
+                    };
+                    img.src = imgsrc;
+                }
+            }
+
+            function loadTowerImages() {
+                for(var key in tower_data) {
+                    var imgsrc = tower_data[key].image;
+                    towerImages[key] = new Image();
+                    towerImagesToLoad++;
+                    towerImages[key].onload = function(){
+                        towerImagesLoaded ++;
+                    };
+                    towerImages[key].src = imgsrc;
+                }
+
+                for(var key in tower_data) {
+                    var imgsrc = tower_data[key].projectileImage;
+                    var img = new Image();
+                    img.key = key;
+                    towerImagesToLoad++;
+                    img.onload = function(){
+                        towerImagesLoaded ++;
+                        projectileImages[this.key] = this;
+                        if(towerImagesLoaded == towerImagesToLoad) {
+                            tower_images_loaded = true;
+                            checkIfLoadComplete();
+                        }
+                    };
+                    img.src = imgsrc;
+                }
+            }
 
             if(typeof io == "undefined") {
                 $.getScript('http://' + window.location.hostname + ':8028/socket.io/socket.io.js', function() {
@@ -134,7 +149,7 @@
             }
 
             function checkIfLoadComplete() {
-                if(units_loaded && towers_loaded && socket_io_loaded && images_loaded) {
+                if(units_loaded && towers_loaded && socket_io_loaded && tower_images_loaded && unit_images_loaded) {
                     loadCompleted();
                 }
             }
