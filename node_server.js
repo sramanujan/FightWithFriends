@@ -73,7 +73,7 @@ io.sockets.on('connection', function (socket) {
             data2.towers = new Array();
             data2.towers.push({
                 code: "001",
-                position: { x: 50, y: 100 }
+                position: { x: 0.20, y: 0.2 }
             });
 
             data2.existingRooms = io.sockets.manager.rooms;

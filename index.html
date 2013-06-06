@@ -399,6 +399,10 @@
 				if (null != currentSelectedUnit) {
 					var relX = event.offsetX / canvasDoc.width;
 					var relY = event.offsetY / canvasDoc.height;
+                    /*if(currentSelectedUnit.isTower == true) {
+                        relX = event.offsetX;
+                        relY = event.offsetY;
+                    }*/
 					currentSelectedUnit.updateTarget({x : relX, y : relY });
 					
 					currentSelectedUnit.mapResource.opacity = currentSelectedUnit.mapResource.opacity < 1 ? 1 : 0.5 ;
@@ -443,8 +447,8 @@
             function addTower(tower) {
                 var towersOnBoard = me.towersOnBoard();
                 if (towersOnBoard < TOTAL_UNITS) {
-                    var myTowerObj = new Tower(towersOnBoard+1, tower, false, true); 
-                    me.addTower(myTowerObj);
+                    var myTowerObj = new Tower(me,towersOnBoard+1, tower, false, true); 
+                   // me.addTower(myTowerObj);
                 }
             }
 
