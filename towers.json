@@ -4,6 +4,7 @@
         "width": 250,
         "height": 211,
         "projectileImage": "assets/img/arrow1.png",
+        "projectileSpeed": 0.05,
         "frames": 24
     }
 }
