@@ -52,6 +52,7 @@ Player = function(name, id, isServer) {
 					if (null == this.units[key]) {
 						// console.log("unit is null " + key);
 						// console.log("position " + JSON.stringify(state.units[key]));
+						
 						var unit = new Unit(key, state.units[key].attacker, state.units[key].position, this.isServer, false);
 						this.addUnit(unit);
 					}
@@ -85,6 +86,11 @@ Player = function(name, id, isServer) {
 			}
 		}
 		return {name : this.name, id : this.id, units : unitPositions}
+	};
+	
+	this.leaveRoom = function() {
+		this.units = {};
+		this.towers = {};
 	}
 };
 

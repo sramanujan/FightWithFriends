@@ -23,7 +23,6 @@
         <link rel="shortcut icon" href="assets/ico/favicon.png">
 </head>
     <body>
-        <div id="fb-root"></div>
         <script>
             var socket_io_loaded = false;
             var fb_connected = false;
@@ -127,7 +126,7 @@
                     userDetails = data.userDetails;
                     listOfRooms = data.existingRooms;
                     populateListOfRooms();
-                    //populateTowers(data.towers);
+                    populateTowers(data.towers);
                     enableButtons();
                 });
 
@@ -174,14 +173,21 @@
             function setClientDetails(data) {
 				me = new Player(data.name, data.id, false);
 				playersOnBoard[me.id] = me;
-                socket.emit('setClientDetails', data);
+                socket.emit('login', data);
             }
 
             function joinRoom(roomName) {
+				// first leave the room you are in
+				leaveRoom();
+				// reset your canvas
+				canvas.clear();
+				
                 socket.emit('joinRoom', { room: roomName });
             }
 
             function leaveRoom() {
+				// reset the player units and towers before leaving
+				me.leaveRoom();
                 socket.emit('leaveRoom', { room: currentRoom });
             }
 
@@ -220,48 +226,85 @@
 				}
 			}
         </script>
-		<div class="container-fluid">
-            <div class="row-fluid">
-                <div class="span2">
-                    <fb:login-button show-faces="true" width="200" max-rows="1"></fb:login-button>
-                    <br />
-                    <br />
-                    <select id='roomList' name='roomListSelect'>
-                    </select>
-                    <a class="btn" id="joinSelected" href="">JOIN</a>
-                    <br />
-                    <br />
-                    <input type='text' id='roomName' align='left' name='roomNameBtn'/>
-                    <a class="btn" id="createRoom" href="">CREATE</a>
-                </div>
-                <div class="span6">
-                    <div id="main_canvas">
-                        <canvas id="canvas1" width="760" height="465" style="border:1px; background-image: url(assets/img/background_map.png);">
-                        </canvas>
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="nav-collapse collapse">
+                        <ul class="nav" id="attacker_dashboard" style="display: none;">
+                            <li class="">
+                                <a id="addUnit" href="./index.html" >Add Unit</a>
+                            </li>
+                        </ul>
+                        <ul class="nav" id="defender_dashboard">
+                            <li class="">
+                                <a id="saveMode" href="./getting-started.html">Save</a>
+                            </li>
+                            <li class="">
+                                <a id="designMode" href="./scaffolding.html">Design Mode</a>
+                            </li>
+                            <li class="">
+                                <a id="addTower" href="./scaffolding.html">Add Tower</a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
-				<div class="span2" style="display:none" id="attacker_dashboard">
-					<input type="text" id="addUnit" class="btn" value="Add Unit">
-				</div>
-                <div class="span2" style="display:none" id="defender_dashboard">
-                    <input type="text" id="saveMode" class="btn" value="Save">
-                    <input type="text" id="designMode" class="btn" value="Design Mode">
-                    <input type="text" id="addTower" class="btn" value="Add Tower">
+            </div>
+        </div>
+		<div class="container-fluid">
+            <div id="main_canvas">
+                <canvas id="canvas1" width="760" height="465" style="border:1px; background-image: url(assets/img/background_map.png);">
+                </canvas>
+            </div>
+        </div>
+        <div class="navbar navbar-inverse navbar-fixed-bottom">
+            <div class="navbar-inner">
+                <div class="container">
+                    <div class="nav-collapse collapse">
+
+                        <ul class="nav" id="friendList">
+                        </ul>
+                        <form class="navbar-search pull-right">
+                            <input type="text" class="search-query" placeholder="Search">
+                            <!-- <input class="span2" type="text" placeholder="Email">
+                            <input class="span2" type="password" placeholder="Password">
+                            <button type="submit" class="btn">Sign in</button> -->
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
         <script>
 
-            $('#joinSelected').click( function() {
-                joinRoom($("#roomList option:selected").text());
+            $('.friends').click( function() {
+                joinRoom($(this).attr("id"));
 				return false;
             });
 
+            function populateListOfRooms() {
+                var i =0;
+                $('#friendList').html("<a href='#' class='dropdown-toggle' data-toggle='dropdown'>Other Friends <b class='caret'></b></a><ul class='dropdown-menu id=extraFriendList'></ul>");
+
+                for (var roomName in listOfRooms) {
+                    if (!roomName) {
+                        continue;
+                    }
+                    i++;
+                    if(i < 4) {
+                        $('#friendList').append("<li><a class='friends' id='" + roomName.replace('/','') + "' href=''>" + roomName.replace('/','') + "</a></li>");
+                    }
+                    else {
+                        $("#extraFriendList").append("<li><a class='friends' id='" + roomName.replace('/','') + "' href=''>" + roomName.replace('/','') + "</a></li>");     
+                    }
+                    
+                }
+            }
+
+/*
             $('#createRoom').click( function() {
                 joinRoom($('#roomName').val());
 				return false;
             });
-			
+			*/
 			/* attacker dashboard */
             $('#addUnit').click( function() {
 				var unitsOnBoard = me.unitsOnBoard();
@@ -358,25 +401,6 @@
                     }
                 }
             }
-/*
-            function createBoxes(value) {
-                for (var i = 0; i < value.length; i++) {
-                    addBox(value[i].position);
-                }
-                //canvasLoop.start();
-            }
-
-            function addBox(position) {
-                boxes.push(Box(position));
-                mainScene.getStage().append(boxes[boxes.length - 1])
-                //canvas.addChild(boxes[boxes.length - 1]);
-            }
-*/
-            function populateListOfRooms() {
-                for (var roomName in listOfRooms) {
-                    $("#roomList").append("<option value='1'>" + roomName.replace('/','') + "</option>") 
-                }
-            }
 
             function populateTowers(listOfTowers) {
                 for (var i = listOfTowers.length - 1; i >= 0; i--) {
@@ -446,5 +470,6 @@
             }
 
         </script>
+        <div id="fb-root"></div>
     </body>
 </html>

@@ -39,8 +39,8 @@ io.sockets.on('connection', function (socket) {
         //io.sockets.in(room).emit('roomUpdate', { clientName: clientName, eventName: eventType, value: value});
     }
 
-    socket.on('setClientDetails', function (data) {
-        console.log("setting client name and id [" + data.name + ":" + data.id +"]");
+    socket.on('login', function (data) {
+        console.log("login name and id [" + data.name + ":" + data.id +"]");
         var data2 = {};
 //        socket[data_namespace].clientName = data.name;
 //        socket[data_namespace].clientId = data.id.toString();
