@@ -373,6 +373,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.id = id;
 	this.isOwner = isOwner;
 	this.player = player;
+	this.maxHealth = unit_data[unit.code].health;
 	this.state = "alive";
 	this.currentPosition = unit.position;
 	this.isServer = isServer;
@@ -400,6 +401,14 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	    var unitObj =  mainScene.createElement(64,64);
 		unitObj.drawImage(imgObject);
 		this.mapResource = unitObj;
+		this.healthBar = mainScene.createElement(50,10);
+		this.healthBarBg = mainScene.createElement(50,10);
+		this.mapResource.append(this.healthBarBg);
+		this.mapResource.append(this.healthBar);
+		this.healthBarBg.fillStyle = "red";
+		this.healthBar.fillStyle = "green";
+		this.healthBarBg.fillRect(0,0,50,10);
+		this.healthBar.fillRect(0,0,50,10);
 		    this.mapResource.cparent = this;
 		    this.player.addUnit(this);
     		// check if it is my unit only then add mouse listener
@@ -414,6 +423,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.updateUnit = function(state) {
 		this.updatePosition(state.position);
 		this.updateTarget(state.target);
+		this.updateHealth();
 		this.state = state.state;
 		if(this.state == "dead" && !this.isServer) {
 			this.mapResource.remove();
@@ -426,6 +436,14 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.updateTarget = function(position) {
 		this.targetPosition = position;
 	};
+	this.updateHealth = function() {
+		if(!isServer) {
+			this.healthBar.refresh();
+			this.healthBar.fillRect(0,0,50 * (this.health/this.maxHealth),10);
+			//this.healthBar.width = this.health/this.maxHealth;
+		}
+		//this.healthBar = this.mapResource.createElement(50,10)
+	}
 	this.update = function() {
 		if(this.state == "dead") {
 			this.mapResource.remove();
