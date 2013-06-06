@@ -127,7 +127,7 @@
                     userDetails = data.userDetails;
                     listOfRooms = data.existingRooms;
                     populateListOfRooms();
-                    populateTowers(data.towers);
+                    //populateTowers(data.towers);
                     enableButtons();
                 });
 
@@ -315,6 +315,7 @@
 					var relY = event.offsetY / canvasDoc.height;
 					currentSelectedUnit.updateTarget({x : relX, y : relY });
 					currentSelectedUnit = null;
+					currentSelectedUnit.mapResource.opacity = currentSelectedUnit.mapResource.opacity < 1 ? 1 : 0.5 ;
 				}
             }
 
@@ -336,7 +337,7 @@
                 }
             });
 
-            function Box(position) {
+            function AttackUnitResource(position) {
                 var button = mainScene.createElement(64,64);
                 button.drawImage("knight");
                 return button;
