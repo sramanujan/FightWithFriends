@@ -50,19 +50,83 @@ Player = function(name, id, isServer) {
 			var state = states;
 			for(var key in state.units) {
 				if (key != 'undefined') {
-					if (null == this.units[key]) {
-						// console.log("position " + JSON.stringify(state.units[key]));
-						var unit = new Unit(this, key, {code: "001", position: state.units[key].position}, this.isServer, false);
-						if (this.isServer) {
-							console.log("unit is null " + key);
-							this.addUnit(unit);
+					if (null == this.units[key] || undefined == this.units[key] ) {
+						console.log("CREATE A UNIT position " + JSON.stringify(state.units[key]));
+						if(states.units[key].state != "dead") {
+							var unit = new Unit(this, key, {code: "001", position: state.units[key].position}, this.isServer, false);
+							if (this.isServer) {
+								console.log("unit is null " + key);
+								this.addUnit(unit);
+							}
 						}
 					}
 					else {
 						// console.log("unit is NOT null " + this.id);
-						// console.log("position " + JSON.stringify(state.units[key]));
+						if(state.units[key].state == "dead") {
+							console.log("DIE PLEASE");
+							//delete this.units[key];
+						}
+						console.log("position " + JSON.stringify(state));
+						this.units[key].updateUnit(state.units[key]);
 						if (this.isServer || me.id != state.id) {
-							this.units[key].updateUnit(state.units[key]);
+							//if(states.units[key].state != "dead") {
+								this.units[key].updateUnit(state.units[key]);
+							//}
+							/*else {
+								delete this.units[key];
+							}*/
+						}
+					}
+				}
+			}
+
+
+			for(var key in state.towers) {
+				if (key != 'undefined') {
+					if (null == this.towers[key] || undefined == this.towers[key] ) {
+						console.log("CREATE A UNIT position " + JSON.stringify(state.towers[key]));
+						if(states.towers[key].state != "dead") {
+							var tower = new Tower(this, key, {code: "001", position: state.towers[key].position}, this.isServer, false);
+							if (this.isServer) {
+								console.log("unit is null " + key);
+								this.addTower(tower);
+							}
+						}
+					}
+					else {
+						// console.log("unit is NOT null " + this.id);
+						if(state.towers[key].state == "dead") {
+							console.log("DIE PLEASE");
+							//delete this.towers[key];
+						}
+						console.log("position " + JSON.stringify(state));
+						this.towers[key].updateTower(state.towers[key]);
+						if (this.isServer || me.id != state.id) {
+							//if(states.towers[key].state != "dead") {
+								this.towers[key].updateTower(state.towers[key]);
+							//}
+							/*else {
+								delete this.units[key];
+							}*/
+						}
+					}
+				}
+			}
+			for(var key in state.towers) {
+				if (key != 'undefined') {
+					if (null == this.towers[key]) {
+						console.log("tower is null " + key);
+						console.log("position " + JSON.stringify(state.towers[key]));
+						var tower = new Tower(this, key, {code: "001", position: state.towers[key].position}, this.isServer, false);
+						if (this.isServer) {
+							this.addTower(tower);
+						}
+					}
+					else {
+						// console.log("unit is NOT null " + this.id);
+						// console.log("position " + JSON.stringify(state.towers[key]));
+						if (this.isServer || me.id != state.id) {
+							this.towers[key].updateTower(state.towers[key]);
 						}
 					}
 				}
@@ -73,13 +137,18 @@ Player = function(name, id, isServer) {
 		for(var key in this.units) {
 			if (key != 'undefined') {
 				this.units[key].update();
-
+				/*if(this.units[key].state == "dead") {
+					delete this.units[key];
+				}*/
 			}
 
 		}
 		for(var key in this.towers) {
 			if (key != 'undefined')
 				this.towers[key].update();
+				/*if(this.towers[key].state == "dead") {
+					delete this.towers[key];
+				}*/
 		}
 		for(var i = this.projectiles.length - 1; i >= 0; i--) {
 			if(this.projectiles[i].update() == false) {
@@ -90,15 +159,32 @@ Player = function(name, id, isServer) {
 	
 	this.getState = function() {
 		unitPositions = {};
+		towerPositions = {};
 		for(var key in this.units) {
 			if (key != 'undefined') {
 				unitPositions[key] = this.units[key].getState();
 			}
 		}
-		return {name : this.name, id : this.id, units : unitPositions}
+		towerPositions = {};
+		for(var key in this.towers) {
+			if (key != 'undefined') {
+				towerPositions[key] = this.towers[key].getState();
+			}
+		}
+		return {name : this.name, id : this.id, units : unitPositions, towers : towerPositions}
 	};
 	
 	this.leaveRoom = function() {
+		for(var key in this.units) {
+			if (key != 'undefined') {
+				this.units[key].mapResource.remove();
+			}
+		}
+		for(var key in this.towers) {
+			if (key != 'undefined') {
+				this.towers[key].mapResource.remove();
+			}
+		}
 		this.units = {};
 		this.towers = {};
 	}
@@ -144,6 +230,8 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
 Tower = function(player, id, tower, isServer, isOwner) {
 	this.isOwner = isOwner;
 	this.player = player;
+	this.state = "alive";
+	this.isServer = isServer;
     if (!isServer) {
 	    var imgObject = towerImages[tower.code];
 	    var towerObj =  mainScene.createElement(1,1);
@@ -168,6 +256,12 @@ Tower = function(player, id, tower, isServer, isOwner) {
     this.id = id;
     
 
+    this.updateTower = function(state) {
+    	this.state = state.state;
+    	if(this.state == "dead" && !this.isServer) {
+    		this.mapResource.remove();
+    	}
+    }
 
     this.mouseDown = function(event) {
 		currentSelectedUnit = this;
@@ -180,29 +274,66 @@ Tower = function(player, id, tower, isServer, isOwner) {
 		//this.updateTarget({x : relX, y : relY});
 	}
     
+	this.updateTower = function(state) {
+		this.updateTarget(state.target);
+		// update health and stuff
+	};
+	
 	this.updatePosition = function(position) {
 		this.currentPosition = position;
 	};
 	this.updateTarget = function(position) {
 		this.targetPosition = position;
+		this.currentPosition = position;
 	};
 
-
-
 	this.update = function() {
+		if(this.state == "dead") {
+			this.mapResource.remove();
+			return false;
+		}
 		if(this && this.mapResource ) {
-			this.mapResource.x = (this.targetPosition.x * canvasDoc.width);
-			this.mapResource.y = (this.targetPosition.y * canvasDoc.height);
-			this.currentPosition = this.targetPosition;
+			this.mapResource.x = (this.currentPosition.x * canvasDoc.width);
+			this.mapResource.y = (this.currentPosition.y * canvasDoc.height);
 			var unitToAttack = this.getUnitInRange();
-			if(unitToAttack != null) {
+			/*if(unitToAttack != null) {
 				unitToAttack.health = unitToAttack.health - 10;
-			}
+			}*/
+			this.isInUnitRange();
 		}
 	};
 
 	this.getState = function() {
-		return {id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : false};
+		return {id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : false, state: this.state, isTower: this.isTower};
+	};
+
+	this.isInUnitRange = function() {
+		var opponent = null;
+		for (var key in playersOnBoard) {
+			if(key != me.id) {
+				opponent = playersOnBoard[key];
+				break;
+			}
+        }
+        if(opponent == null) {
+        	return null;
+        }
+        for(var key in opponent.units ) {////hack due to stupid logic of units and towers storage.change to opponent tower when fixed
+        	var tower = opponent.units[key];
+        	var x = tower.mapResource.x;
+        	var y = tower.mapResource.y;
+        	var remX = x  - this.mapResource.x;
+			var remY = y - this.mapResource.y;
+			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+			if(dist < 300) {
+				this.health -= 5;
+				if(this.health <= 0) {
+					this.state = "dead";
+				}
+				//return tower;
+			}
+        }
+        return null;
 	};
 
 	this.fireProjectile = function(target) {
@@ -228,6 +359,9 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			var remY = y - this.mapResource.y;
 			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 			if(dist < 300) {
+				if(tower.health <= 0) {
+					tower.state = "dead";
+				}
 				return tower;
 			}
         }
@@ -240,7 +374,9 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.isOwner = isOwner;
 	this.player = player;
 	this.maxHealth = unit_data[unit.code].health;
+	this.state = "alive";
 	this.currentPosition = unit.position;
+	this.isServer = isServer;
 	this.isTower = false;
 	this.targetPosition = {x : 0, y : 0};
 	if (!isServer) {
@@ -288,6 +424,11 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		this.updatePosition(state.position);
 		this.updateTarget(state.target);
 		this.updateHealth();
+		this.state = state.state;
+		if(this.state == "dead" && !this.isServer) {
+			this.mapResource.remove();
+		}
+		// update health and stuff
 	};
 	this.updatePosition = function(position) {
 		this.currentPosition = position;
@@ -304,6 +445,10 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		//this.healthBar = this.mapResource.createElement(50,10)
 	}
 	this.update = function() {
+		if(this.state == "dead") {
+			this.mapResource.remove();
+			return false;
+		}
 		var remX = (this.targetPosition.x * canvasDoc.width) - this.currentPosition.x;
 		var remY = (this.targetPosition.y * canvasDoc.height)- this.currentPosition.y;
 		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
@@ -323,10 +468,40 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		this.mapResource.x = this.currentPosition.x;
 		this.mapResource.y = this.currentPosition.y;
 		var towerToAttack = this.getTowerInRange() ;
-		if(towerToAttack != null) {
+		/*if(towerToAttack != null) {
 			//fire
 			towerToAttack.health = towerToAttack.health - 5;
-		}
+		}*/
+		this.isInTowerRange();
+	};
+
+	this.isInTowerRange = function() {
+		var opponent = null;
+		for (var key in playersOnBoard) {
+			if(key != me.id) {
+				opponent = playersOnBoard[key];
+				break;
+			}
+        }
+        if(opponent == null) {
+        	return null;
+        }
+        for(var key in opponent.towers ) {////hack due to stupid logic of units and towers storage.change to opponent tower when fixed
+        	var tower = opponent.towers[key];
+        	var x = tower.mapResource.x;
+        	var y = tower.mapResource.y;
+        	var remX = x  - this.mapResource.x;
+			var remY = y - this.mapResource.y;
+			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+			if(dist < 300) {
+				this.health -= 5;
+				if(this.health <= 0) {
+					this.state = "dead";
+				}
+				//return tower;
+			}
+        }
+        return null;
 	};
 
 	this.getTowerInRange = function() {
@@ -348,14 +523,19 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			var remY = y - this.mapResource.y;
 			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 			if(dist < 300) {
+				if(tower.health < 0) {
+					tower.state = "dead";
+				}
 				return tower;
 			}
         }
         return null;
 	};
 
+
+
 	this.getState = function() {
-		return {id : this.id, position : this.currentPosition, target : this.targetPosition};
+		return {id : this.id, position : this.currentPosition, target : this.targetPosition, state: this.state, isTower: this.isTower};
 	};
 	
 	this.mouseDown = function(event) {

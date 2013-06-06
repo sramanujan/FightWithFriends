@@ -195,8 +195,10 @@
 
                 socket.on('iregistered', function(data) {
                     userDetails = data.userDetails;
+                    currentRoom = data.room;
                     listOfRooms = data.existingRooms;
                     populateListOfRooms();
+					console.log("iregistered");
                     populateTowers(data.towers);
                     enableButtons();
                 });
@@ -287,6 +289,9 @@
 					// empty the array - find the right way
 					batchedStates = new Array();
 				}
+                else if (null != me && me.towersOnBoard() > 0) {
+                    socket.emit('updateState', { states: me.getState() });
+                }
 			}
 
 			function enableButtons() {
@@ -310,7 +315,7 @@
                             </li>
                         </ul>
                         <ul class="nav" id="defender_dashboard">
-							<li class="" id="whoami">
+							<li class="" id="whoami" style="color:red">
                             </li>
                             <li class="">
                                 <a id="saveMode" href="#">Save</a>
@@ -385,8 +390,8 @@
 			/* defender dashboard */
             $('#addTower').click( function() {
                 addTower({
-                    code: "001",
-                    position: { x: 100, y: 30 }
+                    code : "001",
+                    position : { x: 0.100, y: 0.30 }
                 });
                 return false;
             });
@@ -400,7 +405,8 @@
 
             $('#saveMode').click( function() {
                 isInDesignMode = false;
-                socket.emit('saveTowers', towersOnBoard);
+				states = me.getState();
+                socket.emit('saveTowers', { states: me.getState() });
                 return false;
             });
 			
@@ -418,12 +424,8 @@
 
             canvasDoc.onmouseup = function (event) {
 				if (null != currentSelectedUnit) {
-					var relX = event.offsetX / canvasDoc.width;
-					var relY = event.offsetY / canvasDoc.height;
-                    /*if(currentSelectedUnit.isTower == true) {
-                        relX = event.offsetX;
-                        relY = event.offsetY;
-                    }*/
+					var relX = (event.offsetX - (currentSelectedUnit.mapResource.width/2)) / canvasDoc.width;
+					var relY = (event.offsetY - (currentSelectedUnit.mapResource.height/2)) / canvasDoc.height;
 					currentSelectedUnit.updateTarget({x : relX, y : relY });
 					
 					currentSelectedUnit.mapResource.opacity = currentSelectedUnit.mapResource.opacity < 1 ? 1 : 0.5 ;
@@ -460,6 +462,7 @@
             }
 
             function populateTowers(listOfTowers) {
+				console.log("populateTowers");
                 for (var i = listOfTowers.length - 1; i >= 0; i--) {
                     addTower(listOfTowers[i])
                 }
