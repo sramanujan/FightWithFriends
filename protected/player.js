@@ -69,8 +69,11 @@ Player = function(name, id, isServer) {
 	};
 	this.update = function() {
 		for(var key in this.units) {
-			if (key != 'undefined')
+			if (key != 'undefined') {
 				this.units[key].update();
+
+			}
+
 		}
 		for(var key in this.towers) {
 			if (key != 'undefined')
@@ -138,6 +141,9 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
 
 Tower = function(id, tower, isServer, isOwner) {
 	this.isOwner = isOwner;
+	if(this.isOwner) {
+		this.owner = me.id;
+	}
     if (!isServer) {
 	    var imgObject = new Image();
 	    imgObject.dparent = this;
@@ -164,15 +170,17 @@ Tower = function(id, tower, isServer, isOwner) {
 	    }
 	    this.proImgObject.src = tower_data[tower.code].projectileImage;
 	    this.proSpeed = tower_data[tower.code].projectileSpeed;
+	    this.health = tower_data[tower.code].health;
 	}
 
     this.currentPosition = tower.position;
     this.targetPosition = tower.position;
     this.isTower = 1;
     this.id = id;
+    
 
 
-    this.mousedown = function(event) {
+    this.mouseDown = function(event) {
 		currentSelectedUnit = this;
 		this.mapResource.opacity = this.mapResource.opacity < 1 ? 1 : 0.5 ;
 		//start a random projectile...
@@ -190,11 +198,17 @@ Tower = function(id, tower, isServer, isOwner) {
 		this.targetPosition = position;
 	};
 
+
+
 	this.update = function() {
 		if(this && this.mapResource ) {
 			this.mapResource.x = this.targetPosition.x;
 			this.mapResource.y = this.targetPosition.y;
 			this.currentPosition = this.targetPosition;
+			var unitToAttack = this.getUnitInRange();
+			if(unitToAttack != null) {
+				unitToAttack.health = unitToAttack.health - 10;
+			}
 		}
 	};
 
@@ -205,6 +219,31 @@ Tower = function(id, tower, isServer, isOwner) {
 	this.fireProjectile = function(target) {
 		var projectile = new Projectile(this.currentPosition, target, this.proImgObject, this.proSpeed);
 	}
+
+	this.getUnitInRange = function() {
+		var opponent = null;
+		for (var key in playersOnBoard) {
+			if(key != me.id) {
+				opponent = playersOnBoard[key];
+				break;
+			}
+        }
+        if(opponent == null) {
+        	//return null;
+        }
+        for(var key in me.units ) {////hack due to stupid logic of units and towers storage.change to opponent tower when fixed
+        	var tower = me.units[key];
+        	var x = tower.mapResource.x;
+        	var y = tower.mapResource.y;
+        	var remX = x  - this.currentPosition.x;
+			var remY = y - this.currentPosition.y;
+			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+			if(dist < 100) {
+				return tower;
+			}
+        }
+        return null;
+	};
 };
 
 Unit = function(id, unit, isServer, isOwner) {
@@ -232,8 +271,9 @@ Unit = function(id, unit, isServer, isOwner) {
 			}
 	    }
 	    imgObject.src = unit_data[unit.code].image;
+	    this.health = unit_data[unit.code].health;
 	}
-
+	
 	this.updateUnit = function(state) {
 		this.updatePosition(state.position);
 		if (this.isAttacker) {
@@ -272,6 +312,36 @@ Unit = function(id, unit, isServer, isOwner) {
 		}
 		this.mapResource.x = this.currentPosition.x;
 		this.mapResource.y = this.currentPosition.y;
+		var towerToAttack = this.getTowerInRange() ;
+		if(towerToAttack != null) {
+			//fire
+			towerToAttack.health = towerToAttack.health - 5;
+		}
+	};
+
+	this.getTowerInRange = function() {
+		var opponent = null;
+		for (var key in playersOnBoard) {
+			if(key != me.id) {
+				opponent = playersOnBoard[key];
+				break;
+			}
+        }
+        if(opponent == null) {
+        	//return null;
+        }
+        for(var key in me.towers ) { //hack due to stupid logic of units and towers storage.change to opponent tower when fixed
+        	var tower = me.towers[key];
+        	var x = tower.mapResource.x;
+        	var y = tower.mapResource.y;
+        	var remX = x  - this.currentPosition.x;
+			var remY = y - this.currentPosition.y;
+			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+			if(dist < 100) {
+				return tower;
+			}
+        }
+        return null;
 	};
 
 	this.getState = function() {
