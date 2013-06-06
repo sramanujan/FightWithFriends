@@ -50,7 +50,6 @@ Player = function(name, id, isServer) {
 			var state = states;
 			for(var key in state.units) {
 				if (key != 'undefined') {
-<<<<<<< HEAD
 					if (null == this.units[key] || undefined == this.units[key] ) {
 						console.log("CREATE A UNIT position " + JSON.stringify(state.units[key]));
 						if(states.units[key].state != "dead") {
@@ -59,14 +58,6 @@ Player = function(name, id, isServer) {
 								console.log("unit is null " + key);
 								this.addUnit(unit);
 							}
-=======
-					if (null == this.units[key]) {
-						console.log("unit is null " + key);
-						console.log("position " + JSON.stringify(state.units[key]));
-						var unit = new Unit(this, key, {code: "001", position: state.units[key].position}, this.isServer, false);
-						if (this.isServer) {
-							this.addUnit(unit);
->>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
 						}
 					}
 					else {
@@ -174,20 +165,13 @@ Player = function(name, id, isServer) {
 				unitPositions[key] = this.units[key].getState();
 			}
 		}
-<<<<<<< HEAD
 		towerPositions = {};
-=======
->>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
 		for(var key in this.towers) {
 			if (key != 'undefined') {
 				towerPositions[key] = this.towers[key].getState();
 			}
 		}
-<<<<<<< HEAD
-		return {name : this.name, id : this.id, units : unitPositions, towers:towerPositions};
-=======
 		return {name : this.name, id : this.id, units : unitPositions, towers : towerPositions}
->>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
 	};
 	
 	this.leaveRoom = function() {
@@ -270,7 +254,6 @@ Tower = function(player, id, tower, isServer, isOwner) {
     this.targetPosition = tower.position;
     this.isTower = true;
     this.id = id;
-<<<<<<< HEAD
     
 
     this.updateTower = function(state) {
@@ -279,8 +262,6 @@ Tower = function(player, id, tower, isServer, isOwner) {
     		this.mapResource.remove();
     	}
     }
-=======
->>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
 
     this.mouseDown = function(event) {
 		currentSelectedUnit = this;
@@ -323,8 +304,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 	};
 
 	this.getState = function() {
-<<<<<<< HEAD
-		return {id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : false, state: this.state};
+		return {id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : false, state: this.state, isTower: this.isTower};
 	};
 
 	this.isInUnitRange = function() {
@@ -354,9 +334,6 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			}
         }
         return null;
-=======
-		return {id : this.id, position : this.currentPosition, target : this.targetPosition, isTower : this.isTower};
->>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
 	};
 
 	this.fireProjectile = function(target) {
@@ -540,11 +517,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 
 
 	this.getState = function() {
-<<<<<<< HEAD
-		return {id : this.id, position : this.currentPosition, target : this.targetPosition, state: this.state};
-=======
-		return {id : this.id, position : this.currentPosition, target : this.targetPosition, isTower : this.isTower};
->>>>>>> a75887a8cf2cbc41561de44d82384bde9638808a
+		return {id : this.id, position : this.currentPosition, target : this.targetPosition, state: this.state, isTower: this.isTower};
 	};
 	
 	this.mouseDown = function(event) {
