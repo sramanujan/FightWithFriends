@@ -3,14 +3,14 @@
         "image": "assets/img/BROKEN-knight.png",
         "width": 64,
         "height": 64,
-        "health": 20,
+        "health": 2000,
         "frames": 24
     },
     "002": {
         "image": "assets/img/BROKEN-Alien_Anim_01.png",
         "width": 257,
         "height": 212,
-        "health":40,
+        "health":4000,
         "frames": 24
     }
 }

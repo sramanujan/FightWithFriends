@@ -266,6 +266,9 @@
 					// empty the array - find the right way
 					batchedStates = new Array();
 				}
+                else if (null != me && me.towersOnBoard() > 0) {
+                    socket.emit('updateState', { states: me.getState() });
+                }
 			}
 
 			function enableButtons() {
