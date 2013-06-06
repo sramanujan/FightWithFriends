@@ -143,8 +143,6 @@
             var socket = null;
             var listOfRooms = {};
             var currentRoom = null;
-            var ownTowers = new Array();
-            var towersOnBoard = new Array();
 			
             var positionArray = new Array();
             var currentServerPositionArray = new Array();
@@ -174,7 +172,7 @@
                     }
                 });
 
-                socket.on('registered', function(data) {
+                socket.on('iregistered', function(data) {
                     userDetails = data.userDetails;
                     listOfRooms = data.existingRooms;
                     populateListOfRooms();
@@ -182,7 +180,8 @@
                     enableButtons();
                 });
 
-                socket.on('joined', function(data) {
+                socket.on('ijoined', function(data) {
+					console.log("i joined " + data.room);
                     currentRoom = data.room;
 					$.each(data.value, function(index, state) {
 						if (state.id != me.id) {
@@ -201,11 +200,13 @@
                     var updateType = data.eventName;
                     var value = data.value;
                     if(updateType == 'update') {
-                        positionArray =  value;
+						// no more comes here
+                        
                     } else if(updateType == 'join') {
                         // create an opponent player object
 						var opp = new Player(updateFrom, updateFromId, false);
 						playersOnBoard[opp.id] = opp;
+						// add to the player list
                     } else if(updateType == 'leave') {
                         //removeBox(updateFrom);
                     }
@@ -223,6 +224,7 @@
             function setClientDetails(data) {
 				me = new Player(data.name, data.id, false);
 				playersOnBoard[me.id] = me;
+				$("#whoami").html(me.name);
                 socket.emit('login', data);
             }
 
@@ -231,7 +233,7 @@
 				leaveRoom();
 				// reset your canvas
 				mcanvas = mainScene.getCanvas();
-                mcanvas.clear();
+				mcanvas.clear();
 				
                 socket.emit('joinRoom', { room: roomName });
             }
@@ -283,10 +285,12 @@
                     <div class="nav-collapse collapse">
                         <ul class="nav" id="attacker_dashboard" style="display: none;">
                             <li class="">
-                                <a id="addUnit" href="./index.html" >Add Unit</a>
+                                <a id="addUnit" href="#" >Add Unit</a>
                             </li>
                         </ul>
                         <ul class="nav" id="defender_dashboard">
+							<li class="" id="whoami">
+                            </li>
                             <li class="">
                                 <a id="saveMode" href="#">Save</a>
                             </li>
@@ -351,8 +355,7 @@
             $('#addUnit').click( function() {
 				var unitsOnBoard = me.unitsOnBoard();
                 if (unitsOnBoard < TOTAL_UNITS) {
-					var unit = new Unit(unitsOnBoard+1, {code: "001", position:{ x: 200, y: 0 }}, false, true);
-					//me.addUnit(unit, false);
+					var unit = new Unit(me, unitsOnBoard+1, {code: "001", position:{ x: 200, y: 0 }}, false, true);
 				}
 				return false;
             });
@@ -394,11 +397,6 @@
 
             canvasDoc.onmouseup = function (event) {
 				if (null != currentSelectedUnit) {
-                    if(currentSelectedUnit.isTower == 1) {
-                        currentSelectedUnit.updateTarget({x : event.offsetX, y : event.offsetY });
-                        currentSelectedUnit = null;
-                        return false;
-                    }
 					var relX = event.offsetX / canvasDoc.width;
 					var relY = event.offsetY / canvasDoc.height;
 					currentSelectedUnit.updateTarget({x : relX, y : relY });
@@ -427,17 +425,6 @@
                 }
             });
 
-            function AttackUnitResource(position) {
-                var button = mainScene.createElement(64,64);
-                var imageObj = new Image();
-                imageObj.onload = function() {
-                    button.drawImage(imageObj);
-                }
-                //TODO: MUST USE ACTUAL UNIT CODE HERE!!!
-                imageObj.src = unit_data["001"].image;
-                return button;
-            }
-
             function removeBox(clientName) {
                 for (var i = 0; i < positionArray.length; i++) {
                     if(positionArray[i].clientName == clientName) {
@@ -449,7 +436,7 @@
 
             function populateTowers(listOfTowers) {
                 for (var i = listOfTowers.length - 1; i >= 0; i--) {
-                    addTower(listOfTowers[i], false)
+                    addTower(listOfTowers[i])
                 }
             }
 

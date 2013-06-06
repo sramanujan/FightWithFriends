@@ -50,10 +50,12 @@ Player = function(name, id, isServer) {
 			for(var key in state.units) {
 				if (key != 'undefined') {
 					if (null == this.units[key]) {
-						// console.log("unit is null " + key);
 						// console.log("position " + JSON.stringify(state.units[key]));
-						var unit = new Unit(key, {code: "001", position: state.units[key].position}, this.isServer, false);
-						//this.addUnit(unit);
+						var unit = new Unit(this, key, {code: "001", position: state.units[key].position}, this.isServer, false);
+						if (this.isServer) {
+							console.log("unit is null " + key);
+							this.addUnit(unit);
+						}
 					}
 					else {
 						// console.log("unit is NOT null " + this.id);
@@ -96,11 +98,9 @@ Player = function(name, id, isServer) {
 	}
 };
 
-Tower = function(id, tower, isServer, isOwner) {
+Tower = function(player, id, tower, isServer, isOwner) {
 	this.isOwner = isOwner;
-	if(this.isOwner) {
-		this.owner = me.id;
-	}
+	this.player = player;
     if (!isServer) {
 	    /*var imgObject = new Image();
 	    imgObject.dparent = this;
@@ -111,7 +111,7 @@ Tower = function(id, tower, isServer, isOwner) {
 		    towerObj.y = tower.position.y;
 		    this.dparent.mapResource = towerObj;
 		    this.dparent.mapResource.cparent = this.dparent;
-		    me.addTower(this.dparent);
+		    this.dparent.player.addTower(this.dparent);
     		// check if it is my unit only then add mouse listener
 			if (this.dparent.isOwner) {
 				this.dparent.mapResource.on("mousedown", function(e) {
@@ -160,8 +160,8 @@ Tower = function(id, tower, isServer, isOwner) {
 
 	this.update = function() {
 		if(this && this.mapResource ) {
-			this.mapResource.x = this.targetPosition.x;
-			this.mapResource.y = this.targetPosition.y;
+			this.mapResource.x = (this.targetPosition.x * canvasDoc.width);
+			this.mapResource.y = (this.targetPosition.y * canvasDoc.height);
 			this.currentPosition = this.targetPosition;
 			var unitToAttack = this.getUnitInRange();
 			if(unitToAttack != null) {
@@ -200,10 +200,11 @@ Tower = function(id, tower, isServer, isOwner) {
 	};
 };
 
-Unit = function(id, unit, isServer, isOwner) {
+Unit = function(player, id, unit, isServer, isOwner) {
 	this.id = id;
-	this.isAttacker = true;
 	this.isOwner = isOwner;
+	this.player = player;
+	
 	this.currentPosition = unit.position;
 	this.isTower = 0;
 	this.targetPosition = {x : 0, y : 0};
@@ -216,7 +217,7 @@ Unit = function(id, unit, isServer, isOwner) {
 		    unitObj.drawImage(imgObject);
 		    this.dparent.mapResource = unitObj;
 		    this.dparent.mapResource.cparent = this.dparent;
-		    me.addUnit(this.dparent);
+		    this.dparent.player.addUnit(this.dparent);
     		// check if it is my unit only then add mouse listener
 			if (this.dparent.isOwner) {
 				this.dparent.mapResource.on("mousedown", function(e) {
@@ -230,9 +231,7 @@ Unit = function(id, unit, isServer, isOwner) {
 	
 	this.updateUnit = function(state) {
 		this.updatePosition(state.position);
-		if (this.isAttacker) {
-			this.updateTarget(state.target);
-		}
+		this.updateTarget(state.target);
 		// update health and stuff
 	};
 	this.updatePosition = function(position) {
@@ -242,28 +241,22 @@ Unit = function(id, unit, isServer, isOwner) {
 		this.targetPosition = position;
 	};
 	this.update = function() {
-		if (this.isAttacker) {
- 
-			var remX = (this.targetPosition.x * canvasDoc.width) - this.currentPosition.x;
-			var remY = (this.targetPosition.y * canvasDoc.height)- this.currentPosition.y;
-			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(dist != 0) {
-				this.currentPosition.x += (remX / dist);
-				this.currentPosition.y += (remY / dist);
-			}
-			/*
-			if( Math.abs((currentPosition.x / canvasDoc.width) - currentServertargetPosition.x) > 0.005 ) {
-				currentPosition.x = currentServertargetPosition.x * canvasDoc.width;
-			}
+		var remX = (this.targetPosition.x * canvasDoc.width) - this.currentPosition.x;
+		var remY = (this.targetPosition.y * canvasDoc.height)- this.currentPosition.y;
+		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+		if(Math.pow(dist, 2) > 1) {
+			this.currentPosition.x += (remX / dist);
+			this.currentPosition.y += (remY / dist);
+		}
+		/*
+		if( Math.abs((currentPosition.x / canvasDoc.width) - currentServertargetPosition.x) > 0.005 ) {
+			currentPosition.x = currentServertargetPosition.x * canvasDoc.width;
+		}
 
-			if( Math.abs((currentPosition.y / canvasDoc.height) - currentServertargetPosition.y) > 0.005 ) {
-				currentPosition.y = currentServertargetPosition.y * canvasDoc.height;
-			}
-			*/
+		if( Math.abs((currentPosition.y / canvasDoc.height) - currentServertargetPosition.y) > 0.005 ) {
+			currentPosition.y = currentServertargetPosition.y * canvasDoc.height;
 		}
-		else {
-		
-		}
+		*/
 		this.mapResource.x = this.currentPosition.x;
 		this.mapResource.y = this.currentPosition.y;
 		var towerToAttack = this.getTowerInRange() ;
@@ -299,7 +292,7 @@ Unit = function(id, unit, isServer, isOwner) {
 	};
 
 	this.getState = function() {
-		return {id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : this.isAttacker};
+		return {id : this.id, position : this.currentPosition, target : this.targetPosition};
 	};
 	
 	this.mouseDown = function(event) {

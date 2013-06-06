@@ -19,23 +19,25 @@ io.sockets.on('connection', function (socket) {
     socket[data_namespace] = {};
     console.log("Connection initiated.....");
     socket.roomUpdate = function(eventType) {
-        room = socket[data_namespace].room;
-        clientName = socket[data_namespace].player.name;
-        clientId = socket[data_namespace].player.id;
-        var value = 'unknown';
-        switch(eventType) {
-            case 'join': value = socket[data_namespace].player.getState(); break;
-            case 'leave': value = 'somerandomleave'; break;
-            case 'update': 
-                          value = new Array();
-                          var clientList = io.sockets.clients(room);
-                          for (var i = 0; i < clientList.length; i++) {
-                              value.push( clientList[i][data_namespace].player.getState() );
-                          }
-                          break;
-        }
-		console.log("sending event " + eventType);
-        socket.broadcast.to(room).emit('roomUpdate', { clientName: clientName, clientId: clientId, eventName: eventType, value: value});
+		if (socket[data_namespace].player) {
+			room = socket[data_namespace].room;
+			clientName = socket[data_namespace].player.name;
+			clientId = socket[data_namespace].player.id;
+			var value = 'unknown';
+			switch(eventType) {
+				case 'join': value = socket[data_namespace].player.getState(); break;
+				case 'leave': value = 'somerandomleave'; break;
+				case 'update': 
+							  value = new Array();
+							  var clientList = io.sockets.clients(room);
+							  for (var i = 0; i < clientList.length; i++) {
+								  value.push( clientList[i][data_namespace].player.getState() );
+							  }
+							  break;
+			}
+			console.log("sending event " + eventType + " for user " + clientName);
+			socket.broadcast.to(room).emit('roomUpdate', { clientName: clientName, clientId: clientId, eventName: eventType, value: value});
+		}
         //io.sockets.in(room).emit('roomUpdate', { clientName: clientName, eventName: eventType, value: value});
     }
 
@@ -78,7 +80,7 @@ io.sockets.on('connection', function (socket) {
 			
 			// join my own room first
 			socket.join(socket[data_namespace].player.name);
-            socket.emit('registered', data2);
+            socket.emit('iregistered', data2);
         } else {
             console.log("COUCHBASE GLOBAL BUCKET NOT AVAILABLE!!");
         }
@@ -103,12 +105,12 @@ io.sockets.on('connection', function (socket) {
             value.push( clientList[i][data_namespace].player.getState() );
         }
 		console.log("user " + socket[data_namespace].player.name + " just joined - " + data.room);
-        socket.emit('joined', { room: data.room, value: value });
+        socket.emit('ijoined', { room: data.room, value: value });
         socket.roomUpdate('join');
     });
 
     socket.on('leaveRoom', function (data) {
-        console.log("leave room...");
+        console.log("leave room... " + data.room);
         socket.roomUpdate('leave');
         socket.leave(data.room);
         socket[data_namespace].room = null;
@@ -122,7 +124,6 @@ io.sockets.on('connection', function (socket) {
 */
     socket.on('updateState', function (update) {
 		if (null != socket[data_namespace].player) {
-			var rand = Math.floor(Math.random()*11);
 			socket[data_namespace].player.updatePosition(update.states);
 			//socket.roomUpdate('update');
 		}
@@ -169,7 +170,10 @@ setInterval(function() {
 			*/
             value.push( clientList[i][data_namespace].player.getState() );
         }
-		// console.log("value0 = " + JSON.stringify(value));
+		var rand = Math.floor(Math.random()*11);
+		if (rand == 1) {
+			// console.log("readjust for room " + properName + " = " + JSON.stringify(value));
+		}
 		
         io.sockets.in(properName).emit('reAdjust', { value : value }); 
     }
