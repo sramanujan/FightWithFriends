@@ -265,7 +265,7 @@
         </div>
 		<div class="container-fluid">
             <div id="main_canvas">
-                <canvas id="canvas1" width="760" height="465" style="border:1px; background-image: url(assets/img/background_map_2.png);">
+                <canvas id="canvas1" width="1600" height="1200" style="border:1px; background-image: url(assets/img/background_map_3.png);">
                 </canvas>
             </div>
         </div>
@@ -314,7 +314,7 @@
 				var unitsOnBoard = me.unitsOnBoard();
                 if (unitsOnBoard < TOTAL_UNITS) {
 					var unit = new Unit(unitsOnBoard+1, {code: 001, position:{ x: 200, y: 0 }}, false, true);
-					me.addUnit(unit, false);
+					//me.addUnit(unit, false);
 				}
 				return false;
             });
@@ -417,9 +417,9 @@
 
             function addTower(tower) {
                 var towersOnBoard = me.towersOnBoard();
-                var myTowerObj = new Tower(towersOnBoard+1, tower, false, true);              
                 if (towersOnBoard < TOTAL_UNITS) {
-                    me.addTower(myTowerObj);
+                    var myTowerObj = new Tower(towersOnBoard+1, tower, false, true); 
+                    //me.addTower(myTowerObj);
                 }
             }
 

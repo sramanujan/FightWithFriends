@@ -1,12 +1,12 @@
 {
     "001": {
-        "image": "assets/img/knight.png",
+        "image": "assets/img/BROKEN-knight.png",
         "width": 64,
         "height": 64,
         "frames": 24
     },
     "002": {
-        "image": "assets/img/Alien_Anim_01.png",
+        "image": "assets/img/BROKEN-Alien_Anim_01.png",
         "width": 257,
         "height": 212,
         "frames": 24

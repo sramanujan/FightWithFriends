@@ -53,7 +53,7 @@ Player = function(name, id, isServer) {
 						// console.log("unit is null " + key);
 						// console.log("position " + JSON.stringify(state.units[key]));
 						var unit = new Unit(key, {code: "001", position: state.units[key].position}, this.isServer, false);
-						this.addUnit(unit);
+						//this.addUnit(unit);
 					}
 					else {
 						// console.log("unit is NOT null " + this.id);
@@ -98,13 +98,14 @@ Tower = function(id, tower, isServer, isOwner) {
     if (!isServer) {
 	    var imgObject = new Image();
 	    imgObject.dparent = this;
-	    imageObj.onload = function() {
+	    imgObject.onload = function() {
 			var towerObj =  mainScene.createElement(100,100);
 		    towerObj.drawImage(imgObject);
 		    towerObj.x = tower.position.x;
 		    towerObj.y = tower.position.y;
 		    this.dparent.mapResource = towerObj;
 		    this.dparent.mapResource.cparent = this.dparent;
+		    me.addTower(this.dparent);
     		// check if it is my unit only then add mouse listener
 			if (this.dparent.isOwner) {
 				this.dparent.mapResource.on("mousedown", function(e) {
@@ -160,11 +161,12 @@ Unit = function(id, unit, isServer, isOwner) {
 		this.mapResource = null;
 	    var imgObject = new Image();
 	    imgObject.dparent = this;
-	    imageObj.onload = function() {
+	    imgObject.onload = function() {
 			var unitObj =  mainScene.createElement(64,64);
 		    unitObj.drawImage(imgObject);
 		    this.dparent.mapResource = unitObj;
 		    this.dparent.mapResource.cparent = this.dparent;
+		    me.addUnit(this.dparent);
     		// check if it is my unit only then add mouse listener
 			if (this.dparent.isOwner) {
 				this.dparent.mapResource.on("mousedown", function(e) {
