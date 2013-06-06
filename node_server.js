@@ -40,10 +40,10 @@ io.sockets.on('connection', function (socket) {
     }
 
     socket.on('setClientDetails', function (data) {
-        console.log("setting client name and id");
-        var data2 = { };
+        var data2 = {};
         socket[data_namespace].clientName = data.name;
         socket[data_namespace].clientId = data.id.toString();
+        console.log("setting client name and id [" + data.name + ":" + data.id +"]");
         socket[data_namespace].player = new Player(data.name, data.id, true);
         if(true) {
 			/*
@@ -105,15 +105,16 @@ io.sockets.on('connection', function (socket) {
         socket.leave(data.room);
         socket[data_namespace].room = null;
     });
-
+/*
     socket.on('stateUpdate', function (update) {
         console.log("Sent state update data...");
         socket[data_namespace].targetPosition = update.position;
         //socket.roomUpdate('update');
     });
-
+*/
     socket.on('updateState', function (update) {
 		if (null != socket[data_namespace].player) {
+			var rand = Math.floor(Math.random()*11);
 			socket[data_namespace].player.updatePosition(update.states);
 			//socket.roomUpdate('update');
 		}
@@ -160,9 +161,8 @@ setInterval(function() {
 			*/
             value.push( clientList[i][data_namespace].player.getState() );
         }
+		// console.log("value0 = " + JSON.stringify(value));
+		
         io.sockets.in(properName).emit('reAdjust', { value : value }); 
     }
 }, 100);
-
-
-
