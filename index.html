@@ -86,6 +86,7 @@
 			var SERVER = false;
 			var categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
 			var COLORS = new Array("blue", "red", "green", "yellow");
+            var isInDesignMode = false;
 			
             var userDetails = null;
             var socket = null;
@@ -278,7 +279,15 @@
                 return false;
             });
 
+            $('#designMode').click( function() {
+                //now we must have on click listeners for each tower.
+                //socket.emit('saveTowers', towersOnBoard);
+                isInDesignMode = true;
+                return false;
+            });
+
             $('#saveMode').click( function() {
+                isInDesignMode = false;
                 socket.emit('saveTowers', towersOnBoard);
                 return false;
             });
@@ -372,6 +381,15 @@
                     ownTowers.push(towerObj);
                     towersOnBoard.push(tower);
                     mainScene.getStage().append(towerObj);
+                    towerObj.on("mousedown", function(e) {
+                        //if not in design mode, do nothing.
+                        if(isInDesignMode) {
+                            
+                        }
+
+                        //this.cparent.mouseDown(e);
+                    }
+                });
                 };
                 imageObj.src = tower.image;
             }
