@@ -70,12 +70,13 @@ io.sockets.on('connection', function (socket) {
 			*/
 
             //this should have an array of tower id and position.
+			/*
             data2.towers = new Array();
             data2.towers.push({
                 code: "001",
                 position: { x: 0.50, y: 0.100 }
             });
-
+			*/
             data2.existingRooms = io.sockets.manager.rooms;
             data2.room = socket[data_namespace].player.name;
 			

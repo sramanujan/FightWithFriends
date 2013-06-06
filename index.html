@@ -194,12 +194,12 @@
                 });
 
                 socket.on('iregistered', function(data) {
+					console.log("iregistered");
                     userDetails = data.userDetails;
                     currentRoom = data.room;
                     listOfRooms = data.existingRooms;
                     populateListOfRooms();
-					console.log("iregistered");
-                    populateTowers(data.towers);
+                    //populateTowers(data.towers);
                     enableButtons();
                 });
 

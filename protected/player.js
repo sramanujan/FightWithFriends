@@ -51,7 +51,7 @@ Player = function(name, id, isServer) {
 			for(var key in state.units) {
 				if (key != 'undefined') {
 					if (null == this.units[key] || undefined == this.units[key] ) {
-						console.log("CREATE A UNIT position " + JSON.stringify(state.units[key]));
+						// console.log("CREATE A UNIT position " + JSON.stringify(state.units[key]));
 						if(states.units[key].state != "dead") {
 							var unit = new Unit(this, key, {code: "001", position: state.units[key].position}, this.isServer, false);
 							if (this.isServer) {
@@ -66,7 +66,7 @@ Player = function(name, id, isServer) {
 							console.log("DIE PLEASE");
 							//delete this.units[key];
 						}
-						console.log("position " + JSON.stringify(state));
+						// console.log("position " + JSON.stringify(state));
 						this.units[key].updateUnit(state.units[key]);
 						if (this.isServer || me.id != state.id) {
 							//if(states.units[key].state != "dead") {
@@ -99,7 +99,7 @@ Player = function(name, id, isServer) {
 							console.log("DIE PLEASE");
 							//delete this.towers[key];
 						}
-						console.log("position " + JSON.stringify(state));
+						// console.log("position " + JSON.stringify(state));
 						this.towers[key].updateTower(state.towers[key]);
 						if (this.isServer || me.id != state.id) {
 							//if(states.towers[key].state != "dead") {
@@ -116,7 +116,7 @@ Player = function(name, id, isServer) {
 				if (key != 'undefined') {
 					if (null == this.towers[key]) {
 						console.log("tower is null " + key);
-						console.log("position " + JSON.stringify(state.towers[key]));
+						// console.log("position " + JSON.stringify(state.towers[key]));
 						var tower = new Tower(this, key, {code: "001", position: state.towers[key].position}, this.isServer, false);
 						if (this.isServer) {
 							this.addTower(tower);
