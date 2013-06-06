@@ -127,7 +127,7 @@
                     userDetails = data.userDetails;
                     listOfRooms = data.existingRooms;
                     populateListOfRooms();
-                    //populateTowers(data.towers);
+                    populateTowers(data.towers);
                     enableButtons();
                 });
 
@@ -174,14 +174,21 @@
             function setClientDetails(data) {
 				me = new Player(data.name, data.id, false);
 				playersOnBoard[me.id] = me;
-                socket.emit('setClientDetails', data);
+                socket.emit('login', data);
             }
 
             function joinRoom(roomName) {
+				// first leave the room you are in
+				leaveRoom();
+				// reset your canvas
+				canvas.clear();
+				
                 socket.emit('joinRoom', { room: roomName });
             }
 
             function leaveRoom() {
+				// reset the player units and towers before leaving
+				me.leaveRoom();
                 socket.emit('leaveRoom', { room: currentRoom });
             }
 
