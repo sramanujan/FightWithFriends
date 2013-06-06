@@ -111,7 +111,6 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
     this.targetPosition = targetPosition;
     this.speed = speed;
 
-
 	if (!this.isServer)
 		mainScene.getStage().append(this.mapResource);
 	console.log("add new projectile ");
@@ -121,6 +120,7 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
 		if(this && this.mapResource ) {
 			var remX = (this.targetPosition.x - (this.mapResource.x / canvasDoc.width));
 			var remY = (this.targetPosition.y - (this.mapResource.y / canvasDoc.height));
+			if(remX != 0) this.mapResource.rotation = (Math.PI/2 + Math.atan(remY / remX));
 			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 			if(totalDist < 0.05) {
 				this.mapResource.remove();
@@ -164,7 +164,7 @@ Tower = function(id, tower, isServer, isOwner) {
 	    }
 	    imgObject.src = tower_data[tower.code].image;
 
-	    this.projImgObject = new Image();
+	    this.proImgObject = new Image();
 	    this.proImgObject.onload = function() {
 
 	    }
