@@ -343,11 +343,17 @@
 
             canvasDoc.onmouseup = function (event) {
 				if (null != currentSelectedUnit) {
+                    if(currentSelectedUnit.isTower == 1) {
+                        currentSelectedUnit.updateTarget({x : event.offsetX, y : event.offsetY });
+                        currentSelectedUnit = null;
+                        return false;
+                    }
 					var relX = event.offsetX / canvasDoc.width;
 					var relY = event.offsetY / canvasDoc.height;
 					currentSelectedUnit.updateTarget({x : relX, y : relY });
-					currentSelectedUnit = null;
+					
 					currentSelectedUnit.mapResource.opacity = currentSelectedUnit.mapResource.opacity < 1 ? 1 : 0.5 ;
+                    currentSelectedUnit = null;
 				}
             }
 
@@ -364,6 +370,7 @@
                     for (var key in playersOnBoard) {
 						playersOnBoard[key].update();
                     }
+
                     stage.refresh();
 					pushToServer();
                 }
@@ -393,21 +400,24 @@
             function addTower(tower) {
                 var imageObj = new Image();
                 imageObj.onload = function() {
-                    var towerObj = mainScene.createElement(100,100);
-                    towerObj.drawImage(imageObj);
-                    towerObj.x = tower.position.x;
-                    towerObj.y = tower.position.y;
-                    ownTowers.push(towerObj);
-                    towersOnBoard.push(tower);
-                    mainScene.getStage().append(towerObj);
-                    towerObj.on("mousedown", function(e) {
+                    var position = {x:200,y:200};
+                    
+                    var towersOnBoard = me.towersOnBoard();
+                    var myTowerObj = new Tower(towersOnBoard+1,imageObj, tower, position);
+                    myTowerObj.addListener();
+                    
+                    if (towersOnBoard < TOTAL_UNITS) {
+                    
+                        me.addTower(myTowerObj, false);
+                    }
+                    /*towerObj.on("mousedown", function(e) {
                         //if not in design mode, do nothing.
                         if(isInDesignMode) {
                             
                         }
 
                         //this.cparent.mouseDown(e);
-                    });
+                    });*/
                 }
                 imageObj.src = tower.image;
             }
