@@ -22,16 +22,59 @@
         <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
         <link rel="shortcut icon" href="assets/ico/favicon.png">
 </head>
-    <body>
+    <body >
         <div id="fb-root"></div>
         <script>
             var socket_io_loaded = false;
             var fb_connected = false;
             var towers_loaded = false;
             var units_loaded = false;
+            var images_loaded = false;
             var fb_response = null;
             var unit_data = null;
             var tower_data = null;
+            var towerImages = {};
+            var unitImages = {};
+            var projectileImages = {};
+
+            var imagesLoaded = 0;
+            var imagesToLoad = 0;
+
+            for(var key in unit_data) {
+                var imgsrc = unit_data[key].image;
+                unitImages[key] = new Image();
+                imagesToLoad++;
+                unitImages[key].onload = function(){
+                    imagesLoaded ++;
+                };
+                unitImages[key].src = imgsrc;
+            }
+
+            for(var key in tower_data) {
+                var imgsrc = tower_data[key].image;
+                towerImages[key] = new Image();
+                imagesToLoad++;
+                towerImages[key].onload = function(){
+                    imagesLoaded ++;
+                };
+                towerImages[key].src = imgsrc;
+            }
+
+            for(var key in tower_data) {
+                var imgsrc = tower_data[key].projectileImage;
+                var img = new Image();
+                img.key = key;
+                imagesToLoad++;
+                img.onload = function(){
+                    imagesLoaded ++;
+                    projectileImages[this.key] = this;
+                    if(imagesLoaded == imagesToLoad) {
+                        images_loaded = true;
+                        checkIfLoadComplete();
+                    }
+                };
+                img.src = imgsrc;
+            }
 
             $.getJSON('units.json', function(data) {
                 unit_data = data;
@@ -91,7 +134,7 @@
             }
 
             function checkIfLoadComplete() {
-                if(units_loaded && towers_loaded && socket_io_loaded) {
+                if(units_loaded && towers_loaded && socket_io_loaded && images_loaded) {
                     loadCompleted();
                 }
             }
@@ -410,8 +453,8 @@
             function addTower(tower) {
                 var towersOnBoard = me.towersOnBoard();
                 if (towersOnBoard < TOTAL_UNITS) {
-                    var myTowerObj = new Tower(me, towersOnBoard+1, tower, false, true); 
-                    //me.addTower(myTowerObj);
+                    var myTowerObj = new Tower(me,towersOnBoard+1, tower, false, true); 
+                   // me.addTower(myTowerObj);
                 }
             }
 

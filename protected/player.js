@@ -10,6 +10,7 @@ Player = function(name, id, isServer) {
 	this.id 	= id.toString();
 	this.units = {};
 	this.towers = {};
+	this.projectiles = new Array();
 	this.totalUnits = 0;
 	this.totalTowers = 0;
 	this.isServer = isServer;
@@ -19,7 +20,7 @@ Player = function(name, id, isServer) {
 			mainScene.getStage().append(unit.mapResource);
 		console.log("add new unit " + unit.id);
 		this.units[unit.id] = unit;
-		this.totalUnits++
+		this.totalUnits++;
 	};
 
 	this.addTower = function(tower) {
@@ -27,7 +28,7 @@ Player = function(name, id, isServer) {
 			mainScene.getStage().append(tower.mapResource);
 		console.log("add new tower " + tower.id);
 		this.towers[tower.id] = tower;
-		this.totalTowers++
+		this.totalTowers++;
 	};
 
 	this.towersOnBoard = function() {
@@ -99,6 +100,11 @@ Player = function(name, id, isServer) {
 			if (key != 'undefined')
 				this.towers[key].update();
 		}
+		for(var i = this.projectiles.length - 1; i >= 0; i--) {
+			if(this.projectiles[i].update() == false) {
+				this.projectiles.splice(i,1);
+			}
+		}
 	};
 	
 	this.getState = function() {
@@ -133,39 +139,75 @@ Player = function(name, id, isServer) {
 	}
 };
 
+Projectile = function(startPosition, targetPosition, imgObject, speed) {
+	var projectileObj =  mainScene.createElement(20,20);
+    projectileObj.drawImage(imgObject);
+    projectileObj.x = startPosition.x;
+    projectileObj.y = startPosition.y;
+
+    this.mapResource = projectileObj;
+    this.targetPosition = targetPosition;
+    this.speed = speed;
+
+	if (!this.isServer)
+		mainScene.getStage().append(this.mapResource);
+	console.log("add new projectile ");
+	me.projectiles.push(this);
+
+	this.update = function() {
+		if(this && this.mapResource ) {
+			var remX = (this.targetPosition.x - (this.mapResource.x / canvasDoc.width));
+			var remY = (this.targetPosition.y - (this.mapResource.y / canvasDoc.height));
+			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+			if(totalDist < 0.05) {
+				this.mapResource.remove();
+				return false;
+			} else if(this.speed < totalDist) {
+				this.mapResource.x += canvasDoc.width * remX * (this.speed /  totalDist);
+				this.mapResource.y += canvasDoc.height * remY * (this.speed /  totalDist);	
+				return true;
+			} else {
+				this.mapResource.x += canvasDoc.width * remX;
+				this.mapResource.y += canvasDoc.height * remY;
+				return true;
+			}
+		}
+		return true;
+	}
+}
+
 Tower = function(player, id, tower, isServer, isOwner) {
 	this.isOwner = isOwner;
 	this.player = player;
     if (!isServer) {
-	    var imgObject = new Image();
-	    imgObject.dparent = this;
-	    imgObject.onload = function() {
-			var towerObj =  mainScene.createElement(100,100);
-		    towerObj.drawImage(imgObject);
-		    towerObj.x = tower.position.x;
-		    towerObj.y = tower.position.y;
-		    this.dparent.mapResource = towerObj;
-		    this.dparent.mapResource.cparent = this.dparent;
-		    this.dparent.player.addTower(this.dparent);
-    		// check if it is my unit only then add mouse listener
-			if (this.dparent.isOwner) {
-				this.dparent.mapResource.on("mousedown", function(e) {
-					this.cparent.mouseDown(e);
-				});
-			}
-	    }
-	    imgObject.src = tower_data[tower.code].image;
+	    var imgObject = towerImages[tower.code];
+	    var towerObj =  mainScene.createElement(1,1);
+		towerObj.drawImage(imgObject);
+		towerObj.x = tower.position.x;
+		towerObj.y = tower.position.y;
+		this.mapResource = towerObj;
+		this.id = id;
+		player.addTower(this);
+		this.mapResource.cparent = this;
+	    this.proImgObject = projectileImages[tower.code];
+	    this.proSpeed = tower_data[tower.code].projectileSpeed;
 	    this.health = tower_data[tower.code].health;
+	    this.mapResource.on("mousedown", function(e) {
+			this.cparent.mouseDown(e);
+		});
 	}
 
     this.currentPosition = tower.position;
     this.targetPosition = tower.position;
-    this.isTower = 1;
+    this.isTower = true;
     this.id = id;
 
     this.mouseDown = function(event) {
 		currentSelectedUnit = this;
 		this.mapResource.opacity = this.mapResource.opacity < 1 ? 1 : 0.5 ;
+		//start a random projectile...
+
+		this.fireProjectile({x: Math.random(), y: Math.random()});
 		//var relX = event.offsetX / canvasDoc.width;
 		//var relY = event.offsetY / canvasDoc.height;
 		//this.updateTarget({x : relX, y : relY});
@@ -199,6 +241,10 @@ Tower = function(player, id, tower, isServer, isOwner) {
 		return {id : this.id, position : this.currentPosition, target : this.targetPosition, isTower : this.isTower};
 	};
 
+	this.fireProjectile = function(target) {
+		var projectile = new Projectile(this.currentPosition, target, this.proImgObject, this.proSpeed);
+	}
+
 	this.getUnitInRange = function() {
 		var opponent = null;
 		for (var key in playersOnBoard) {
@@ -208,16 +254,16 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			}
         }
         if(opponent == null) {
-        	//return null;
+        	return null;
         }
-        for(var key in me.units ) {////hack due to stupid logic of units and towers storage.change to opponent tower when fixed
-        	var tower = me.units[key];
+        for(var key in opponent.units ) {////hack due to stupid logic of units and towers storage.change to opponent tower when fixed
+        	var tower = opponent.units[key];
         	var x = tower.mapResource.x;
         	var y = tower.mapResource.y;
-        	var remX = x  - this.currentPosition.x;
-			var remY = y - this.currentPosition.y;
+        	var remX = x  - this.mapResource.x;
+			var remY = y - this.mapResource.y;
 			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(dist < 100) {
+			if(dist < 300) {
 				return tower;
 			}
         }
@@ -231,11 +277,11 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.player = player;
 	
 	this.currentPosition = unit.position;
-	this.isTower = 0;
+	this.isTower = false;
 	this.targetPosition = {x : 0, y : 0};
 	if (!isServer) {
 		this.mapResource = null;
-	    var imgObject = new Image();
+	    /*var imgObject = new Image();
 	    imgObject.dparent = this;
 	    imgObject.onload = function() {
 			var unitObj =  mainScene.createElement(64,64);
@@ -250,7 +296,19 @@ Unit = function(player, id, unit, isServer, isOwner) {
 				});
 			}
 	    }
-	    imgObject.src = unit_data[unit.code].image;
+	    imgObject.src = unit_data[unit.code].image;*/
+	    var imgObject = unitImages[unit.code];
+	    var unitObj =  mainScene.createElement(64,64);
+		unitObj.drawImage(imgObject);
+		this.mapResource = unitObj;
+		    this.mapResource.cparent = this;
+		    this.player.addUnit(this);
+    		// check if it is my unit only then add mouse listener
+			if (this.isOwner) {
+				this.mapResource.on("mousedown", function(e) {
+					this.cparent.mouseDown(e);
+				});
+			}
 	    this.health = unit_data[unit.code].health;
 	}
 	
@@ -300,16 +358,16 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			}
         }
         if(opponent == null) {
-        	//return null;
+        	return null;
         }
-        for(var key in me.towers ) { //hack due to stupid logic of units and towers storage.change to opponent tower when fixed
-        	var tower = me.towers[key];
+        for(var key in opponent.towers ) { //hack due to stupid logic of units and towers storage.change to opponent tower when fixed
+        	var tower = opponent.towers[key];
         	var x = tower.mapResource.x;
         	var y = tower.mapResource.y;
-        	var remX = x  - this.currentPosition.x;
-			var remY = y - this.currentPosition.y;
+        	var remX = x  - this.mapResource.x;
+			var remY = y - this.mapResource.y;
 			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(dist < 100) {
+			if(dist < 300) {
 				return tower;
 			}
         }
