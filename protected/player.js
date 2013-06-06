@@ -107,6 +107,27 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
     projectileObj.drawImage(imgObject);
     projectileObj.x = startPosition.x;
     projectileObj.y = startPosition.y;
+    var diffX = startPosition.x - targetPosition.x;
+    var diffY = startPosition.y - targetPosition.y;
+    var angle = 0;
+    if(diffX < 0) {
+    	angle -= Math.PI/2;
+    	if(diffY < 0) {
+    		angle += Math.atan(diffY / diffX);
+    	} else {
+    		angle -= Math.atan(diffY / diffX);
+    	}
+    } else {
+    	angle += Math.PI/2;
+    	if(diffY < 0) {
+    		angle -= Math.atan(diffY / diffX);
+    	} else {
+    		angle += Math.atan(diffY / diffX);
+    	}
+    }
+    console.log("Rotating by... " + (57.2957795 * angle));
+    projectileObj.rotate(57.2957795 * angle);
+
     this.mapResource = projectileObj;
     this.targetPosition = targetPosition;
     this.speed = speed;
