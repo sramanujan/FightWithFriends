@@ -290,7 +290,9 @@
 					batchedStates = new Array();
 				}
                 else if (null != me && me.towersOnBoard() > 0) {
-                    socket.emit('updateState', { states: me.getState() });
+					if (!isInDesignMode) {
+						socket.emit('updateState', { states: me.getState() });
+					}
                 }
 			}
 
@@ -389,10 +391,15 @@
 			
 			/* defender dashboard */
             $('#addTower').click( function() {
-                addTower({
-                    code : "001",
-                    position : { x: 0.100, y: 0.30 }
-                });
+				if (isInDesignMode) {
+					addTower({
+						code : "001",
+						position : { x: 0.100, y: 0.30 }
+					});
+				}
+				else {
+					alert("you must be in design mode to add");
+				}
                 return false;
             });
 
