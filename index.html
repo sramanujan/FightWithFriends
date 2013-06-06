@@ -91,7 +91,7 @@
             }
 
             function checkIfLoadComplete() {
-                if(units_loaded && towers_loaded && socket_io_loaded && fb_connected) {
+                if(units_loaded && towers_loaded && socket_io_loaded) {
                     loadCompleted();
                 }
             }
@@ -193,7 +193,8 @@
 				// first leave the room you are in
 				leaveRoom();
 				// reset your canvas
-				canvas.clear();
+				mcanvas = mainScene.getCanvas();
+                mcanvas.clear();
 				
                 socket.emit('joinRoom', { room: roomName });
             }
@@ -313,7 +314,7 @@
             $('#addUnit').click( function() {
 				var unitsOnBoard = me.unitsOnBoard();
                 if (unitsOnBoard < TOTAL_UNITS) {
-					var unit = new Unit(unitsOnBoard+1, {code: 001, position:{ x: 200, y: 0 }}, false, true);
+					var unit = new Unit(unitsOnBoard+1, {code: "001", position:{ x: 200, y: 0 }}, false, true);
 					//me.addUnit(unit, false);
 				}
 				return false;

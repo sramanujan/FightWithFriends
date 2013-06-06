@@ -3,6 +3,7 @@
         "image": "assets/img/BROKEN-Tower_Anim_Low_Res.png",
         "width": 250,
         "height": 211,
+        "health":100,
         "projectileImage": "assets/img/arrow1.png",
         "frames": 24
     }
