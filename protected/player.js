@@ -102,7 +102,7 @@ Tower = function(id, tower, isServer, isOwner) {
 		this.owner = me.id;
 	}
     if (!isServer) {
-	    var imgObject = new Image();
+	    /*var imgObject = new Image();
 	    imgObject.dparent = this;
 	    imgObject.onload = function() {
 			var towerObj =  mainScene.createElement(100,100);
@@ -118,9 +118,20 @@ Tower = function(id, tower, isServer, isOwner) {
 					this.cparent.mouseDown(e);
 				});
 			}
-	    }
-	    imgObject.src = tower_data[tower.code].image;
+	    }*/
+	    //imgObject.src = tower_data[tower.code].image;
+	    var imgObject = towerImages[tower.code];
+	    var towerObj =  mainScene.createElement(100,100);
+		towerObj.drawImage(imgObject);
+		towerObj.x = tower.position.x;
+		towerObj.y = tower.position.y;
+		this.mapResource = towerObj;
+		//me.addTower(this);
+		this.mapResource.cparent = this;
 	    this.health = tower_data[tower.code].health;
+	    this.mapResource.on("mousedown", function(e) {
+					this.cparent.mouseDown(e);
+				});
 	}
 
     this.currentPosition = tower.position;
