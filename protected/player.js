@@ -107,26 +107,6 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
     projectileObj.drawImage(imgObject);
     projectileObj.x = startPosition.x;
     projectileObj.y = startPosition.y;
-    var diffX = startPosition.x - targetPosition.x;
-    var diffY = startPosition.y - targetPosition.y;
-    var angle = 0;
-    if(diffX < 0) {
-    	angle -= Math.PI/2;
-    	if(diffY < 0) {
-    		angle += Math.atan(diffY / diffX);
-    	} else {
-    		angle -= Math.atan(diffY / diffX);
-    	}
-    } else {
-    	angle += Math.PI/2;
-    	if(diffY < 0) {
-    		angle -= Math.atan(diffY / diffX);
-    	} else {
-    		angle += Math.atan(diffY / diffX);
-    	}
-    }
-    console.log("Rotating by... " + (57.2957795 * angle));
-    projectileObj.rotate(57.2957795 * angle);
 
     this.mapResource = projectileObj;
     this.targetPosition = targetPosition;
@@ -141,7 +121,6 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
 		if(this && this.mapResource ) {
 			var remX = (this.targetPosition.x - (this.mapResource.x / canvasDoc.width));
 			var remY = (this.targetPosition.y - (this.mapResource.y / canvasDoc.height));
-			if(remX != 0) this.mapResource.rotation = (Math.PI/2 + Math.atan(remY / remX));
 			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 			if(totalDist < 0.05) {
 				this.mapResource.remove();
