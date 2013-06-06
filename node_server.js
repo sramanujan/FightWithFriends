@@ -1,6 +1,7 @@
 var SERVER = true;
 //require('./db.js');
 require('./protected/player.js');
+var fs = require('fs');
 
 var app = require('http').createServer();
 var io = require('socket.io').listen(app);
@@ -14,6 +15,11 @@ io.set('log level', 1); // reduce logging
 
 var data_namespace = 'IOSOCKET';
 var roomArray = new Array();
+
+
+unit_data = JSON.parse(fs.readFileSync("units.json"));
+tower_data = JSON.parse(fs.readFileSync("towers.json"));
+
 io.sockets.on('connection', function (socket) {
 
     socket[data_namespace] = {};
