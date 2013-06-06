@@ -4,7 +4,8 @@
         "width": 250,
         "height": 211,
         "health":100,
-        "projectileImage": "assets/img/arrow1.png",
+        "projectileImage": "assets/img/flame.png",
+        "projectileSpeed": 0.01,
         "frames": 24
     }
 }

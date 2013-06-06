@@ -29,11 +29,52 @@
             var fb_connected = false;
             var towers_loaded = false;
             var units_loaded = false;
+            var images_loaded = false;
             var fb_response = null;
             var unit_data = null;
             var tower_data = null;
             var towerImages = {};
             var unitImages = {};
+            var projectileImages = {};
+
+            var imagesLoaded = 0;
+            var imagesToLoad = 0;
+
+            for(var key in unit_data) {
+                var imgsrc = unit_data[key].image;
+                unitImages[key] = new Image();
+                imagesToLoad++;
+                unitImages[key].onload = function(){
+                    imagesLoaded ++;
+                };
+                unitImages[key].src = imgsrc;
+            }
+
+            for(var key in tower_data) {
+                var imgsrc = tower_data[key].image;
+                towerImages[key] = new Image();
+                imagesToLoad++;
+                towerImages[key].onload = function(){
+                    imagesLoaded ++;
+                };
+                towerImages[key].src = imgsrc;
+            }
+
+            for(var key in tower_data) {
+                var imgsrc = tower_data[key].projectileImage;
+                var img = new Image();
+                img.key = key;
+                imagesToLoad++;
+                img.onload = function(){
+                    imagesLoaded ++;
+                    projectileImages[this.key] = this;
+                    if(imagesLoaded == imagesToLoad) {
+                        images_loaded = true;
+                        checkIfLoadComplete();
+                    }
+                };
+                img.src = imgsrc;
+            }
 
             $.getJSON('units.json', function(data) {
                 unit_data = data;
@@ -46,10 +87,6 @@
                 towers_loaded = true;
                 checkIfLoadComplete();
             });
-
-
-
-
 
             if(typeof io == "undefined") {
                 $.getScript('http://' + window.location.hostname + ':8028/socket.io/socket.io.js', function() {
@@ -97,40 +134,9 @@
             }
 
             function checkIfLoadComplete() {
-                if(units_loaded && towers_loaded && socket_io_loaded) {
-                    loadImages();
-                    //loadCompleted();
+                if(units_loaded && towers_loaded && socket_io_loaded && images_loaded) {
+                    loadCompleted();
                 }
-            }
-            var imagesLoaded = 0;
-            var imagesToLoad = 0;
-            function loadImages() {
-                for(var key in unit_data) {
-                    var imgsrc = unit_data[key].image;
-                    unitImages[key] = new Image();
-                    imagesToLoad++;
-                    unitImages[key].onload = function(){
-                        imagesLoaded ++;
-                    };
-                    unitImages[key].src = imgsrc;
-                }
-
-                for(var key in tower_data) {
-                    var imgsrc = tower_data[key].image;
-                    var img = new Image();
-                    //towerImages[key] = new Image();
-                    img.key = key;
-                    imagesToLoad++;
-                    img.onload = function(){
-                        imagesLoaded ++;
-                        towerImages[this.key] = this;
-                        if(imagesLoaded == imagesToLoad) {
-                            loadCompleted();
-                        }
-                    };
-                    img.src = imgsrc;
-                }
-
             }
 
 			var TOTAL_UNITS = 4;
