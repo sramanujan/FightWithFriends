@@ -28,7 +28,7 @@
                 <h1>FIGHT WITH FRIENDS!!</h1>
                 <p class="lead">Team up with your friends! Improve your Kingdom, and make your way through others' - Show them that you can RULE!</p>
             </div>
-            <div id="login_div" class="container">
+            <div id="login_div" class="container" width="300">
                 <form class="form-signin">
                     <h2 class="form-signin-heading">Please sign in</h2>
                     <input id="loginId" type="text" class="input-block-level" placeholder="Username">
@@ -60,6 +60,9 @@
             var unitImages = {};
             var projectileImages = {};
 
+            var load_status = 0;
+            var load_total = 6;
+
             var towerImagesLoaded = 0;
             var towerImagesToLoad = 0;
             var unitImagesLoaded = 0;
@@ -68,6 +71,7 @@
             $('#login_button').click( function() {
                 login_data = { id: $('input[id=loginId]').val(), username: $('input[id=loginId]').val() };
                 login_entered = true;
+                load_status++;
                 $("#login_div").hide();
                 $("#loading_div").show();
                 checkIfLoadComplete();
@@ -77,6 +81,7 @@
             $.getJSON('units.json', function(data) {
                 unit_data = data;
                 units_loaded = true;
+                load_status++;
                 loadUnitImages();
                 checkIfLoadComplete();
             });
@@ -84,6 +89,7 @@
             $.getJSON('towers.json', function(data) {
                 tower_data = data;
                 towers_loaded = true;
+                load_status++;
                 loadTowerImages();
                 checkIfLoadComplete();
             });
@@ -99,6 +105,7 @@
                         unitImages[this.key] = this;
                         if(unitImagesLoaded == unitImagesToLoad) {
                             unit_images_loaded = true;
+                            load_status++
                             checkIfLoadComplete();
                         }
                     };
@@ -127,6 +134,7 @@
                         projectileImages[this.key] = this;
                         if(towerImagesLoaded == towerImagesToLoad) {
                             tower_images_loaded = true;
+                            load_status++;
                             checkIfLoadComplete();
                         }
                     };
@@ -137,12 +145,14 @@
             if(typeof io == "undefined") {
                 $.getScript('http://' + window.location.hostname + ':8028/socket.io/socket.io.js', function() {
                     socket_io_loaded = true;
+                    load_status++;
                     checkIfLoadComplete();
                 });
             }
 
 
             function checkIfLoadComplete() {
+                $("#progress_bar").width = Math.floor(100 * load_status / total_load );
                 if(units_loaded && towers_loaded && socket_io_loaded && tower_images_loaded && unit_images_loaded && login_entered) {
                     loadCompleted();
                 }
@@ -215,6 +225,7 @@
 						}
 					});
 					whoami          = categories.Attacker;
+                    $('#friendList').html("");
                     enableButtons();
                 });
 
