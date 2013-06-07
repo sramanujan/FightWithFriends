@@ -154,7 +154,7 @@
                 }
             }
 
-			var TOTAL_UNITS = 4;
+			var TOTAL_UNITS = 5;
 			var SERVER = false;
 			var categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
 			var COLORS = new Array("blue", "red", "green", "yellow");
@@ -387,7 +387,7 @@
             $('#addUnit').click( function() {
 				var unitsOnBoard = me.unitsOnBoard();
                 if (unitsOnBoard < TOTAL_UNITS) {
-					var unit = new Unit(me, unitsOnBoard+1, {code: "001", position:{ x: 200, y: 0 }}, false, true);
+					var unit = new Unit(me, unitsOnBoard+1, {code: "001", position:{ x: 200, y: 220 }}, false, true);
 				}
 				return false;
             });
