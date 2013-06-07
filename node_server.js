@@ -83,7 +83,7 @@ io.sockets.on('connection', function (socket) {
                 position: { x: 0.50, y: 0.100 }
             });
 			*/
-            data2.existingRooms = io.sockets.manager.rooms;
+            // data2.existingRooms = io.sockets.manager.rooms;
             data2.room = socket[data_namespace].player.name;
 			
 			// join my own room first
@@ -159,7 +159,6 @@ io.sockets.on('connection', function (socket) {
 
 });
 
-
 setInterval(function() {
     var existingRooms = io.sockets.manager.rooms;
     for (var roomName in existingRooms) {
@@ -171,22 +170,6 @@ setInterval(function() {
         var value = new Array();
 		var states = new Array();
         for (var i = 0; i < clientList.length; i++) {
-			/*
-            var remX = clientList[i][data_namespace].targetPosition.x - clientList[i][data_namespace].currentPosition.x;
-            var remY = clientList[i][data_namespace].targetPosition.y - clientList[i][data_namespace].currentPosition.y;
-            //dist is maximum distance you can move in one interval (in this case 100 ms) - lets say you can move 1/150th of game board... which would be 0.006
-            var dist = 0.006;
-            var totDist = Math.sqrt( Math.pow(remX, 2) + Math.pow(remY, 2) );
-            if(totDist != 0) {
-                if(totDist > dist) {
-                    clientList[i][data_namespace].currentPosition.x += remX * (dist / totDist);
-                    clientList[i][data_namespace].currentPosition.y += remY * (dist / totDist);  
-                } else {
-                    clientList[i][data_namespace].currentPosition.x += remX;
-                    clientList[i][data_namespace].currentPosition.y += remY; 
-                }
-            }
-			*/
             value.push( clientList[i][data_namespace].player.getState() );
         }
 		var rand = Math.floor(Math.random()*11);
@@ -196,4 +179,13 @@ setInterval(function() {
 		
         io.sockets.in(properName).emit('reAdjust', { value : value }); 
     }
+	// update room once in 10 secs
+	
+	
 }, 100);
+
+setInterval(function() {
+	data = {}
+	data.existingRooms = io.sockets.manager.rooms;
+	io.sockets.emit('updateRoomList', { value : data});
+}, 10000);
