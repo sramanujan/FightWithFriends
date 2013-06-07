@@ -54,20 +54,20 @@ Player = function(name, id, isServer) {
 						// console.log("CREATE A UNIT position " + JSON.stringify(state.units[key]));
 						if(states.units[key].state != "dead") {
 							var unit = new Unit(this, key, {code: "001", position: state.units[key].position}, this.isServer, false);
-							if (this.isServer) {
-								console.log("unit is null " + key);
-								this.addUnit(unit);
-							}
+							// if (this.isServer) {
+								// console.log("unit is null " + key);
+								// this.addUnit(unit);
+							// }
 						}
 					}
 					else {
 						// console.log("unit is NOT null " + this.id);
 						if(state.units[key].state == "dead") {
-							console.log("DIE PLEASE");
+							// console.log("DIE PLEASE");
 							//delete this.units[key];
 						}
 						// console.log("position " + JSON.stringify(state));
-						this.units[key].updateUnit(state.units[key]);
+						// this.units[key].updateUnit(state.units[key]);
 						if (this.isServer || me.id != state.id) {
 							//if(states.units[key].state != "dead") {
 								this.units[key].updateUnit(state.units[key]);
@@ -84,23 +84,23 @@ Player = function(name, id, isServer) {
 			for(var key in state.towers) {
 				if (key != 'undefined') {
 					if (null == this.towers[key] || undefined == this.towers[key] ) {
-						console.log("CREATE A TOWER position " + JSON.stringify(state.towers[key]));
+						// console.log("CREATE A TOWER position " + JSON.stringify(state.towers[key]));
 						if(states.towers[key].state != "dead") {
 							var tower = new Tower(this, key, {code: "001", position: state.towers[key].position}, this.isServer, false);
-							if (this.isServer) {
-								console.log("tower is null " + key);
-								this.addTower(tower);
-							}
+							// if (this.isServer) {
+								// console.log("tower is null " + key);
+								// this.addTower(tower);
+							// }
 						}
 					}
 					else {
 						// console.log("unit is NOT null " + this.id);
 						if(state.towers[key].state == "dead") {
-							console.log("DIE PLEASE");
+							// console.log("DIE PLEASE");
 							//delete this.towers[key];
 						}
 						// console.log("position " + JSON.stringify(state));
-						this.towers[key].updateTower(state.towers[key]);
+						// this.towers[key].updateTower(state.towers[key]);
 						if (this.isServer || me.id != state.id) {
 							//if(states.towers[key].state != "dead") {
 								this.towers[key].updateTower(state.towers[key]);
@@ -108,25 +108,6 @@ Player = function(name, id, isServer) {
 							/*else {
 								delete this.units[key];
 							}*/
-						}
-					}
-				}
-			}
-			for(var key in state.towers) {
-				if (key != 'undefined') {
-					if (null == this.towers[key]) {
-						console.log("tower is null " + key);
-						// console.log("position " + JSON.stringify(state.towers[key]));
-						var tower = new Tower(this, key, {code: "001", position: state.towers[key].position}, this.isServer, false);
-						if (this.isServer) {
-							this.addTower(tower);
-						}
-					}
-					else {
-						// console.log("unit is NOT null " + this.id);
-						// console.log("position " + JSON.stringify(state.towers[key]));
-						if (this.isServer || me.id != state.id) {
-							this.towers[key].updateTower(state.towers[key]);
 						}
 					}
 				}
@@ -232,32 +213,35 @@ Tower = function(player, id, tower, isServer, isOwner) {
 	this.player = player;
 	this.state = "alive";
 	this.isServer = isServer;
+    this.id = id;
+	
+    this.currentPosition = tower.position;
+    this.targetPosition = tower.position;
+    this.isTower = true;
+	
     if (!isServer) {
 	    var imgObject = towerImages[tower.code];
-	    var towerObj =  mainScene.createElement(1,1);
+	    var towerObj =  mainScene.createElement(100,100);
 		towerObj.drawImage(imgObject);
-		towerObj.x = tower.position.x;
-		towerObj.y = tower.position.y;
+		//towerObj.x = tower.position.x;
+		//towerObj.y = tower.position.y;
 		this.mapResource = towerObj;
-		this.id = id;
-		player.addTower(this);
 		this.mapResource.cparent = this;
 	    this.proImgObject = projectileImages[tower.code];
 	    this.proSpeed = tower_data[tower.code].projectileSpeed;
 	    this.health = tower_data[tower.code].health;
-	    this.mapResource.on("mousedown", function(e) {
-			this.cparent.mouseDown(e);
-		});
+		if (this.isOwner) {
+			this.mapResource.on("mousedown", function(e) {
+				this.cparent.mouseDown(e);
+			});
+		}
 	}
-
-    this.currentPosition = tower.position;
-    this.targetPosition = tower.position;
-    this.isTower = true;
-    this.id = id;
-    
+	// this has to be placed here - has to be called after mapResource is created on client
+	this.player.addTower(this);
 
     this.updateTower = function(state) {
     	this.state = state.state;
+		this.updateTarget(state.target);
     	if(this.state == "dead" && !this.isServer) {
     		this.mapResource.remove();
     	}
@@ -274,11 +258,6 @@ Tower = function(player, id, tower, isServer, isOwner) {
 		//this.updateTarget({x : relX, y : relY});
 	}
     
-	this.updateTower = function(state) {
-		this.updateTarget(state.target);
-		// update health and stuff
-	};
-	
 	this.updatePosition = function(position) {
 		this.currentPosition = position;
 	};
@@ -373,6 +352,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.id = id;
 	this.isOwner = isOwner;
 	this.player = player;
+	
 	this.maxHealth = unit_data[unit.code].health;
 	this.state = "alive";
 	this.currentPosition = unit.position;
@@ -380,23 +360,6 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.isTower = false;
 	this.targetPosition = {x : 0, y : 0};
 	if (!isServer) {
-		this.mapResource = null;
-	    /*var imgObject = new Image();
-	    imgObject.dparent = this;
-	    imgObject.onload = function() {
-			var unitObj =  mainScene.createElement(64,64);
-		    unitObj.drawImage(imgObject);
-		    this.dparent.mapResource = unitObj;
-		    this.dparent.mapResource.cparent = this.dparent;
-		    this.dparent.player.addUnit(this.dparent);
-    		// check if it is my unit only then add mouse listener
-			if (this.dparent.isOwner) {
-				this.dparent.mapResource.on("mousedown", function(e) {
-					this.cparent.mouseDown(e);
-				});
-			}
-	    }
-	    imgObject.src = unit_data[unit.code].image;*/
 	    var imgObject = unitImages[unit.code];
 	    var unitObj =  mainScene.createElement(64,64);
 		unitObj.drawImage(imgObject);
@@ -409,16 +372,17 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		this.healthBar.fillStyle = "green";
 		this.healthBarBg.fillRect(0,0,50,10);
 		this.healthBar.fillRect(0,0,50,10);
-		    this.mapResource.cparent = this;
-		    this.player.addUnit(this);
-    		// check if it is my unit only then add mouse listener
-			if (this.isOwner) {
-				this.mapResource.on("mousedown", function(e) {
-					this.cparent.mouseDown(e);
-				});
-			}
+		this.mapResource.cparent = this;
+		// check if it is my unit only then add mouse listener
+		if (this.isOwner) {
+			this.mapResource.on("mousedown", function(e) {
+				this.cparent.mouseDown(e);
+			});
+		}
 	    this.health = unit_data[unit.code].health;
 	}
+	// this has to be placed here - has to be called after mapResource is created on client
+	this.player.addUnit(this);
 	
 	this.updateUnit = function(state) {
 		this.updatePosition(state.position);
