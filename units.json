@@ -3,7 +3,7 @@
         "image": "assets/img/BROKEN-knight.png",
         "width": 64,
         "height": 64,
-        "health": 2000,
+        "health": 15000,
         "frames": 24
     },
     "002": {
