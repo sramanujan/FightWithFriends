@@ -191,7 +191,7 @@ setInterval(function() {
         }
 		var rand = Math.floor(Math.random()*11);
 		if (rand == 1) {
-			// console.log("readjust for room " + properName + " = " + JSON.stringify(value));
+			console.log("readjust for room " + properName + " = " + JSON.stringify(value));
 		}
 		
         io.sockets.in(properName).emit('reAdjust', { value : value }); 
