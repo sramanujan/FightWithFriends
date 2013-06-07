@@ -51,23 +51,25 @@ Player = function(name, id, isServer) {
 			for(var key in state.units) {
 				if (key != 'undefined') {
 					if (null == this.units[key] || undefined == this.units[key] ) {
-						// console.log("CREATE A UNIT position " + JSON.stringify(state.units[key]));
+						 //console.log("CREATE A UNIT position " + JSON.stringify(state.units[key]));
 						if(states.units[key].state != "dead") {
 							var unit = new Unit(this, key, {code: "001", position: state.units[key].position}, this.isServer, false);
-							// if (this.isServer) {
+							if (this.isServer) {
 								// console.log("unit is null " + key);
 								// this.addUnit(unit);
-							// }
+								unit.health = state.units[key].health ;
+							}
 						}
 					}
 					else {
-						// console.log("unit is NOT null " + this.id);
+						 //console.log("unit is NOT null " + this.id);
 						if(state.units[key].state == "dead") {
-							// console.log("DIE PLEASE");
+							//console.log("DIE PLEASE");
 							//delete this.units[key];
+							this.units[key].updateUnit(state.units[key]);
 						}
 						// console.log("position " + JSON.stringify(state));
-						// this.units[key].updateUnit(state.units[key]);
+						
 						if (this.isServer || me.id != state.id) {
 							//if(states.units[key].state != "dead") {
 								this.units[key].updateUnit(state.units[key]);
@@ -100,7 +102,7 @@ Player = function(name, id, isServer) {
 							//delete this.towers[key];
 						}
 						// console.log("position " + JSON.stringify(state));
-						// this.towers[key].updateTower(state.towers[key]);
+						
 						if (this.isServer || me.id != state.id) {
 							//if(states.towers[key].state != "dead") {
 								this.towers[key].updateTower(state.towers[key]);
@@ -111,7 +113,7 @@ Player = function(name, id, isServer) {
 						}
 					}
 				}
-			}
+			}*/
 		// }
 	};
 	this.update = function() {
@@ -211,7 +213,6 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
 Tower = function(player, id, tower, isServer, isOwner) {
 	this.isOwner = isOwner;
 	this.player = player;
-	this.state = "alive";
 	this.isServer = isServer;
     this.id = id;
 	
@@ -230,6 +231,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 	    this.proImgObject = projectileImages[tower.code];
 	    this.proSpeed = tower_data[tower.code].projectileSpeed;
 	    this.health = tower_data[tower.code].health;
+   		this.state = "alive";
 		if (this.isOwner) {
 			this.mapResource.on("mousedown", function(e) {
 				this.cparent.mouseDown(e);
@@ -241,6 +243,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 
     this.updateTower = function(state) {
     	this.state = state.state;
+    	this.health = state.health;
 		this.updateTarget(state.target);
     	if(this.state == "dead" && !this.isServer) {
     		this.mapResource.remove();
@@ -283,7 +286,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 	};
 
 	this.getState = function() {
-		return {id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : false, state: this.state, isTower: this.isTower};
+		return {id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : false, state: this.state, isTower: this.isTower, health: this.health};
 	};
 
 	this.isInUnitRange = function() {
@@ -299,6 +302,9 @@ Tower = function(player, id, tower, isServer, isOwner) {
         }
         for(var key in opponent.units ) {////hack due to stupid logic of units and towers storage.change to opponent tower when fixed
         	var tower = opponent.units[key];
+        	if(tower.state == "dead") {
+        		continue;
+        	}
         	var x = tower.mapResource.x;
         	var y = tower.mapResource.y;
         	var remX = x  - this.mapResource.x;
@@ -380,12 +386,14 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			});
 		}
 	    this.health = unit_data[unit.code].health;
+	    this.state = "alive";
 	}
 	// this has to be placed here - has to be called after mapResource is created on client
 	this.player.addUnit(this);
 	
 	this.updateUnit = function(state) {
 		this.updatePosition(state.position);
+		this.health = state.health;
 		this.updateTarget(state.target);
 		this.updateHealth();
 		this.state = state.state;
@@ -452,6 +460,9 @@ Unit = function(player, id, unit, isServer, isOwner) {
         }
         for(var key in opponent.towers ) {////hack due to stupid logic of units and towers storage.change to opponent tower when fixed
         	var tower = opponent.towers[key];
+        	if(tower.state == "dead") {
+        		continue;
+        	}
         	var x = tower.mapResource.x;
         	var y = tower.mapResource.y;
         	var remX = x  - this.mapResource.x;
@@ -499,7 +510,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 
 
 	this.getState = function() {
-		return {id : this.id, position : this.currentPosition, target : this.targetPosition, state: this.state, isTower: this.isTower};
+		return {id : this.id, position : this.currentPosition, target : this.targetPosition, state: this.state, isTower: this.isTower, health: this.health};
 	};
 	
 	this.mouseDown = function(event) {
