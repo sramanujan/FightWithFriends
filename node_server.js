@@ -70,7 +70,15 @@ io.sockets.on('connection', function (socket) {
                 }
             });
 
-            data2.existingRooms = io.sockets.manager.rooms;
+            //this should have an array of tower id and position.
+			/*
+            data2.towers = new Array();
+            data2.towers.push({
+                code: "001",
+                position: { x: 0.50, y: 0.100 }
+            });
+			*/
+            // data2.existingRooms = io.sockets.manager.rooms;
             data2.room = socket[data_namespace].player.name;
 			
 			socket.join(socket[data_namespace].player.name);
@@ -156,7 +164,6 @@ io.sockets.on('connection', function (socket) {
 
 });
 
-
 setInterval(function() {
     var existingRooms = io.sockets.manager.rooms;
     for (var roomName in existingRooms) {
@@ -177,4 +184,13 @@ setInterval(function() {
 		
         io.sockets.in(properName).emit('reAdjust', { value : value }); 
     }
+	// update room once in 10 secs
+	
+	
 }, 100);
+
+setInterval(function() {
+	data = {}
+	data.existingRooms = io.sockets.manager.rooms;
+	io.sockets.emit('updateRoomList', { value : data});
+}, 10000);

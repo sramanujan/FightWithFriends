@@ -158,6 +158,7 @@
             var socket = null;
             var listOfRooms = {};
             var currentRoom = null;
+            var myRoom = null;
 			
             var positionArray = new Array();
             var currentServerPositionArray = new Array();
@@ -193,12 +194,13 @@
                 socket.on('iregistered', function(data) {
 					console.log("iregistered");
                     userDetails = data.userDetails;
-                    currentRoom = data.room;
-                    listOfRooms = data.existingRooms;
-                    populateListOfRooms();
+                    //currentRoom = data.room;
+                    //listOfRooms = data.existingRooms;
+                    //populateListOfRooms();
                     if (data.towers) {
                         populateTowers(data.towers);
                     }
+                    myRoom = currentRoom = data.room;
                     enableButtons();
                 });
 
@@ -235,6 +237,11 @@
                     console.log("Client: " + updateFrom + " Event: " + updateType + " Value: " + value);
                 });
 
+				socket.on('updateRoomList', function (data) {
+					listOfRooms = data.value.existingRooms;
+					populateListOfRooms();
+				});
+				
                 socket.on('reAdjust', function (data) {
                     //currentServerPositionArray = data.value;
 					$.each(data.value, function(index, state) {
@@ -360,7 +367,8 @@
                 var i =0;
                 $('#friendList').html("");
                 for (var roomName in listOfRooms) {
-                    if (!roomName) {
+					roomName = roomName.replace('/','')
+                    if (!roomName || roomName == myRoom) {
                         continue;
                     }
                     i++;
@@ -368,10 +376,10 @@
                         $('#friendList').html("<a href='#' class='dropdown-toggle' data-toggle='dropdown'>Other Friends <b class='caret'></b></a><ul class='dropdown-menu id=extraFriendList'></ul>");
                     }
                     if(i < 5) {
-                        $('#friendList').append("<li><a class='friends' id='" + roomName.replace('/','') + "' href='#'>" + roomName.replace('/','') + "</a></li>");
+                        $('#friendList').append("<li><a class='friends' id='" + roomName + "' href='#'>" + roomName + "</a></li>");
                     }
                     else {
-                        $("#extraFriendList").append("<li><a class='friends' id='" + roomName.replace('/','') + "' href='#'>" + roomName.replace('/','') + "</a></li>");
+                        $("#extraFriendList").append("<li><a class='friends' id='" + roomName + "' href='#'>" + roomName + "</a></li>");
                     }    
                 }
                 $('.friends').click(function() {
