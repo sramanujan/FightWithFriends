@@ -149,7 +149,7 @@
             }
 
             function checkIfLoadComplete() {
-                if(units_loaded && towers_loaded && socket_io_loaded && tower_images_loaded && unit_images_loaded) {
+                if(units_loaded && towers_loaded && socket_io_loaded && tower_images_loaded && unit_images_loaded && fb_connected) {
                     loadCompleted();
                 }
             }
@@ -182,8 +182,9 @@
 			
             function makeEventListeners() {
                 socket.on('connect', function() {
-					var rand = Math.floor(Math.random()*11);
-                    setClientDetails({name : "anand" + rand, id : rand});
+					//var rand = Math.floor(Math.random()*11);
+                    setClientDetails(fb_response);
+                    //setClientDetails({name : "anand" + rand, id : rand});
                 });
 
                 socket.on('disconnect', function() {
@@ -199,7 +200,9 @@
                     currentRoom = data.room;
                     listOfRooms = data.existingRooms;
                     populateListOfRooms();
-                    //populateTowers(data.towers);
+                    if (data.towers) {
+                        populateTowers(data.towers);
+                    }
                     enableButtons();
                 });
 

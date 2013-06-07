@@ -233,7 +233,7 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
 Tower = function(player, id, tower, isServer, isOwner) {
 	this.isOwner = isOwner;
 	this.player = player;
-	
+	this.code = tower.code;
 	this.isServer = isServer;
     if (!isServer) {
 	    var imgObject = towerImages[tower.code];
@@ -310,7 +310,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 	};
 
 	this.getState = function() {
-		return {id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : false, state: this.state, isTower: this.isTower, health: this.health};
+		return {code: this.code, id : this.id, position : this.currentPosition, target : this.targetPosition, attacker : false, state: this.state, isTower: this.isTower, health: this.health};
 	};
 
 	this.isInUnitRange = function() {
@@ -382,6 +382,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.id = id;
 	this.isOwner = isOwner;
 	this.player = player;
+	this.code = unit.code;
 	this.maxHealth = unit_data[unit.code].health;
 	
 	this.currentPosition = unit.position;
@@ -549,7 +550,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 
 
 	this.getState = function() {
-		return {id : this.id, position : this.currentPosition, target : this.targetPosition, state: this.state, isTower: this.isTower, health: this.health};
+		return {code: this.code, id : this.id, position : this.currentPosition, target : this.targetPosition, state: this.state, isTower: this.isTower, health: this.health};
 	};
 	
 	this.mouseDown = function(event) {

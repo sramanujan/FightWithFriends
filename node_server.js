@@ -1,7 +1,7 @@
 var SERVER = true;
-//require('./db.js');
+require('./db.js');
 require('./protected/player.js');
-var fs = require('fs');
+//var fs = require('fs');
 
 var app = require('http').createServer();
 var io = require('socket.io').listen(app);
@@ -53,8 +53,8 @@ io.sockets.on('connection', function (socket) {
 //        socket[data_namespace].clientName = data.name;
 //        socket[data_namespace].clientId = data.id.toString();
         socket[data_namespace].player = new Player(data.name, data.id, true);
-        if(true) {
-			/*
+        if(db.enabled) {
+			
             db.bucket.get(socket[data_namespace].clientId, function (err, doc, meta) {
                 if(!doc || err || !db.isValidPlayerObject(doc)) {
                     doc = db.playerTemplate;
@@ -67,26 +67,18 @@ io.sockets.on('connection', function (socket) {
                     db.bucket.set(socket[data_namespace].clientId, doc, function(err, meta) {
                         if(err) {
                             console.log("GOT AN ERROR WHILE SETTING TO COUCHBASE");
+                        } else {
+                            data2.userDetails = doc;
                         }
                     });  
                 } else {
                     data2.userDetails = doc;
                 }
             });
-			*/
 
-            //this should have an array of tower id and position.
-			/*
-            data2.towers = new Array();
-            data2.towers.push({
-                code: "001",
-                position: { x: 0.50, y: 0.100 }
-            });
-			*/
             data2.existingRooms = io.sockets.manager.rooms;
             data2.room = socket[data_namespace].player.name;
 			
-			// join my own room first
 			socket.join(socket[data_namespace].player.name);
             socket.emit('iregistered', data2);
         } else {
@@ -101,7 +93,24 @@ io.sockets.on('connection', function (socket) {
         //do db update here.
 		if (null != socket[data_namespace].player) {
 			socket[data_namespace].player.updatePosition(update.states);
-			//socket.roomUpdate('update');
+            if(db.enabled) {
+                db.bucket.get(socket[data_namespace].clientId, function (err, doc, meta) {
+                    if(!doc || err || !db.isValidPlayerObject(doc)) {
+                        console.log("SOME ERROR FETCHING BLOB!!");
+                    } else {
+                        var towers = new Array();
+                        for (var key in update.states.towers) {
+                            towers.push({code: update.states.towers[key].code, position: update.states.towers[key].position});
+                        }
+                        doc.towers = towers;
+                        db.bucket.set(socket[data_namespace].clientId, doc, function(err, meta) {
+                            if(err) {
+                                console.log("GOT AN ERROR WHILE SETTING TO COUCHBASE");
+                            }
+                        });
+                    }
+                });    
+            }
 		}
 
     });
@@ -128,13 +137,7 @@ io.sockets.on('connection', function (socket) {
         socket.leave(data.room);
         socket[data_namespace].room = null;
     });
-/*
-    socket.on('stateUpdate', function (update) {
-        console.log("Sent state update data...");
-        socket[data_namespace].targetPosition = update.position;
-        //socket.roomUpdate('update');
-    });
-*/
+
     socket.on('updateState', function (update) {
 		if (null != socket[data_namespace].player) {
 			socket[data_namespace].player.updatePosition(update.states);
@@ -171,22 +174,6 @@ setInterval(function() {
         var value = new Array();
 		var states = new Array();
         for (var i = 0; i < clientList.length; i++) {
-			/*
-            var remX = clientList[i][data_namespace].targetPosition.x - clientList[i][data_namespace].currentPosition.x;
-            var remY = clientList[i][data_namespace].targetPosition.y - clientList[i][data_namespace].currentPosition.y;
-            //dist is maximum distance you can move in one interval (in this case 100 ms) - lets say you can move 1/150th of game board... which would be 0.006
-            var dist = 0.006;
-            var totDist = Math.sqrt( Math.pow(remX, 2) + Math.pow(remY, 2) );
-            if(totDist != 0) {
-                if(totDist > dist) {
-                    clientList[i][data_namespace].currentPosition.x += remX * (dist / totDist);
-                    clientList[i][data_namespace].currentPosition.y += remY * (dist / totDist);  
-                } else {
-                    clientList[i][data_namespace].currentPosition.x += remX;
-                    clientList[i][data_namespace].currentPosition.y += remY; 
-                }
-            }
-			*/
             value.push( clientList[i][data_namespace].player.getState() );
         }
 		var rand = Math.floor(Math.random()*11);

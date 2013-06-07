@@ -3,7 +3,9 @@ var fs = require('fs');
 
 var configFilename = 'config.json';
 
-db = {}; 
+db = {
+    enabled: true
+}; 
 
 db.playerTemplate = { 
     id: "",
