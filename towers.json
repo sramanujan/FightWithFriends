@@ -3,9 +3,9 @@
         "image": "assets/img/BROKEN-Tower_Anim_Low_Res.png",
         "width": 250,
         "height": 211,
-        "health":100000,
+        "health":1000,
         "projectileImage": "assets/img/flame.png",
-        "projectileSpeed": 0.05,
+        "projectileSpeed": 0.01,
         "frames": 24
     }
 }
