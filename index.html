@@ -152,7 +152,7 @@
 
 
             function checkIfLoadComplete() {
-                $("#progress_bar").width = Math.floor(100 * load_status / total_load );
+                $("#progress_bar").width = Math.floor(100 * load_status / load_total );
                 if(units_loaded && towers_loaded && socket_io_loaded && tower_images_loaded && unit_images_loaded && login_entered) {
                     loadCompleted();
                 }
