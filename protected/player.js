@@ -113,7 +113,7 @@ Player = function(name, id, isServer) {
 						}
 					}
 				}
-			}*/
+			}
 		// }
 	};
 	this.update = function() {
