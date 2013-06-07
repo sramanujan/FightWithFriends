@@ -23,15 +23,37 @@
         <link rel="shortcut icon" href="assets/ico/favicon.png">
 </head>
     <body >
-        <div id="fb-root"></div>
+        <div id="start_screen">
+            <div class="jumbotron">
+                <h1>FIGHT WITH FRIENDS!!</h1>
+                <p class="lead">Team up with your friends! Improve your Kingdom, and make your way through others' - Show them that you can RULE!</p>
+            </div>
+            <div id="login_div" class="container">
+                <form class="form-signin">
+                    <h2 class="form-signin-heading">Please sign in</h2>
+                    <input id="loginId" type="text" class="input-block-level" placeholder="Username">
+                    <input type="password" class="input-block-level" placeholder="Password">
+                    <label class="checkbox">
+                        <input type="checkbox" value="remember-me"> Remember me
+                    </label>
+                    <button id="login_button" class="btn btn-large btn-primary" type="submit">Go Go!</button>
+                </form>   
+            </div>
+            <div id="loading_div" style="display: none;">
+                <h1 "text-align:center">Loading...</h1>
+                <div class="progress progress-striped active">
+                    <div id="progress_bar" class="bar" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
         <script>
             var socket_io_loaded = false;
-            var fb_connected = false;
+            var login_entered = false;
             var towers_loaded = false;
             var units_loaded = false;
             var unit_images_loaded = false;
             var tower_images_loaded = false;
-            var fb_response = null;
+            var login_data = null;
             var unit_data = null;
             var tower_data = null;
             var towerImages = {};
@@ -42,6 +64,15 @@
             var towerImagesToLoad = 0;
             var unitImagesLoaded = 0;
             var unitImagesToLoad = 0;
+
+            $('#login_button').click( function() {
+                login_data = { id: $('input[id=loginId]').val(), username: $('input[id=loginId]').val() };
+                login_entered = true;
+                $("#login_div").hide();
+                $("#loading_div").show();
+                checkIfLoadComplete();
+                return false;
+            });
 
             $.getJSON('units.json', function(data) {
                 unit_data = data;
@@ -110,46 +141,9 @@
                 });
             }
 
-            window.fbAsyncInit = function() {
-                FB.init({
-                    appId      : FB_APP_ID, // App ID
-                    channelUrl : '//' + window.location.hostname + '/channel.html', // Channel File
-                    status     : true, // check login status
-                    cookie     : true, // enable cookies to allow the server to access the session
-                    xfbml      : true  // parse XFBML
-                });
-                FB.Event.subscribe('auth.authResponseChange', function(response) {
-                    // Here we specify what we do with the response anytime this event occurs. 
-                    if (response.status === 'connected') {
-                        fbConnected();
-                    } else if (response.status === 'not_authorized') {
-                        FB.login();
-                    } else {
-                        FB.login();
-                    }
-                });
-            };
-
-            // Load the SDK asynchronously
-            (function(d){
-                var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
-                if (d.getElementById(id)) {return;}
-                js = d.createElement('script'); js.id = id; js.async = true;
-                js.src = "//connect.facebook.net/en_US/all.js";
-                ref.parentNode.insertBefore(js, ref);
-            }(document));
-
-            function fbConnected() {
-                FB.api('/me', function(response) {
-                    fb_response = response;
-                    console.log(fb_response);
-                    fb_connected = true;
-                    checkIfLoadComplete();
-                });
-            }
 
             function checkIfLoadComplete() {
-                if(units_loaded && towers_loaded && socket_io_loaded && tower_images_loaded && unit_images_loaded && fb_connected) {
+                if(units_loaded && towers_loaded && socket_io_loaded && tower_images_loaded && unit_images_loaded && login_entered) {
                     loadCompleted();
                 }
             }
@@ -177,13 +171,15 @@
 
             function loadCompleted() {
                 socket = io.connect('http://' + window.location.hostname + ':8028', { 'connect timeout': 10000 });
+                $("#start_screen").hide();
+                $("#gamediv").show();
                 makeEventListeners();
             }
 			
             function makeEventListeners() {
                 socket.on('connect', function() {
 					//var rand = Math.floor(Math.random()*11);
-                    setClientDetails(fb_response);
+                    setClientDetails(login_data);
                     //setClientDetails({name : "anand" + rand, id : rand});
                 });
 
@@ -248,7 +244,7 @@
             }
 
             function setClientDetails(data) {
-				me = new Player(data.name, data.id, false);
+				me = new Player(data.username, data.id, false);
 				playersOnBoard[me.id] = me;
 				$("#whoami").html(me.name);
                 socket.emit('login', data);
@@ -310,48 +306,50 @@
 				}
 			}
         </script>
-        <div class="navbar navbar-inverse navbar-fixed-top">
-            <div class="navbar-inner">
-                <div class="container">
-                    <div class="nav-collapse collapse">
-                        <ul class="nav" id="attacker_dashboard" style="display: none;">
-                            <li class="">
-                                <a id="addUnit" href="#" >Add Unit</a>
-                            </li>
-                        </ul>
-                        <ul class="nav" id="defender_dashboard">
-							<li class="" id="whoami" style="color:red">
-                            </li>
-                            <li class="">
-                                <a id="saveMode" href="#">Save</a>
-                            </li>
-                            <li class="">
-                                <a id="designMode" href="#">Design Mode</a>
-                            </li>
-                            <li class="">
-                                <a id="addTower" href="#">Add Tower</a>
-                            </li>
-                        </ul>
+        <div id="gamediv" style="display: none;">
+            <div class="navbar navbar-inverse navbar-fixed-top">
+                <div class="navbar-inner">
+                    <div class="container">
+                        <div class="nav-collapse collapse">
+                            <ul class="nav" id="attacker_dashboard" style="display: none;">
+                                <li class="">
+                                    <a id="addUnit" href="#" >Add Unit</a>
+                                </li>
+                            </ul>
+                            <ul class="nav" id="defender_dashboard">
+    							<li class="" id="whoami" style="color:red">
+                                </li>
+                                <li class="">
+                                    <a id="saveMode" href="#">Save</a>
+                                </li>
+                                <li class="">
+                                    <a id="designMode" href="#">Design Mode</a>
+                                </li>
+                                <li class="">
+                                    <a id="addTower" href="#">Add Tower</a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-		<div class="container-fluid">
-            <div id="main_canvas">
-                <canvas id="canvas1" width="1600" height="1200" style="border:1px; background-image: url(assets/img/background_map_3.png);">
-                </canvas>
+    		<div class="container-fluid">
+                <div id="main_canvas">
+                    <canvas id="canvas1" width="1600" height="1200" style="border:1px; background-image: url(assets/img/background_map_3.png);">
+                    </canvas>
+                </div>
             </div>
-        </div>
-        <div class="navbar navbar-inverse navbar-fixed-bottom">
-            <div class="navbar-inner">
-                <div class="container">
-                    <div class="nav-collapse collapse">
+            <div class="navbar navbar-inverse navbar-fixed-bottom">
+                <div class="navbar-inner">
+                    <div class="container">
+                        <div class="nav-collapse collapse">
 
-                        <ul class="nav" id="friendList">
-                        </ul>
-                        <form class="navbar-search pull-left" style="display: none;">
-                            <input type="text" class="search-query" placeholder="Search">
-                        </form>
+                            <ul class="nav" id="friendList">
+                            </ul>
+                            <form class="navbar-search pull-left" style="display: none;">
+                                <input type="text" class="search-query" placeholder="Search">
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>

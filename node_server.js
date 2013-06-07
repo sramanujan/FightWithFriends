@@ -1,7 +1,7 @@
 var SERVER = true;
 require('./db.js');
 require('./protected/player.js');
-//var fs = require('fs');
+var fs = require('fs');
 
 var app = require('http').createServer();
 var io = require('socket.io').listen(app);
@@ -48,23 +48,17 @@ io.sockets.on('connection', function (socket) {
     }
 
     socket.on('login', function (data) {
-        console.log("login name and id [" + data.name + ":" + data.id +"]");
+        console.log("login name and id [" + data.username + ":" + data.id +"]");
         var data2 = {};
-//        socket[data_namespace].clientName = data.name;
-//        socket[data_namespace].clientId = data.id.toString();
-        socket[data_namespace].player = new Player(data.name, data.id, true);
+        socket[data_namespace].player = new Player(data.username, data.id, true);
         if(db.enabled) {
 			
-            db.bucket.get(socket[data_namespace].clientId, function (err, doc, meta) {
+            db.bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
                 if(!doc || err || !db.isValidPlayerObject(doc)) {
                     doc = db.playerTemplate;
                     doc.id = data.id;
-                    doc.first_name = data.first_name;
-                    doc.last_name = data.last_name;
-                    doc.gender = data.gender;
-                    doc.timezone = data.timezone;
                     doc.username = data.username;
-                    db.bucket.set(socket[data_namespace].clientId, doc, function(err, meta) {
+                    db.bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
                         if(err) {
                             console.log("GOT AN ERROR WHILE SETTING TO COUCHBASE");
                         } else {
@@ -94,7 +88,7 @@ io.sockets.on('connection', function (socket) {
 		if (null != socket[data_namespace].player) {
 			socket[data_namespace].player.updatePosition(update.states);
             if(db.enabled) {
-                db.bucket.get(socket[data_namespace].clientId, function (err, doc, meta) {
+                db.bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
                     if(!doc || err || !db.isValidPlayerObject(doc)) {
                         console.log("SOME ERROR FETCHING BLOB!!");
                     } else {
@@ -103,7 +97,7 @@ io.sockets.on('connection', function (socket) {
                             towers.push({code: update.states.towers[key].code, position: update.states.towers[key].position});
                         }
                         doc.towers = towers;
-                        db.bucket.set(socket[data_namespace].clientId, doc, function(err, meta) {
+                        db.bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
                             if(err) {
                                 console.log("GOT AN ERROR WHILE SETTING TO COUCHBASE");
                             }

@@ -9,10 +9,6 @@ db = {
 
 db.playerTemplate = { 
     id: "",
-    first_name: "",
-    last_name: "",
-    gender: "",
-    timezone: 0,
     username: "",
     level: 1,
     defence_xp: 1,
