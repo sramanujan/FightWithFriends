@@ -90,7 +90,7 @@ Player = function(name, id, isServer) {
 						if(states.towers[key].state != "dead") {
 							var tower = new Tower(this, key, {code: "001", position: state.towers[key].position}, this.isServer, false);
 							if (this.isServer) {
-								console.log("unit is null " + key);
+								console.log("tower is null " + key);
 								this.addTower(tower);
 							}
 						}
@@ -274,7 +274,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 		this.mapResource.opacity = this.mapResource.opacity < 1 ? 1 : 0.5 ;
 		//start a random projectile...
 
-		this.fireProjectile({x: Math.random(), y: Math.random()});
+		//this.fireProjectile({x: Math.random(), y: Math.random()});
 		//var relX = event.offsetX / canvasDoc.width;
 		//var relY = event.offsetY / canvasDoc.height;
 		//this.updateTarget({x : relX, y : relY});

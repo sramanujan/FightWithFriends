@@ -139,10 +139,10 @@ io.sockets.on('connection', function (socket) {
 		if (null != socket[data_namespace].player) {
 			socket[data_namespace].player.updatePosition(update.states);
             if(socket[data_namespace].player.unitsOnBoard() > 0) {
-                console.log("Message from attacker");
+                // console.log("Message from attacker");
             }
             else if(socket[data_namespace].player.towersOnBoard() > 0) {
-                console.log("Message from defencer");
+                // console.log("Message from defencer");
             }
 			//socket.roomUpdate('update');
 		}
