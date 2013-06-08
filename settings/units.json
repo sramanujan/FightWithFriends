@@ -5,8 +5,9 @@
         "height": 64,
         "health": 1500,
         "projectileImage": "assets/img/bullet.png",
-        "projectileSpeed": 0.005,
+        "projectileSpeed": 0.002,
         "range": 0.2,
+        "hitsPerSecond": 1,
         "frames": 24
     },
     "002": {
@@ -15,8 +16,9 @@
         "height": 212,
         "health":4000,
         "projectileImage": "assets/img/bullet.png",
-        "projectileSpeed": 0.005,
+        "projectileSpeed": 0.002,
         "range": 0.2,
+        "hitsPerSecond": 1,
         "frames": 24
     }
 }
