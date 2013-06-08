@@ -3,6 +3,7 @@
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
     <script src="protected/player.js"></script>
+    <script src="assets/js/jquery.ba-resize.min.js"></script>
         <title> Fight With Friends! </title> 
         <!-- Le styles -->
         <link href="assets/css/bootstrap.css" rel="stylesheet">
@@ -187,7 +188,7 @@
 
 
             function checkIfLoadComplete() {
-                $("#progress_bar").width = Math.floor(100 * load_status / load_total );
+                $("#progress_bar").width(Math.floor(100 * load_status / load_total ).toString() + "%");
                 if(units_loaded && towers_loaded && socket_io_loaded && tower_assets_loaded && unit_assets_loaded && login_entered && global_loaded && global_assets_loaded) {
                     loadCompleted();
                 }
@@ -219,6 +220,7 @@
                 socket = io.connect('http://' + window.location.hostname + ':8028', { 'connect timeout': 10000 });
                 $("#start_screen").hide();
                 $("#gamediv").show();
+                resizeCanvas();
                 makeEventListeners();
             }
 			
@@ -418,6 +420,14 @@
             </div>
         </div>
         <script>
+            $('#main_canvas').bind('resize', function(){
+                resizeCanvas();
+            });
+
+            function resizeCanvas() {
+                $('#canvas1').width($('#main_canvas').width().toString());
+                $('#canvas1').height($('#main_canvas').height().toString());
+            }
 
             function populateListOfRooms() {
                 var i =0;
