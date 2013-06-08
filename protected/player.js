@@ -209,7 +209,7 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
 			var remX = (this.targetPosition.x - this.mapResource.x );
 			var remY = (this.targetPosition.y - this.mapResource.y );
 			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(totalDist < 1) {
+			if(totalDist < 20) {
 				this.hasHit = true;
 				this.mapResource.remove();
 				return false;
@@ -349,7 +349,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			return;
 		}
 		for (var key in playersOnBoard) {
-			if(key != me.id) {
+			if(key != me.id && (playersOnBoard[key].unitsOnBoard() > 0)) {
 				opponent = playersOnBoard[key];
 				break;
 			}
@@ -391,7 +391,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			return;
 		}
 		for (var key in playersOnBoard) {
-			if(key != me.id) {
+			if(key != me.id && (playersOnBoard[key].unitsOnBoard() > 0)) {
 				opponent = playersOnBoard[key];
 				break;
 			}
@@ -400,20 +400,20 @@ Tower = function(player, id, tower, isServer, isOwner) {
         	return null;
         }
         for(var key in opponent.units ) {////hack due to stupid logic of units and towers storage.change to opponent tower when fixed
-        	var tower = opponent.units[key];
-        	if(tower.state == "dead") {
+        	var unit = opponent.units[key];
+        	if(unit.state == "dead") {
         		continue;
         	}
-        	var x = tower.mapResource.x;
-        	var y = tower.mapResource.y;
+        	var x = unit.mapResource.x;
+        	var y = unit.mapResource.y;
         	var remX = x  - this.mapResource.x;
 			var remY = y - this.mapResource.y;
 			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 			if(dist < 300) {
-				if(tower.health <= 0) {
-					tower.state = "dead";
+				if(unit.health <= 0) {
+					unit.state = "dead";
 				}
-				this.fireProjectile(tower.currentPosition);
+				this.fireProjectile(unit.currentPosition);
 				//return tower;
 			}
         }
@@ -544,7 +544,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			return;
 		}
 		for (var key in playersOnBoard) {
-			if(key != me.id) {
+			if(key != me.id && (playersOnBoard[key].towersOnBoard() > 0)) {
 				opponent = playersOnBoard[key];
 				break;
 			}
@@ -580,7 +580,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			return;
 		}
 		for (var key in playersOnBoard) {
-			if(key != me.id) {
+			if(key != me.id && (playersOnBoard[key].towersOnBoard() > 0)) {
 				opponent = playersOnBoard[key];
 				break;
 			}
