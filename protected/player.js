@@ -14,6 +14,7 @@ Player = function(name, id, isServer) {
 	this.totalUnits = 0;
 	this.totalTowers = 0;
 	this.isServer = isServer;
+	this.battleOver = false;
 	
 	this.addUnit = function(unit) {
 		if (!this.isServer)
@@ -48,17 +49,16 @@ Player = function(name, id, isServer) {
 		for(var key in state.units) {
 			if (key != 'undefined') {
 				if (null == this.units[key] || undefined == this.units[key] ) {
+					console.log("RADSSSSS: got this in updateposition");
+					console.log(state.units[key]);
 					if(states.units[key].state != "dead") {
-						var unit = new Unit(this, key, {code: "001", position: state.units[key].position}, this.isServer, false);
+						var unit = new Unit(this, key, {code: state.units[key].code, position: state.units[key].position}, this.isServer, false);
 						if (this.isServer) {
 							unit.health = state.units[key].health ;
 						}
 					}
 				}
 				else {
-					if(state.units[key].state == "dead") {
-						this.units[key].updateUnit(state, state.units[key]);
-					}
 					this.units[key].updateUnit(state, state.units[key]);
 				}
 			}
@@ -103,6 +103,7 @@ Player = function(name, id, isServer) {
 		for(var key in this.units) {
 			if (key != 'undefined') {
 				unitPositions[key] = this.units[key].getState();
+				this.checkVictoryPosition(unitPositions[key].position);
 			}
 		}
 		towerPositions = {};
@@ -111,7 +112,7 @@ Player = function(name, id, isServer) {
 				towerPositions[key] = this.towers[key].getState();
 			}
 		}
-		return {name : this.name, id : this.id, units : unitPositions, towers : towerPositions}
+		return {name : this.name, id : this.id, units : unitPositions, towers : towerPositions};
 	};
 	
 	this.leaveRoom = function() {
@@ -127,6 +128,17 @@ Player = function(name, id, isServer) {
 		}
 		this.units = {};
 		this.towers = {};
+	}
+
+	this.checkVictoryPosition = function(position) {
+		//TODO: Temporary, change this with appropriate position check
+		if(position.x > 0.90 && position.y > 0.90) {
+			this.battleOver = true;
+		}
+	}
+
+	this.performAfterEffectsAndReset = function() {
+
 	}
 };
 

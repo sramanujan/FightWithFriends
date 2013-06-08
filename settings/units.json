@@ -1,5 +1,6 @@
 {
     "001": {
+        "name": "Uber Knight",
         "image": "assets/img/BROKEN-knight.png",
         "width": 64,
         "height": 64,
@@ -8,9 +9,13 @@
         "projectileSpeed": 0.002,
         "range": 0.2,
         "hitsPerSecond": 1,
-        "frames": 24
+        "frames": 24,
+        "requirements": {
+            "level": 1
+        }
     },
     "002": {
+        "name": "X-Galactic Warrior",
         "image": "assets/img/BROKEN-Alien_Anim_01.png",
         "width": 257,
         "height": 212,
@@ -19,6 +24,9 @@
         "projectileSpeed": 0.002,
         "range": 0.2,
         "hitsPerSecond": 1,
-        "frames": 24
+        "frames": 24,
+        "requirements": {
+            "level": 1
+        }
     }
 }
