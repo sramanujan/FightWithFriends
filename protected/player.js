@@ -173,14 +173,14 @@ Player = function(name, id, isServer) {
 	}
 };
 
-Projectile = function(startPosition, targetPosition, imgObject, speed) {
+Projectile = function(startPosition, targetRelativePosition, imgObject, speed) {
 	var projectileObj =  mainScene.createElement(20,20);
     projectileObj.drawImage(imgObject);
     projectileObj.x = startPosition.x;
     projectileObj.y = startPosition.y;
 
     this.mapResource = projectileObj;
-    this.targetPosition = {x: targetPosition.x, y:targetPosition.y}
+    this.targetRelativePosition = {x: targetRelativePosition.x, y: targetRelativePosition.y}
     this.speed = speed;
     this.hasHit = false;
 	if (!this.isServer)
@@ -190,8 +190,8 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
 
 	this.update = function() {
 		if(this && this.mapResource ) {
-			/*var remX = (this.targetPosition.x - (this.mapResource.x / canvasDoc.width));
-			var remY = (this.targetPosition.y - (this.mapResource.y / canvasDoc.height));
+			var remX = (this.targetRelativePosition.x - (this.mapResource.x / canvasDoc.width));
+			var remY = (this.targetRelativePosition.y - (this.mapResource.y / canvasDoc.height));
 			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 			if(totalDist < 0.05) {
 				this.hasHit = true;
@@ -205,46 +205,10 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
 				this.mapResource.x += canvasDoc.width * remX;
 				this.mapResource.y += canvasDoc.height * remY;
 				return true;
-			}*/
-			var remX = (this.targetPosition.x - this.mapResource.x );
-			var remY = (this.targetPosition.y - this.mapResource.y );
-			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(totalDist < 5) {
-				this.hasHit = true;
-				this.mapResource.remove();
-				return false;
-			} else if(this.speed < totalDist) {
-				this.mapResource.x +=  remX * this.speed ;// /  totalDist;
-				this.mapResource.y +=  remY * this.speed ;// /  totalDist;	
-				return true;
-			} else {
-				this.mapResource.x +=  remX;
-				this.mapResource.y +=  remY;
-				return true;
 			}
-
 		}
 
 	}
-
-		/*var remX = (this.mapResource.x - this.mapResource.x );
-			var remY = (this.mapResource.y - (this.mapResource.y / canvasDoc.height));
-			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(totalDist < 0.05) {
-				this.hasHit = true;
-				this.mapResource.remove();
-				return false;
-			} else if(this.speed < totalDist) {
-				this.mapResource.x += canvasDoc.width * remX * (this.speed /  totalDist);
-				this.mapResource.y += canvasDoc.height * remY * (this.speed /  totalDist);	
-				return true;
-			} else {
-				this.mapResource.x += canvasDoc.width * remX;
-				this.mapResource.y += canvasDoc.height * remY;
-				return true;
-			}
-		return true;
-	}*/
 }
 
 Tower = function(player, id, tower, isServer, isOwner) {
@@ -258,7 +222,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
     this.targetPosition = tower.position;
     this.isTower = true;
 	this.maxHealth = tower_data[tower.code].health;
-	
+	this.range = tower_data[tower.code].range;
     if (!isServer) {
 	    var imgObject = towerImages[tower.code];
 	    var towerObj =  mainScene.createElement(100,100);
@@ -358,22 +322,18 @@ Tower = function(player, id, tower, isServer, isOwner) {
         	return null;
         }
         for(var key in opponent.units ) {////hack due to stupid logic of units and towers storage.change to opponent tower when fixed
-        	var tower = opponent.units[key];
-        	if(tower.state == "dead") {
+        	var unit = opponent.units[key];
+        	if(unit.state == "dead") {
         		continue;
         	}
-        	var x = tower.mapResource.x;
-        	var y = tower.mapResource.y;
-        	var remX = x  - this.mapResource.x;
-			var remY = y - this.mapResource.y;
-			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(dist < 300) {
-				tower.fireProjectile(this.currentPosition);
+        	var remX = unit.currentPosition.x  - this.currentPosition.x;
+			var remY = unit.currentPosition.y - this.currentPosition.y;
+			if(Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2)) < this.range) {
+				unit.fireProjectile(this.currentPosition);
 				this.health -= 5;
 				if(this.health <= 0) {
 					this.state = "dead";
 				}
-				//return tower;
 			}
         }
         return null;
@@ -401,21 +361,17 @@ Tower = function(player, id, tower, isServer, isOwner) {
         	return null;
         }
         for(var key in opponent.units ) {////hack due to stupid logic of units and towers storage.change to opponent tower when fixed
-        	var tower = opponent.units[key];
-        	if(tower.state == "dead") {
+        	var unit = opponent.units[key];
+        	if(unit.state == "dead") {
         		continue;
         	}
-        	var x = tower.mapResource.x;
-        	var y = tower.mapResource.y;
-        	var remX = x  - this.mapResource.x;
-			var remY = y - this.mapResource.y;
-			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(dist < 300) {
-				if(tower.health <= 0) {
+        	var remX = unit.currentPosition.x  - this.currentPosition.x;
+			var remY = unit.currentPosition.y - this.currentPosition.y;
+			if(Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2)) < this.range) {
+				this.fireProjectile(unit.currentPosition);
+				if(unit.health <= 0) {
 					tower.state = "dead";
 				}
-				this.fireProjectile(tower.currentPosition);
-				//return tower;
 			}
         }
         return null;
@@ -453,6 +409,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.isServer = isServer;
 	this.isTower = false;
 	this.targetPosition = {x : 0, y : 0};
+	this.range = unit_data[unit.code].range;
 	if (!isServer) {
 	    var imgObject = unitImages[unit.code];
 	    var unitObj =  mainScene.createElement(64,64);
@@ -516,24 +473,19 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			this.mapResource.remove();
 			return false;
 		}
-		var remX = (this.targetPosition.x * canvasDoc.width) - this.currentPosition.x;
-		var remY = (this.targetPosition.y * canvasDoc.height)- this.currentPosition.y;
+		var remX = this.targetPosition.x - this.currentPosition.x;
+		var remY = this.targetPosition.y - this.currentPosition.y;
 		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-		if(Math.pow(dist, 2) > 1) {
-			this.currentPosition.x += (remX / dist);
-			this.currentPosition.y += (remY / dist);
+		if(dist > 0.05) {
+			this.currentPosition.x += (remX / dist)*0.05;
+			this.currentPosition.y += (remY / dist)*0.05;
+		} else {
+			this.currentPosition.x += remX;
+			this.currentPosition.y += remY;
 		}
-		/*
-		if( Math.abs((currentPosition.x / canvasDoc.width) - currentServertargetPosition.x) > 0.005 ) {
-			currentPosition.x = currentServertargetPosition.x * canvasDoc.width;
-		}
-
-		if( Math.abs((currentPosition.y / canvasDoc.height) - currentServertargetPosition.y) > 0.005 ) {
-			currentPosition.y = currentServertargetPosition.y * canvasDoc.height;
-		}
-		*/
-		this.mapResource.x = this.currentPosition.x;
-		this.mapResource.y = this.currentPosition.y;
+		
+		this.mapResource.x = this.currentPosition.x * canvasDoc.width;
+		this.mapResource.y = this.currentPosition.y * canvasDoc.height;
 		var towerToAttack = this.getTowerInRange() ;
 		/*if(towerToAttack != null) {
 			//fire
@@ -561,18 +513,14 @@ Unit = function(player, id, unit, isServer, isOwner) {
         	if(tower.state == "dead") {
         		continue;
         	}
-        	var x = tower.mapResource.x;
-        	var y = tower.mapResource.y;
-        	var remX = x  - this.mapResource.x;
-			var remY = y - this.mapResource.y;
-			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(dist < 300) {
+        	var remX = tower.currentPosition.x  - this.currentPosition.x;
+			var remY = tower.currentPosition.y - this.currentPosition.y;
+			if(Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2)) < this.range) {
 				tower.fireProjectile(this.currentPosition);
 				this.health -= 5;
 				if(this.health <= 0) {
 					this.state = "dead";
 				}
-				//return tower;
 			}
         }
         return null;
@@ -594,16 +542,16 @@ Unit = function(player, id, unit, isServer, isOwner) {
         }
         for(var key in opponent.towers ) { //hack due to stupid logic of units and towers storage.change to opponent tower when fixed
         	var tower = opponent.towers[key];
-        	var x = tower.mapResource.x;
-        	var y = tower.mapResource.y;
-        	var remX = x  - this.mapResource.x;
-			var remY = y - this.mapResource.y;
-			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(dist < 300) {
+        	if(tower.state == "dead") {
+        		continue;
+        	}
+        	var remX = tower.currentPosition.x  - this.currentPosition.x;
+			var remY = tower.currentPosition.y - this.currentPosition.y;
+			if(Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2)) < this.range) {
+				this.fireProjectile(tower.currentPosition);
 				if(tower.health < 0) {
 					tower.state = "dead";
 				}
-				this.fireProjectile(tower.currentPosition);
 				return tower;
 			}
         }
