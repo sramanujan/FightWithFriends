@@ -36,3 +36,4 @@ Local Setup
 -----------
 1. It is mostly the same as above. Remeber to setup the prerequisite softwares.
 2. For couchbase, hit localhost:8091 and configure it with root user name "fwf-root", root password "fwf-rootpwd", and a new bucket "fwf".
+3. Add "127.0.0.1   USERNAME-fwf.dev2-hackathon.zc2.zynga.com" into your /etc/hosts file whenever you want to use local setup in place of remote setup (remember to clear it to check remote setup!).
