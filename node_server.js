@@ -17,8 +17,8 @@ var data_namespace = 'IOSOCKET';
 var roomArray = new Array();
 
 
-unit_data = JSON.parse(fs.readFileSync("units.json"));
-tower_data = JSON.parse(fs.readFileSync("towers.json"));
+unit_data = JSON.parse(fs.readFileSync("settings/units.json"));
+tower_data = JSON.parse(fs.readFileSync("settings/towers.json"));
 
 io.sockets.on('connection', function (socket) {
 
@@ -47,42 +47,57 @@ io.sockets.on('connection', function (socket) {
         //io.sockets.in(room).emit('roomUpdate', { clientName: clientName, eventName: eventType, value: value});
     }
 
+    socket.sendUserDetails = function(userDetails) {
+        var data = { userDetails: userDetails };
+        data.room = socket[data_namespace].player.name;
+        //TODO: Based on user's level and xp and all that, populate this list
+        data.usableUnits = new Array();
+        data.usableTowers = new Array();
+        for (var code in unit_data) {
+            for (var requirement in unit_data[code].requirements) {
+                if (unit_data[code].requirements[requirement] >= data.userDetails[requirement]) {
+                    data.usableUnits.push(code);
+                }
+            }
+        }
+        for (var code in tower_data) {
+            for (var requirement in tower_data[code].requirements) {
+                if (tower_data[code].requirements[requirement] >= data.userDetails[requirement]) {
+                    data.usableTowers.push(code);
+                }
+            }
+        }
+        socket.join(socket[data_namespace].player.name);
+        socket.emit('iregistered', data);
+    }
+
     socket.on('login', function (data) {
         console.log("login name and id [" + data.username + ":" + data.id +"]");
+        if(data.id.split(':')[0] == "anonymous") {
+            socket[data_namespace].db_bucket = db.anonymousBucket;  
+        } else {
+            socket[data_namespace].db_bucket = db.bucket;
+        }
         var data2 = {};
         socket[data_namespace].player = new Player(data.username, data.id, true);
         if(db.enabled) {
-			
-            db.bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
+            socket[data_namespace].db_bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
                 if(!doc || err || !db.isValidPlayerObject(doc)) {
                     doc = db.playerTemplate;
                     doc.id = data.id;
                     doc.username = data.username;
-                    db.bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
+                    socket[data_namespace].db_bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
                         if(err) {
                             console.log("GOT AN ERROR WHILE SETTING TO COUCHBASE");
+                            return;
                         } else {
-                            data2.userDetails = doc;
+                            socket.sendUserDetails(doc);
                         }
                     });  
                 } else {
-                    data2.userDetails = doc;
+                    socket.sendUserDetails(doc);
                 }
             });
-
-            //this should have an array of tower id and position.
-			/*
-            data2.towers = new Array();
-            data2.towers.push({
-                code: "001",
-                position: { x: 0.50, y: 0.100 }
-            });
-			*/
-            // data2.existingRooms = io.sockets.manager.rooms;
-            data2.room = socket[data_namespace].player.name;
-			
-			socket.join(socket[data_namespace].player.name);
-            socket.emit('iregistered', data2);
         } else {
             console.log("COUCHBASE GLOBAL BUCKET NOT AVAILABLE!!");
         }
@@ -92,11 +107,10 @@ io.sockets.on('connection', function (socket) {
     socket.on('saveTowers', function (update) {
         console.log("Saving towers...");
         console.log(update);
-        //do db update here.
 		if (null != socket[data_namespace].player) {
 			socket[data_namespace].player.updatePosition(update.states);
             if(db.enabled) {
-                db.bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
+                socket[data_namespace].db_bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
                     if(!doc || err || !db.isValidPlayerObject(doc)) {
                         console.log("SOME ERROR FETCHING BLOB!!");
                     } else {
@@ -105,7 +119,7 @@ io.sockets.on('connection', function (socket) {
                             towers.push({code: update.states.towers[key].code, position: update.states.towers[key].position});
                         }
                         doc.towers = towers;
-                        db.bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
+                        socket[data_namespace].db_bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
                             if(err) {
                                 console.log("GOT AN ERROR WHILE SETTING TO COUCHBASE");
                             }
@@ -114,7 +128,6 @@ io.sockets.on('connection', function (socket) {
                 });    
             }
 		}
-
     });
 	
 	// this is called when 'I' join a room
@@ -172,16 +185,22 @@ setInterval(function() {
             continue;
         }
         var clientList = io.sockets.clients(properName);
+        var battleOver = false;
         var value = new Array();
 		var states = new Array();
         for (var i = 0; i < clientList.length; i++) {
             value.push( clientList[i][data_namespace].player.getState() );
+            if(clientList[i][data_namespace].player.battleOver) {
+                battleOver = true;
+                break;
+            }
         }
-		var rand = Math.floor(Math.random()*11);
-		if (rand == 1) {
-			// console.log("readjust for room " + properName + " = " + JSON.stringify(value));
-		}
-		
+		if(battleOver) {
+            value = { battleOver: true };
+            for (var i = 0; i < clientList.length; i++) {
+                clientList[i][data_namespace].player.performAfterEffectsAndReset();
+            } 
+        }
         io.sockets.in(properName).emit('reAdjust', { value : value }); 
     }
 	// update room once in 10 secs
