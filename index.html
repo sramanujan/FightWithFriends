@@ -183,6 +183,11 @@
             function loadCompleted() {
                 socket = io.connect('http://' + window.location.hostname + ':8028', { 'connect timeout': 10000 });
                 $("#start_screen").hide();
+				
+				// resize canvas
+				$("#gamediv").width($(document).width());
+				$("#gamediv").height($(document).height());
+				
                 $("#gamediv").show();
                 makeEventListeners();
             }
@@ -203,14 +208,14 @@
 
                 socket.on('iregistered', function(data) {
 					console.log("iregistered");
+                    myRoom = currentRoom = data.room;
                     userDetails = data.userDetails;
-                    //currentRoom = data.room;
-                    //listOfRooms = data.existingRooms;
-                    //populateListOfRooms();
                     if (data.towers) {
                         populateTowers(data.towers);
                     }
-                    myRoom = currentRoom = data.room;
+					if (data.userDetails && data.userDetails.towers) {
+                        populateTowers(data.userDetails.towers);
+                    }
                     enableButtons();
                 });
 
