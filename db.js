@@ -1,7 +1,7 @@
 var couchbase = require("couchbase");
 var fs = require('fs');
 
-var configFilename = 'config.json';
+var configFilename = 'settings/db-config.json';
 
 db = {
     enabled: true
