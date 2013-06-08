@@ -257,7 +257,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			return;
 		}
 		for (var key in playersOnBoard) {
-			if(key != me.id) {
+			if(key != me.id && (playersOnBoard[key].unitsOnBoard() > 0)) {
 				opponent = playersOnBoard[key];
 				break;
 			}
@@ -297,7 +297,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			return;
 		}
 		for (var key in playersOnBoard) {
-			if(key != me.id) {
+			if(key != me.id && (playersOnBoard[key].unitsOnBoard() > 0)) {
 				opponent = playersOnBoard[key];
 				break;
 			}
@@ -431,7 +431,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			return;
 		}
 		for (var key in playersOnBoard) {
-			if(key != me.id) {
+			if(key != me.id && (playersOnBoard[key].towersOnBoard() > 0)) {
 				opponent = playersOnBoard[key];
 				break;
 			}
@@ -463,7 +463,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			return;
 		}
 		for (var key in playersOnBoard) {
-			if(key != me.id) {
+			if(key != me.id && (playersOnBoard[key].towersOnBoard() > 0)) {
 				opponent = playersOnBoard[key];
 				break;
 			}
