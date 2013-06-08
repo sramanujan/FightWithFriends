@@ -17,8 +17,8 @@ var data_namespace = 'IOSOCKET';
 var roomArray = new Array();
 
 
-unit_data = JSON.parse(fs.readFileSync("units.json"));
-tower_data = JSON.parse(fs.readFileSync("towers.json"));
+unit_data = JSON.parse(fs.readFileSync("settings/units.json"));
+tower_data = JSON.parse(fs.readFileSync("settings/towers.json"));
 
 io.sockets.on('connection', function (socket) {
 
@@ -49,16 +49,20 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('login', function (data) {
         console.log("login name and id [" + data.username + ":" + data.id +"]");
+        if(data.id.split(':')[0] == "anonymous") {
+            socket[data_namespace].db_bucket = db.anonymousBucket;  
+        } else {
+            socket[data_namespace].db_bucket = db.bucket;
+        }
         var data2 = {};
         socket[data_namespace].player = new Player(data.username, data.id, true);
         if(db.enabled) {
-			
-            db.bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
+            socket[data_namespace].db_bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
                 if(!doc || err || !db.isValidPlayerObject(doc)) {
                     doc = db.playerTemplate;
                     doc.id = data.id;
                     doc.username = data.username;
-                    db.bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
+                    socket[data_namespace].db_bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
                         if(err) {
                             console.log("GOT AN ERROR WHILE SETTING TO COUCHBASE");
                         } else {
@@ -69,16 +73,6 @@ io.sockets.on('connection', function (socket) {
                     data2.userDetails = doc;
                 }
             });
-
-            //this should have an array of tower id and position.
-			/*
-            data2.towers = new Array();
-            data2.towers.push({
-                code: "001",
-                position: { x: 0.50, y: 0.100 }
-            });
-			*/
-            // data2.existingRooms = io.sockets.manager.rooms;
             data2.room = socket[data_namespace].player.name;
 			
 			socket.join(socket[data_namespace].player.name);
@@ -92,11 +86,10 @@ io.sockets.on('connection', function (socket) {
     socket.on('saveTowers', function (update) {
         console.log("Saving towers...");
         console.log(update);
-        //do db update here.
 		if (null != socket[data_namespace].player) {
 			socket[data_namespace].player.updatePosition(update.states);
             if(db.enabled) {
-                db.bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
+                socket[data_namespace].db_bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
                     if(!doc || err || !db.isValidPlayerObject(doc)) {
                         console.log("SOME ERROR FETCHING BLOB!!");
                     } else {
@@ -105,7 +98,7 @@ io.sockets.on('connection', function (socket) {
                             towers.push({code: update.states.towers[key].code, position: update.states.towers[key].position});
                         }
                         doc.towers = towers;
-                        db.bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
+                        socket[data_namespace].db_bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
                             if(err) {
                                 console.log("GOT AN ERROR WHILE SETTING TO COUCHBASE");
                             }
@@ -114,7 +107,6 @@ io.sockets.on('connection', function (socket) {
                 });    
             }
 		}
-
     });
 	
 	// this is called when 'I' join a room

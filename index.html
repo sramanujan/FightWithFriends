@@ -1,10 +1,9 @@
 <html>
 <head> 
-	<script src="assets/js/global.js"></script>
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
     <script src="protected/player.js"></script>
-        <title> Testing Web Socket... </title> 
+        <title> Fight With Friends! </title> 
         <!-- Le styles -->
         <link href="assets/css/bootstrap.css" rel="stylesheet">
         <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
@@ -28,18 +27,16 @@
                 <h1>FIGHT WITH FRIENDS!!</h1>
                 <p class="lead">Team up with your friends! Improve your Kingdom, and make your way through others' - Show them that you can RULE!</p>
             </div>
-            <div id="login_div" class="container" width="300">
-                <form class="form-signin">
-                    <h2 class="form-signin-heading">Please sign in</h2>
-                    <input id="loginId" type="text" class="input-block-level" placeholder="Username">
-                    <input type="password" class="input-block-level" placeholder="Password">
-                    <label class="checkbox">
-                        <input type="checkbox" value="remember-me"> Remember me
-                    </label>
-                    <button id="login_button" class="btn btn-large btn-primary" type="submit">Go Go!</button>
-                </form>   
+            <div id="login_div" class="jumbotron" style="width: 300; margin-right: auto; margin-left: auto;">
+                <h2 class="form-signin-heading">Please sign in</h2>
+                <input id="loginId" type="text" class="input-block-level" placeholder="Username">
+                <input type="password" class="input-block-level" placeholder="Password">
+                <a id="login_button" class="btn btn-large btn-success" href="#">Start Playing</a>
+                <!--<button id="login_button" class="btn btn-large btn-primary" type="submit">Start Playing!</button>-->
+                <h4 class="form-signin-heading">Don't feel like creating an account? This is just for you:</h4>
+                <a id="anonymous_button" class="btn btn-large btn-primary" href="#">Just GO GO!</a>
             </div>
-            <div id="loading_div" style="display: none;">
+            <div id="loading_div" class="container" style="display: none; width: 400;">
                 <h1 "text-align:center">Loading...</h1>
                 <div class="progress progress-striped active">
                     <div id="progress_bar" class="bar" style="width: 0%;"></div>
@@ -58,7 +55,8 @@
             var tower_data = null;
             var towerImages = {};
             var unitImages = {};
-            var projectileImages = {};
+            var towerProjectileImages = {};
+            var unitProjectileImages = {};
 
             var load_status = 0;
             var load_total = 6;
@@ -68,8 +66,14 @@
             var unitImagesLoaded = 0;
             var unitImagesToLoad = 0;
 
-            $('#login_button').click( function() {
-                login_data = { id: $('input[id=loginId]').val(), username: $('input[id=loginId]').val() };
+            $('#login_button,#anonymous_button').click( function() {
+                var login = '';
+                if(!$('input[id=loginId]').val()) {
+                    login = "anonymous:" + Math.round(new Date().getTime()/1000).toString().slice(-5);
+                } else {
+                    login = $('input[id=loginId]').val();
+                }
+                login_data = { id: login, username: login };
                 login_entered = true;
                 load_status++;
                 $("#login_div").hide();
@@ -78,7 +82,7 @@
                 return false;
             });
 
-            $.getJSON('units.json', function(data) {
+            $.getJSON('settings/units.json', function(data) {
                 unit_data = data;
                 units_loaded = true;
                 load_status++;
@@ -86,7 +90,7 @@
                 checkIfLoadComplete();
             });
 
-            $.getJSON('towers.json', function(data) {
+            $.getJSON('settings/towers.json', function(data) {
                 tower_data = data;
                 towers_loaded = true;
                 load_status++;
@@ -97,15 +101,25 @@
             function loadUnitImages() {
                 for(var key in unit_data) {
                     var imgsrc = unit_data[key].image;
+                    unitImages[key] = new Image();
+                    unitImagesToLoad++;
+                    unitImages[key].onload = function(){
+                        unitImagesLoaded ++;
+                    };
+                    unitImages[key].src = imgsrc;
+                }
+
+                for(var key in unit_data) {
+                    var imgsrc = unit_data[key].projectileImage;
                     var img = new Image();
                     img.key = key;
                     unitImagesToLoad++;
                     img.onload = function(){
                         unitImagesLoaded ++;
-                        unitImages[this.key] = this;
+                        unitProjectileImages[this.key] = this;
                         if(unitImagesLoaded == unitImagesToLoad) {
                             unit_images_loaded = true;
-                            load_status++
+                            load_status++;
                             checkIfLoadComplete();
                         }
                     };
@@ -131,7 +145,7 @@
                     towerImagesToLoad++;
                     img.onload = function(){
                         towerImagesLoaded ++;
-                        projectileImages[this.key] = this;
+                        towerProjectileImages[this.key] = this;
                         if(towerImagesLoaded == towerImagesToLoad) {
                             tower_images_loaded = true;
                             load_status++;
@@ -189,9 +203,7 @@
 			
             function makeEventListeners() {
                 socket.on('connect', function() {
-					//var rand = Math.floor(Math.random()*11);
                     setClientDetails(login_data);
-                    //setClientDetails({name : "anand" + rand, id : rand});
                 });
 
                 socket.on('disconnect', function() {
@@ -204,9 +216,6 @@
                 socket.on('iregistered', function(data) {
 					console.log("iregistered");
                     userDetails = data.userDetails;
-                    //currentRoom = data.room;
-                    //listOfRooms = data.existingRooms;
-                    //populateListOfRooms();
                     if (data.towers) {
                         populateTowers(data.towers);
                     }
@@ -403,7 +412,7 @@
             $('#addUnit').click( function() {
 				var unitsOnBoard = me.unitsOnBoard();
                 if (unitsOnBoard < TOTAL_UNITS) {
-					var unit = new Unit(me, unitsOnBoard+1, {code: "001", position:{ x: 200, y: 220 }}, false, true);
+					var unit = new Unit(me, unitsOnBoard+1, {code: "001", position:{ x: 0.125, y: 0.183 }}, false, true);
 				}
 				return false;
             });
@@ -424,8 +433,6 @@
             });
 
             $('#designMode').click( function() {
-                //now we must have on click listeners for each tower.
-                //socket.emit('saveTowers', towersOnBoard);
                 isInDesignMode = true;
                 return false;
             });
@@ -517,24 +524,11 @@
             var currentStaticUnits = new Array();
 
             function loadStaticUnit(staticUnit) {
-                /*
-                var staticUnit = canvas.display.rectangle({
-                    x: position.x,
-                    y: position.y,
-                    origin: { x: "center", y: "center" },
-                    width: 60,
-                    height: 40,
-                    fill: "linear-gradient(315deg, #079, #013)",
-                    shadow: "0 0 20px rgba(0,0,0, 0.8)"
-                });
-                canvas.addChild(staticUnit);
-                */
                 currentStaticUnits.push(staticUnit);
             }
 
             function removeAllStaticUnits() {
                 for( var i = currentStaticUnits.length - 1; i >= 0; i--) {
-                    //canvas.removeChild(currentStaticUnits[i]);
                     currentStaticUnits.splice(i,1);
                 }
             }

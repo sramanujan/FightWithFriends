@@ -5,7 +5,9 @@
         "height": 211,
         "health":1000,
         "projectileImage": "assets/img/flame.png",
-        "projectileSpeed": 0.01,
+        "projectileSpeed": 0.004,
+        "range": 0.2,
+        "hitsPerSecond": 1,
         "frames": 24
     }
 }
