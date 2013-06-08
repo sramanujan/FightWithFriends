@@ -269,7 +269,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 		this.healthBar = new HealthBar(this.mapResource, 200, 0, this.maxHealth);
 		
 		this.mapResource.cparent = this;
-	    this.proImgObject = projectileImages[tower.code];
+	    this.proImgObject = towerProjectileImages[tower.code];
 	    this.proSpeed = tower_data[tower.code].projectileSpeed;
 	    this.health = tower_data[tower.code].health;
    		this.state = "alive";
