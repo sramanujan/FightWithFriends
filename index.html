@@ -249,6 +249,9 @@
                     if (data.usableTowers && data.usableTowers.length > 0) {
                         populateUsableTowers(data.usableTowers);
                     }
+                    if (userDetails && userDetails.kingdom) {
+                        loadKingdom(userDetails.kingdom);
+                    }
                     myRoom = currentRoom = data.room;
                     enableButtons();
                 });
@@ -400,7 +403,7 @@
             </div>
     		<div class="container-fluid">
                 <div id="main_canvas">
-                    <canvas id="canvas1" width="1600" height="1200" style="border:1px; background-image: url(assets/img/background_map_3.png);">
+                    <canvas id="canvas1" style="border:1px; background-size: 100%;">
                     </canvas>
                 </div>
             </div>
@@ -567,14 +570,18 @@
             }
 
             function loadKingdom(kingdom) {
-                var staticUnits = kingdom.buildings;
+                //var staticUnits = kingdom.buildings;
                 var background = kingdom.theme.background;
+                $('#canvas1').css('background', 'url(' + background + ') no-repeat');
+                $('#canvas1').css('background-size', '100%');
                 //background must be a URL
                 //canvas.background.set("image('" + background + "'");
                 //staticUnits is an array of units with each having an x and a y.
+                /*
                 for( var i = staticUnits.length - 1; i >= 0; i--) {
                     loadStaticUnit(staticUnits[i]);
                 }
+                */
             }
             
             var currentStaticUnits = new Array();
