@@ -48,23 +48,29 @@
             var login_entered = false;
             var towers_loaded = false;
             var units_loaded = false;
-            var unit_images_loaded = false;
-            var tower_images_loaded = false;
+            var unit_assets_loaded = false;
+            var tower_assets_loaded = false;
+            var global_loaded = false;
+            var global_assets_loaded = false;
             var login_data = null;
             var unit_data = null;
             var tower_data = null;
+            var global_data = null;
             var towerImages = {};
             var unitImages = {};
             var towerProjectileImages = {};
             var unitProjectileImages = {};
+            var towerProjectileSounds = {};
+            var unitProjectileSounds = {};
+            var globalSounds = {};
 
             var load_status = 0;
-            var load_total = 6;
+            var load_total = 7;
 
-            var towerImagesLoaded = 0;
-            var towerImagesToLoad = 0;
-            var unitImagesLoaded = 0;
-            var unitImagesToLoad = 0;
+            var towerAssetsLoaded = 0;
+            var towerAssetsToLoad = 0;
+            var unitAssetsLoaded = 0;
+            var unitAssetsToLoad = 0;
 
             $('#login_button,#anonymous_button').click( function() {
                 var login = '';
@@ -82,11 +88,20 @@
                 return false;
             });
 
+
+            $.getJSON('settings/global-sounds.json', function(data) {
+                global_data = data;
+                global_loaded = true;
+                load_status++;
+                loadGlobalAssetData();
+                checkIfLoadComplete();
+            });
+
             $.getJSON('settings/units.json', function(data) {
                 unit_data = data;
                 units_loaded = true;
                 load_status++;
-                loadUnitImages();
+                loadUnitAssetData();
                 checkIfLoadComplete();
             });
 
@@ -94,17 +109,18 @@
                 tower_data = data;
                 towers_loaded = true;
                 load_status++;
-                loadTowerImages();
+                loadTowerAssetData();
                 checkIfLoadComplete();
             });
 
-            function loadUnitImages() {
+
+            function loadUnitAssetData() {
                 for(var key in unit_data) {
                     var imgsrc = unit_data[key].image;
                     unitImages[key] = new Image();
-                    unitImagesToLoad++;
+                    unitAssetsToLoad++;
                     unitImages[key].onload = function(){
-                        unitImagesLoaded ++;
+                        unitAssetsLoaded ++;
                     };
                     unitImages[key].src = imgsrc;
                 }
@@ -113,12 +129,12 @@
                     var imgsrc = unit_data[key].projectileImage;
                     var img = new Image();
                     img.key = key;
-                    unitImagesToLoad++;
+                    unitAssetsToLoad++;
                     img.onload = function(){
-                        unitImagesLoaded ++;
+                        unitAssetsLoaded ++;
                         unitProjectileImages[this.key] = this;
-                        if(unitImagesLoaded == unitImagesToLoad) {
-                            unit_images_loaded = true;
+                        if(unitAssetsLoaded == unitAssetsToLoad) {
+                            unit_assets_loaded = true;
                             load_status++;
                             checkIfLoadComplete();
                         }
@@ -127,13 +143,13 @@
                 }
             }
 
-            function loadTowerImages() {
+            function loadTowerAssetData() {
                 for(var key in tower_data) {
                     var imgsrc = tower_data[key].image;
                     towerImages[key] = new Image();
-                    towerImagesToLoad++;
+                    towerAssetsToLoad++;
                     towerImages[key].onload = function(){
-                        towerImagesLoaded ++;
+                        towerAssetsLoaded ++;
                     };
                     towerImages[key].src = imgsrc;
                 }
@@ -142,18 +158,23 @@
                     var imgsrc = tower_data[key].projectileImage;
                     var img = new Image();
                     img.key = key;
-                    towerImagesToLoad++;
+                    towerAssetsToLoad++;
                     img.onload = function(){
-                        towerImagesLoaded ++;
+                        towerAssetsLoaded++;
                         towerProjectileImages[this.key] = this;
-                        if(towerImagesLoaded == towerImagesToLoad) {
-                            tower_images_loaded = true;
+                        if(towerAssetsLoaded == towerAssetsToLoad) {
+                            tower_assets_loaded = true;
                             load_status++;
                             checkIfLoadComplete();
                         }
                     };
                     img.src = imgsrc;
                 }
+            }
+
+            function loadGlobalAssetData() {
+                global_assets_loaded = true;
+                load_status++;
             }
 
             if(typeof io == "undefined") {
@@ -167,7 +188,7 @@
 
             function checkIfLoadComplete() {
                 $("#progress_bar").width = Math.floor(100 * load_status / load_total );
-                if(units_loaded && towers_loaded && socket_io_loaded && tower_images_loaded && unit_images_loaded && login_entered) {
+                if(units_loaded && towers_loaded && socket_io_loaded && tower_assets_loaded && unit_assets_loaded && login_entered && global_loaded && global_assets_loaded) {
                     loadCompleted();
                 }
             }
@@ -215,6 +236,7 @@
 
                 socket.on('iregistered', function(data) {
 					console.log("iregistered");
+                    //start own kingdom music.
                     userDetails = data.userDetails;
                     if (data.towers) {
                         populateTowers(data.towers);
