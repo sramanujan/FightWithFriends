@@ -16,7 +16,7 @@ db.playerTemplate = {
     attack_xp: 1,
     kingdom: {
         theme: {
-            background: "assets/img/background_map.png"
+            background: "assets/img/background_map_3.png"
         }
     }
 };
