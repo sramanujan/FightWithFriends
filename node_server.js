@@ -74,7 +74,23 @@ io.sockets.on('connection', function (socket) {
                 }
             });
             data2.room = socket[data_namespace].player.name;
-			
+			//TODO: Based on user's level and xp and all that, populate this list
+            data2.usableUnits = new Array();
+            data2.usableTowers = new Array();
+            for (var code in unit_data) {
+                for (var requirement in unit_data[code].requirements) {
+                    if (unit_data[code].requirements[requirement] >= doc[requirement]) {
+                        data2.usableUnits.push(code);
+                    }
+                }
+            }
+            for (var code in tower_data) {
+                for (var requirement in tower_data[code].requirements) {
+                    if (tower_data[code].requirements[requirement] >= doc[requirement]) {
+                        data2.usableTowers.push(code);
+                    }
+                }
+            }
 			socket.join(socket[data_namespace].player.name);
             socket.emit('iregistered', data2);
         } else {

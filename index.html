@@ -219,6 +219,12 @@
                     if (data.towers) {
                         populateTowers(data.towers);
                     }
+                    if (data.usableUnits && data.usableUnits.length > 0) {
+                        populateUsableUnits(data.usableUnits);
+                    }
+                    if (data.usableTowers && data.usableTowers.length > 0) {
+                        populateUsableTowers(data.usableTowers);
+                    }
                     myRoom = currentRoom = data.room;
                     enableButtons();
                 });
@@ -343,8 +349,10 @@
                     <div class="container">
                         <div class="nav-collapse collapse">
                             <ul class="nav" id="attacker_dashboard" style="display: none;">
-                                <li class="">
-                                    <a id="addUnit" href="#" >Add Unit</a>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Add Unit <b class="caret"></b></a>
+                                    <ul id="add_unit_dropdown" class="dropdown-menu">
+                                    </ul>
                                 </li>
                             </ul>
                             <ul class="nav" id="defender_dashboard">
@@ -356,8 +364,10 @@
                                 <li class="">
                                     <a id="designMode" href="#">Design Mode</a>
                                 </li>
-                                <li class="">
-                                    <a id="addTower" href="#">Add Tower</a>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Add Tower <b class="caret"></b></a>
+                                    <ul id="add_tower_dropdown" class="dropdown-menu">
+                                    </ul>
                                 </li>
                             </ul>
                         </div>
@@ -412,29 +422,35 @@
                 });
             }
 
-			/* attacker dashboard */
-            $('#addUnit').click( function() {
-				var unitsOnBoard = me.unitsOnBoard();
-                if (unitsOnBoard < TOTAL_UNITS) {
-					var unit = new Unit(me, unitsOnBoard+1, {code: "001", position:{ x: 0.125, y: 0.183 }}, false, true);
-				}
-				return false;
-            });
-			
-			
-			/* defender dashboard */
-            $('#addTower').click( function() {
-				if (isInDesignMode) {
-					addTower({
-						code : "001",
-						position : { x: 0.100, y: 0.30 }
-					});
-				}
-				else {
-					alert("you must be in design mode to add");
-				}
-                return false;
-            });
+            function populateUsableUnits(usableUnitCodes) {
+                $('#add_unit_dropdown').html("");
+                for (var i = usableUnitCodes.length - 1; i >= 0; i--) {
+                    $('#add_unit_dropdown').append("<li><a class='add_unit_button' id='" + usableUnitCodes[i] + "' href='#'>" + unit_data[usableUnitCodes[i]] + "</a></li>")
+                }
+                $('.add_unit_button').click(function() {
+                    var unitsOnBoard = me.unitsOnBoard();
+                    if (unitsOnBoard < TOTAL_UNITS) {
+                        var unit = new Unit(me, unitsOnBoard+1, {code: $(this).attr("id"), position:{ x: 0.125, y: 0.183 }}, false, true);
+                    }
+                    return false;
+                });
+            }
+
+            function populateUsableTowers(usableTowerCodes) {
+                $('#add_tower_dropdown').html("");
+                for (var i = usableUnitCodes.length - 1; i >= 0; i--) {
+                    $('#add_tower_dropdown').append("<li><a class='add_tower_button' id='" + usableTowerCodes[i] + "' href='#'>" + tower_data[usableTowerCodes[i]] + "</a></li>")
+                }
+                $('.add_tower_button').click(function() {
+                    if (isInDesignMode) {
+                        addTower({code : $(this).attr("id"), position : { x: 0.100, y: 0.30 }});
+                    }
+                    else {
+                        alert("you must be in design mode to add");
+                    }                    
+                    return false;
+                });                
+            }
 
             $('#designMode').click( function() {
                 isInDesignMode = true;
