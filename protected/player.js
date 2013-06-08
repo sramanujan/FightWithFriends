@@ -103,7 +103,7 @@ Player = function(name, id, isServer) {
 		for(var key in this.units) {
 			if (key != 'undefined') {
 				unitPositions[key] = this.units[key].getState();
-				checkVictoryPosition(unitPositions[key].position);
+				this.checkVictoryPosition(unitPositions[key].position);
 			}
 		}
 		towerPositions = {};
@@ -130,7 +130,7 @@ Player = function(name, id, isServer) {
 		this.towers = {};
 	}
 
-	this.checkVictoryPosition() = function(position) {
+	this.checkVictoryPosition = function(position) {
 		//TODO: Temporary, change this with appropriate position check
 		if(position.x > 0.90 && position.y > 0.90) {
 			this.battleOver = true;

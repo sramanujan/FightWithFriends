@@ -425,7 +425,7 @@
             function populateUsableUnits(usableUnitCodes) {
                 $('#add_unit_dropdown').html("");
                 for (var i = usableUnitCodes.length - 1; i >= 0; i--) {
-                    $('#add_unit_dropdown').append("<li><a class='add_unit_button' id='" + usableUnitCodes[i] + "' href='#'>" + unit_data[usableUnitCodes[i]] + "</a></li>")
+                    $('#add_unit_dropdown').append("<li><a class='add_unit_button' id='" + usableUnitCodes[i] + "' href='#'>" + unit_data[usableUnitCodes[i]].name + "</a></li>")
                 }
                 $('.add_unit_button').click(function() {
                     var unitsOnBoard = me.unitsOnBoard();
@@ -438,8 +438,8 @@
 
             function populateUsableTowers(usableTowerCodes) {
                 $('#add_tower_dropdown').html("");
-                for (var i = usableUnitCodes.length - 1; i >= 0; i--) {
-                    $('#add_tower_dropdown').append("<li><a class='add_tower_button' id='" + usableTowerCodes[i] + "' href='#'>" + tower_data[usableTowerCodes[i]] + "</a></li>")
+                for (var i = usableTowerCodes.length - 1; i >= 0; i--) {
+                    $('#add_tower_dropdown').append("<li><a class='add_tower_button' id='" + usableTowerCodes[i] + "' href='#'>" + tower_data[usableTowerCodes[i]].name + "</a></li>")
                 }
                 $('.add_tower_button').click(function() {
                     if (isInDesignMode) {

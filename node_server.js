@@ -47,6 +47,30 @@ io.sockets.on('connection', function (socket) {
         //io.sockets.in(room).emit('roomUpdate', { clientName: clientName, eventName: eventType, value: value});
     }
 
+    socket.sendUserDetails = function(userDetails) {
+        var data = { userDetails: userDetails };
+        data.room = socket[data_namespace].player.name;
+        //TODO: Based on user's level and xp and all that, populate this list
+        data.usableUnits = new Array();
+        data.usableTowers = new Array();
+        for (var code in unit_data) {
+            for (var requirement in unit_data[code].requirements) {
+                if (unit_data[code].requirements[requirement] >= data.userDetails[requirement]) {
+                    data.usableUnits.push(code);
+                }
+            }
+        }
+        for (var code in tower_data) {
+            for (var requirement in tower_data[code].requirements) {
+                if (tower_data[code].requirements[requirement] >= data.userDetails[requirement]) {
+                    data.usableTowers.push(code);
+                }
+            }
+        }
+        socket.join(socket[data_namespace].player.name);
+        socket.emit('iregistered', data);
+    }
+
     socket.on('login', function (data) {
         console.log("login name and id [" + data.username + ":" + data.id +"]");
         if(data.id.split(':')[0] == "anonymous") {
@@ -65,34 +89,15 @@ io.sockets.on('connection', function (socket) {
                     socket[data_namespace].db_bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
                         if(err) {
                             console.log("GOT AN ERROR WHILE SETTING TO COUCHBASE");
+                            return;
                         } else {
-                            data2.userDetails = doc;
+                            socket.sendUserDetails(doc);
                         }
                     });  
                 } else {
-                    data2.userDetails = doc;
+                    socket.sendUserDetails(doc);
                 }
             });
-            data2.room = socket[data_namespace].player.name;
-			//TODO: Based on user's level and xp and all that, populate this list
-            data2.usableUnits = new Array();
-            data2.usableTowers = new Array();
-            for (var code in unit_data) {
-                for (var requirement in unit_data[code].requirements) {
-                    if (unit_data[code].requirements[requirement] >= doc[requirement]) {
-                        data2.usableUnits.push(code);
-                    }
-                }
-            }
-            for (var code in tower_data) {
-                for (var requirement in tower_data[code].requirements) {
-                    if (tower_data[code].requirements[requirement] >= doc[requirement]) {
-                        data2.usableTowers.push(code);
-                    }
-                }
-            }
-			socket.join(socket[data_namespace].player.name);
-            socket.emit('iregistered', data2);
         } else {
             console.log("COUCHBASE GLOBAL BUCKET NOT AVAILABLE!!");
         }
