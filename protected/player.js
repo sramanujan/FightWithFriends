@@ -130,7 +130,7 @@ Player = function(name, id, isServer) {
 	}
 };
 
-Projectile = function(startPosition, targetRelativePosition, imgObject, speed) {
+Projectile = function(owner, startPosition, targetRelativePosition, imgObject, speed) {
 	var projectileObj =  mainScene.createElement(20,20);
     projectileObj.drawImage(imgObject);
     projectileObj.x = startPosition.x;
@@ -143,7 +143,8 @@ Projectile = function(startPosition, targetRelativePosition, imgObject, speed) {
 	if (!this.isServer)
 		mainScene.getStage().append(this.mapResource);
 	console.log("add new projectile ");
-	me.projectiles.push(this);
+	this.owner = owner;
+	this.owner.projectiles.push(this);
 
 	this.update = function() {
 		if(this && this.mapResource ) {
@@ -286,7 +287,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 		if(this.lastProjectileFiredTime != null && ((new Date().getTime() - this.lastProjectileFiredTime)/1000 < 1/this.hitsPerSecond)) {
 			return;
 		}
-		//Projectile({x: this.mapResource.x,y: this.mapResource.y}, target, this.proImgObject, this.proSpeed);
+		new Projectile(this.player, {x: this.mapResource.x,y: this.mapResource.y}, target, this.proImgObject, this.proSpeed);
 		this.lastProjectileFiredTime = new Date().getTime();
 	}
 
@@ -500,7 +501,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		if(this.lastProjectileFiredTime != null && ((new Date().getTime() - this.lastProjectileFiredTime)/1000 < 1/this.hitsPerSecond)) {
 			return;
 		}
-		Projectile({x: this.mapResource.x,y: this.mapResource.y}, target, this.proImgObject, this.proSpeed);
+		new Projectile(this.player, {x: this.mapResource.x, y: this.mapResource.y}, target, this.proImgObject, this.proSpeed);
 		this.lastProjectileFiredTime = new Date().getTime();
 	}
 };
