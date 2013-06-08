@@ -264,6 +264,10 @@
 				
                 socket.on('reAdjust', function (data) {
                     //currentServerPositionArray = data.value;
+                    if(data.battleOver) {
+                        indicateBattleOverAndReset();
+                        return;
+                    }
 					$.each(data.value, function(index, state) {
 						playersOnBoard[state.id].updatePosition(state);
 					});
@@ -508,6 +512,10 @@
                     var myTowerObj = new Tower(me,towersOnBoard+1, tower, false, true); 
                    // me.addTower(myTowerObj);
                 }
+            }
+
+            function indicateBattleOverAndReset() {
+                //TODO: Check if attacker or defender, reset them to their kingdoms, play music, remove filter etc.
             }
 
             function loadKingdom(kingdom) {

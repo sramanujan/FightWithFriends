@@ -164,16 +164,22 @@ setInterval(function() {
             continue;
         }
         var clientList = io.sockets.clients(properName);
+        var battleOver = false;
         var value = new Array();
 		var states = new Array();
         for (var i = 0; i < clientList.length; i++) {
             value.push( clientList[i][data_namespace].player.getState() );
+            if(clientList[i][data_namespace].player.battleOver) {
+                battleOver = true;
+                break;
+            }
         }
-		var rand = Math.floor(Math.random()*11);
-		if (rand == 1) {
-			// console.log("readjust for room " + properName + " = " + JSON.stringify(value));
-		}
-		
+		if(battleOver) {
+            value = { battleOver: true };
+            for (var i = 0; i < clientList.length; i++) {
+                clientList[i][data_namespace].player.performAfterEffectsAndReset();
+            } 
+        }
         io.sockets.in(properName).emit('reAdjust', { value : value }); 
     }
 	// update room once in 10 secs
