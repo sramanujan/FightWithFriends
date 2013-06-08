@@ -4,7 +4,7 @@
         "width": 64,
         "height": 64,
         "health": 1500,
-        "projectileImage": "assets/img/flame.png",
+        "projectileImage": "assets/img/bullet.png",
         "projectileSpeed": 0.01,
         "frames": 24
     },
@@ -13,7 +13,7 @@
         "width": 257,
         "height": 212,
         "health":4000,
-        "projectileImage": "assets/img/flame.png",
+        "projectileImage": "assets/img/bullet.png",
         "projectileSpeed": 0.01,
         "frames": 24
     }

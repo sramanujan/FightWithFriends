@@ -180,7 +180,7 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
     projectileObj.y = startPosition.y;
 
     this.mapResource = projectileObj;
-    this.targetPosition = targetPosition;
+    this.targetPosition = {x: targetPosition.x, y:targetPosition.y}
     this.speed = speed;
     this.hasHit = false;
 	if (!this.isServer)
@@ -209,7 +209,7 @@ Projectile = function(startPosition, targetPosition, imgObject, speed) {
 			var remX = (this.targetPosition.x - this.mapResource.x );
 			var remY = (this.targetPosition.y - this.mapResource.y );
 			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(totalDist < 1) {
+			if(totalDist < 5) {
 				this.hasHit = true;
 				this.mapResource.remove();
 				return false;
@@ -368,6 +368,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			var remY = y - this.mapResource.y;
 			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 			if(dist < 300) {
+				tower.fireProjectile(this.currentPosition);
 				this.health -= 5;
 				if(this.health <= 0) {
 					this.state = "dead";
@@ -447,6 +448,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.code = unit.code;
 	this.maxHealth = unit_data[unit.code].health;
 	this.state = "alive";
+	this.projectileFired = null;
 	this.currentPosition = unit.position;
 	this.isServer = isServer;
 	this.isTower = false;
@@ -466,6 +468,8 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		// this.healthBar.fillStyle = "green";
 		// this.healthBarBg.fillRect(0,0,50,10);
 		// this.healthBar.fillRect(0,0,50,10);
+	    this.proImgObject = unitProjectileImages[this.code];
+	    this.proSpeed = unit_data[this.code].projectileSpeed;
 
 		this.mapResource.cparent = this;
 		// check if it is my unit only then add mouse listener
@@ -599,6 +603,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 				if(tower.health < 0) {
 					tower.state = "dead";
 				}
+				this.fireProjectile(tower.currentPosition);
 				return tower;
 			}
         }
@@ -617,5 +622,11 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		//var relX = event.offsetX / canvasDoc.width;
 		//var relY = event.offsetY / canvasDoc.height;
 		//this.updateTarget({x : relX, y : relY});
+	}
+	this.fireProjectile = function(target) {
+		if(this.projectileFired != null && this.projectileFired.hasHit == false) {
+			return;
+		}
+		this.projectileFired = new Projectile({x: this.mapResource.x,y: this.mapResource.y}, target, this.proImgObject, this.proSpeed);
 	}
 };
