@@ -6,17 +6,18 @@ A RTS Game
 
 Prerequisites
 -------------
-nginx
-nodejs
-couchbase-server
-libcouchbase2
-libcouchbase-dev
+1. nginx
+2. nodejs
+3. couchbase-server
+4. libcouchbase2
+5. libcouchbase-dev
 
 
 Node JS Modules
 ---------------
-npm install socket.io
-npm install couchbase
+1. npm install socket.io
+2. npm install couchbase
+3. npm instlal forever
 
 
 Setup
