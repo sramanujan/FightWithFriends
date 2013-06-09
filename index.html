@@ -297,7 +297,7 @@
 				
                 socket.on('reAdjust', function (data) {
                     //currentServerPositionArray = data.value;
-                    if(data.battleOver) {
+                    if(data.value.battleOver) {
                         indicateBattleOverAndReset();
                         return;
                     }

@@ -441,16 +441,16 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			slope = remY/remX;
 		}
 		var c = this.targetPosition.y - slope*(this.targetPosition.x);
-		var xSpeed = 1.5; //1 pixel per 100 milliseconds
+		var xSpeed = 0.0001; //1 pixel per 100 milliseconds
 		if(dist > 0.05) {
-			this.currentPosition.x += xspeed;
+			this.currentPosition.x += xSpeed;
 			this.currentPosition.y = slope*this.currentPosition.x + c;
 		} else {
 			this.currentPosition.x = this.targetPosition.x;
 			this.currentPosition.y = this.targetPosition.y;
 		}
-		this.currentPosition.x = Math.max(this.currentPosition.x,0.95);
-		this.currentPosition.y = Math.max(this.currentPosition.x,0.95);
+		this.currentPosition.x = Math.min(this.currentPosition.x,0.95);
+		this.currentPosition.y = Math.min(this.currentPosition.x,0.95);
 		this.mapResource.x = this.currentPosition.x * canvasDoc.width;
 		this.mapResource.y = this.currentPosition.y * canvasDoc.height;
 		var towerToAttack = this.getTowerInRange() ;
