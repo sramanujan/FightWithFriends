@@ -373,6 +373,8 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.targetPosition = {x : 0.295, y : 0.295};
 	this.range = unit_data[unit.code].range;
 	this.hitsPerSecond = unit_data[unit.code].hitsPerSecond;
+	this.speed = unit_data[unit.code].unitSpeed;
+	
 	if (!isServer) {
 	    var imgObject = unitImages[unit.code];
 	    var unitObj =  mainScene.createElement(globalUnitWidth, globalUnitHeight);
@@ -457,9 +459,10 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		var remX = this.targetPosition.x - this.currentPosition.x;
 		var remY = this.targetPosition.y - this.currentPosition.y;
 		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-		if(dist > 0.05) {
-			this.currentPosition.x += (remX / dist)*0.05;
-			this.currentPosition.y += (remY / dist)*0.05;
+		
+		if(dist > this.speed) {
+			this.currentPosition.x += (remX / dist)*this.speed;
+			this.currentPosition.y += (remY / dist)*this.speed;
 		} else {
 			this.currentPosition.x += remX;
 			this.currentPosition.y += remY;
