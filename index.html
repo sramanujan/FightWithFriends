@@ -403,7 +403,7 @@
             </div>
     		<div class="container-fluid">
                 <div id="main_canvas">
-                    <canvas id="canvas1" style="border:1px; background-size: 100%;">
+                    <canvas id="canvas1" width="1800" height="900" style="border:1px; background-size: 100%;">
                     </canvas>
                 </div>
             </div>
@@ -522,6 +522,18 @@
 				}
             }
 
+            canvasDoc.ontouchend = function (event) {
+                if (null != currentSelectedUnit) {
+                    var relX = (event.offsetX - (currentSelectedUnit.mapResource.width/2)) / canvasDoc.width;
+                    var relY = (event.offsetY - (currentSelectedUnit.mapResource.height/2)) / canvasDoc.height;
+                    currentSelectedUnit.updateTarget({x : relX, y : relY });
+                    
+                    currentSelectedUnit.mapResource.opacity = currentSelectedUnit.mapResource.opacity < 1 ? 1 : 0.5 ;
+                    currentSelectedUnit = null;
+                }
+            }
+            touchend
+
             var mainScene = canvas.Scene.new({
                 name: "MainScene",
                 materials: {
@@ -540,6 +552,17 @@
 					pushToServer();
                 }
             });
+
+            //TODO: Define global screen width and height, we will use percentages...
+            var globalHeight = 900;
+            var globalWidth = 1800;
+            var globalUnitHeight = 100;
+            var globalUnitWidth = 100;
+            var globalTowerHeight = 200;
+            var globalTowerWidth = 200;
+            var globalProjectileHeight = 50;
+            var globalProjectileWidth = 50;
+
 
             function removeBox(clientName) {
                 for (var i = 0; i < positionArray.length; i++) {
@@ -572,8 +595,8 @@
             function loadKingdom(kingdom) {
                 //var staticUnits = kingdom.buildings;
                 var background = kingdom.theme.background;
-                $('#canvas1').css('background', 'url(' + background + ') no-repeat');
-                $('#canvas1').css('background-size', '100%');
+                $('#canvas1').css('background', 'url(' + background + ')');
+                //$('#canvas1').css('background-size', '100%');
                 //background must be a URL
                 //canvas.background.set("image('" + background + "'");
                 //staticUnits is an array of units with each having an x and a y.

@@ -8,6 +8,8 @@
         "projectileImage": "assets/img/flame.png",
         "projectileSpeed": 0.004,
         "projectileSound": "assets/sound/big_fire_sound.mp3",
+        "projectileWidth": 60,
+        "projectileHeight": 48,
         "range": 0.2,
         "hitsPerSecond": 1,
         "frames": 24,
