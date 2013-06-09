@@ -365,7 +365,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.currentPosition = unit.position;
 	this.isServer = isServer;
 	this.isTower = false;
-	this.targetPosition = {x : 0, y : 0};
+	this.targetPosition = {x : 0.95, y : 0.95};
 	this.range = unit_data[unit.code].range;
 	this.hitsPerSecond = unit_data[unit.code].hitsPerSecond;
 	if (!isServer) {
@@ -430,11 +430,11 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		var remY = this.targetPosition.y - this.currentPosition.y;
 		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 		if(dist > 0.05) {
-			this.currentPosition.x += (remX / dist)*0.05;
-			this.currentPosition.y += (remY / dist)*0.05;
+			this.currentPosition.x += (remX / dist);//*0.05;
+			this.currentPosition.y += (remY / dist);//*0.05;
 		} else {
-			this.currentPosition.x += remX;
-			this.currentPosition.y += remY;
+			this.currentPosition.x = this.targetPosition.x;
+			this.currentPosition.y = this.targetPosition.y;
 		}
 		
 		this.mapResource.x = this.currentPosition.x * canvasDoc.width;
