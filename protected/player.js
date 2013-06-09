@@ -175,20 +175,6 @@ Projectile = function(owner, startPosition, targetRelativePosition, imgObject, s
 				this.mapResource.x += canvasDoc.width * remX;
 				this.mapResource.y += canvasDoc.height * remY;
 				return true;
-			}*/
-			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(totalDist < 0.05) {
-				this.hasHit = true;
-				this.mapResource.remove();
-				return false;
-			} else if(this.speed < totalDist) {
-				this.mapResource.x += canvasDoc.width * remX * (this.speed /  totalDist);
-				this.mapResource.y += canvasDoc.height * remY * (this.speed /  totalDist);	
-				return true;
-			} else {
-				this.mapResource.x += canvasDoc.width * remX;
-				this.mapResource.y += canvasDoc.height * remY;
-				return true;
 			}
 		}
 
