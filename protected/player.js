@@ -369,7 +369,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.currentPosition = unit.position;
 	this.isServer = isServer;
 	this.isTower = false;
-	this.targetPosition = {x : 0.95, y : 0.95};
+	
 	this.range = unit_data[unit.code].range;
 	this.hitsPerSecond = unit_data[unit.code].hitsPerSecond;
 	if (!isServer) {
@@ -381,8 +381,9 @@ Unit = function(player, id, unit, isServer, isOwner) {
 
 	    this.proImgObject = unitProjectileImages[this.code];
 	    this.proSpeed = unit_data[this.code].projectileSpeed;
-
+	    this.targetPosition = {x : 0.95, y : 0.95};
 		this.mapResource.cparent = this;
+
 		// check if it is my unit only then add mouse listener
 		if (this.isOwner) {
 			this.mapResource.on("mousedown", function(e) {
@@ -391,6 +392,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			this.mapResource.on("touchstart", function(e) {
 				this.cparent.mouseDown(e);
 			});
+			
 		}
 	    this.health = unit_data[unit.code].health;
 	    this.state = "alive";
@@ -428,7 +430,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			return false;
 		}
 		//If unit has reached its target position, update target to goal
-		if(this.targetPosition.x == this.currentPosition.x && this.targetPosition.y == this.currentPosition.y) {
+		if((Math.abs(this.targetPosition.x - this.currentPosition.x) < 0.01 )&& (Math.abs(this.targetPosition.y - this.currentPosition.y)< 0.01)) {
 			this.targetPosition.x = 0.95;
 			this.targetPosition.y = 0.95;
 		}
@@ -441,16 +443,29 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			slope = remY/remX;
 		}
 		var c = this.targetPosition.y - slope*(this.targetPosition.x);
-		var xSpeed = 0.0001; //1 pixel per 100 milliseconds
+		var xSpeed = 0.001; //1 pixel per 100 milliseconds
 		if(dist > 0.05) {
-			this.currentPosition.x += xSpeed;
+
+			if(remX > 0) {
+				if(Math.abs(remX) > 0.001) {
+					this.currentPosition.x += xSpeed;
+				}
+			}
+			else {
+				if(Math.abs(remX) > 0.001) {
+					this.currentPosition.x -= xSpeed;
+				}
+			}
+			
 			this.currentPosition.y = slope*this.currentPosition.x + c;
 		} else {
 			this.currentPosition.x = this.targetPosition.x;
 			this.currentPosition.y = this.targetPosition.y;
 		}
+
+		console.log("Plan to reach ("+this.targetPosition.x+","+this.targetPosition.y+",) now at ("+this.currentPosition.x+","+this.currentPosition.y+")");
 		this.currentPosition.x = Math.min(this.currentPosition.x,0.95);
-		this.currentPosition.y = Math.min(this.currentPosition.x,0.95);
+		this.currentPosition.y = Math.min(this.currentPosition.y,0.95);
 		this.mapResource.x = this.currentPosition.x * canvasDoc.width;
 		this.mapResource.y = this.currentPosition.y * canvasDoc.height;
 		var towerToAttack = this.getTowerInRange() ;
