@@ -1,0 +1,6 @@
+{
+    "kingdom_sound": "assets/sound/own_kingdom_music.mp3",
+    "battle_sound": "assets/sound/battle_music.mp3",
+    "victory_sound": "assets/sound/victory_sound.mp3",
+    "defeat_sound": "assets/sound/defeat_sound.mp3"
+}

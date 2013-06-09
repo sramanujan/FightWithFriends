@@ -1,10 +1,10 @@
 <html>
 <head> 
-	<script src="assets/js/global.js"></script>
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
     <script src="protected/player.js"></script>
-        <title> Testing Web Socket... </title> 
+    <script src="assets/js/jquery.ba-resize.min.js"></script>
+        <title> Fight With Friends! </title> 
         <!-- Le styles -->
         <link href="assets/css/bootstrap.css" rel="stylesheet">
         <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
@@ -22,94 +22,211 @@
         <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
         <link rel="shortcut icon" href="assets/ico/favicon.png">
 </head>
-    <body>
-        <div id="fb-root"></div>
+    <body >
+        <div id="start_screen">
+            <div class="jumbotron">
+                <h1>FIGHT WITH FRIENDS!!</h1>
+                <p class="lead">Team up with your friends! Improve your Kingdom, and make your way through others' - Show them that you can RULE!</p>
+            </div>
+            <div id="login_div" class="jumbotron" style="width: 300; margin-right: auto; margin-left: auto;">
+                <h2 class="form-signin-heading">Please sign in</h2>
+                <input id="loginId" type="text" class="input-block-level" placeholder="Username">
+                <input type="password" class="input-block-level" placeholder="Password">
+                <a id="login_button" class="btn btn-large btn-success" href="#">Start Playing</a>
+                <!--<button id="login_button" class="btn btn-large btn-primary" type="submit">Start Playing!</button>-->
+                <h4 class="form-signin-heading">Don't feel like creating an account? This is just for you:</h4>
+                <a id="anonymous_button" class="btn btn-large btn-primary" href="#">Just GO GO!</a>
+            </div>
+            <div id="loading_div" class="container" style="display: none; width: 400;">
+                <h1 "text-align:center">Loading...</h1>
+                <div class="progress progress-striped active">
+                    <div id="progress_bar" class="bar" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
         <script>
             var socket_io_loaded = false;
-            var fb_connected = false;
-            var fb_response = null;
+            var login_entered = false;
+            var towers_loaded = false;
+            var units_loaded = false;
+            var unit_assets_loaded = false;
+            var tower_assets_loaded = false;
+            var global_loaded = false;
+            var global_assets_loaded = false;
+            var login_data = null;
+            var unit_data = null;
+            var tower_data = null;
+            var global_data = null;
+            var towerImages = {};
+            var unitImages = {};
+            var towerProjectileImages = {};
+            var unitProjectileImages = {};
+            var towerProjectileSounds = {};
+            var unitProjectileSounds = {};
+            var globalSounds = {};
+
+            var load_status = 0;
+            var load_total = 7;
+
+            var towerAssetsLoaded = 0;
+            var towerAssetsToLoad = 0;
+            var unitAssetsLoaded = 0;
+            var unitAssetsToLoad = 0;
+
+            $('#login_button,#anonymous_button').click( function() {
+                var login = '';
+                if(!$('input[id=loginId]').val()) {
+                    login = "anonymous:" + Math.round(new Date().getTime()/1000).toString().slice(-5);
+                } else {
+                    login = $('input[id=loginId]').val();
+                }
+                login_data = { id: login, username: login };
+                login_entered = true;
+                load_status++;
+                $("#login_div").hide();
+                $("#loading_div").show();
+                checkIfLoadComplete();
+                return false;
+            });
+
+
+            $.getJSON('settings/global-sounds.json', function(data) {
+                global_data = data;
+                global_loaded = true;
+                load_status++;
+                loadGlobalAssetData();
+                checkIfLoadComplete();
+            });
+
+            $.getJSON('settings/units.json', function(data) {
+                unit_data = data;
+                units_loaded = true;
+                load_status++;
+                loadUnitAssetData();
+                checkIfLoadComplete();
+            });
+
+            $.getJSON('settings/towers.json', function(data) {
+                tower_data = data;
+                towers_loaded = true;
+                load_status++;
+                loadTowerAssetData();
+                checkIfLoadComplete();
+            });
+
+
+            function loadUnitAssetData() {
+                for(var key in unit_data) {
+                    var imgsrc = unit_data[key].image;
+                    unitImages[key] = new Image();
+                    unitAssetsToLoad++;
+                    unitImages[key].onload = function(){
+                        unitAssetsLoaded ++;
+                    };
+                    unitImages[key].src = imgsrc;
+                }
+
+                for(var key in unit_data) {
+                    var imgsrc = unit_data[key].projectileImage;
+                    var img = new Image();
+                    img.key = key;
+                    unitAssetsToLoad++;
+                    img.onload = function(){
+                        unitAssetsLoaded ++;
+                        unitProjectileImages[this.key] = this;
+                        if(unitAssetsLoaded == unitAssetsToLoad) {
+                            unit_assets_loaded = true;
+                            load_status++;
+                            checkIfLoadComplete();
+                        }
+                    };
+                    img.src = imgsrc;
+                }
+            }
+
+            function loadTowerAssetData() {
+                for(var key in tower_data) {
+                    var imgsrc = tower_data[key].image;
+                    towerImages[key] = new Image();
+                    towerAssetsToLoad++;
+                    towerImages[key].onload = function(){
+                        towerAssetsLoaded ++;
+                    };
+                    towerImages[key].src = imgsrc;
+                }
+
+                for(var key in tower_data) {
+                    var imgsrc = tower_data[key].projectileImage;
+                    var img = new Image();
+                    img.key = key;
+                    towerAssetsToLoad++;
+                    img.onload = function(){
+                        towerAssetsLoaded++;
+                        towerProjectileImages[this.key] = this;
+                        if(towerAssetsLoaded == towerAssetsToLoad) {
+                            tower_assets_loaded = true;
+                            load_status++;
+                            checkIfLoadComplete();
+                        }
+                    };
+                    img.src = imgsrc;
+                }
+            }
+
+            function loadGlobalAssetData() {
+                global_assets_loaded = true;
+                load_status++;
+            }
 
             if(typeof io == "undefined") {
                 $.getScript('http://' + window.location.hostname + ':8028/socket.io/socket.io.js', function() {
-                    socketIoLoaded();
+                    socket_io_loaded = true;
+                    load_status++;
+                    checkIfLoadComplete();
                 });
             }
 
-            window.fbAsyncInit = function() {
-                FB.init({
-                    appId      : FB_APP_ID, // App ID
-                    channelUrl : '//' + window.location.hostname + '/channel.html', // Channel File
-                    status     : true, // check login status
-                    cookie     : true, // enable cookies to allow the server to access the session
-                    xfbml      : true  // parse XFBML
-                });
-                FB.Event.subscribe('auth.authResponseChange', function(response) {
-                    // Here we specify what we do with the response anytime this event occurs. 
-                    if (response.status === 'connected') {
-                        fbConnected();
-                    } else if (response.status === 'not_authorized') {
-                        FB.login();
-                    } else {
-                        FB.login();
-                    }
-                });
-            };
 
-            // Load the SDK asynchronously
-            (function(d){
-                var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
-                if (d.getElementById(id)) {return;}
-                js = d.createElement('script'); js.id = id; js.async = true;
-                js.src = "//connect.facebook.net/en_US/all.js";
-                ref.parentNode.insertBefore(js, ref);
-            }(document));
-
-            function socketIoLoaded() {
-                socket_io_loaded = true;
-                if(fb_connected || true) {
+            function checkIfLoadComplete() {
+                $("#progress_bar").width(Math.floor(100 * load_status / load_total ).toString() + "%");
+                if(units_loaded && towers_loaded && socket_io_loaded && tower_assets_loaded && unit_assets_loaded && login_entered && global_loaded && global_assets_loaded) {
                     loadCompleted();
                 }
             }
 
-            function fbConnected() {
-                FB.api('/me', function(response) {
-                    fb_response = response;
-                    console.log(fb_response);
-                    fb_connected = true;
-                    if(socket_io_loaded) {
-                        loadCompleted();
-                    }
-                });
-            }
-
-			var TOTAL_UNITS = 4;
+			var TOTAL_UNITS = 5;
 			var SERVER = false;
 			var categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
 			var COLORS = new Array("blue", "red", "green", "yellow");
+            var isInDesignMode = false;
 			
             var userDetails = null;
             var socket = null;
             var listOfRooms = {};
             var currentRoom = null;
+            var myRoom = null;
 			
             var positionArray = new Array();
             var currentServerPositionArray = new Array();
 			var me 				= null;
-			var playersOnBoard 	= new Array();
+			var playersOnBoard 	= {};
 			var currentSelectedUnit = null;
 			
-			var whoami			= categories.Attacker;
+			//var whoami			= categories.Attacker;
+            var whoami          = categories.Defender;
 			var batchedStates 	= new Array();
 
             function loadCompleted() {
                 socket = io.connect('http://' + window.location.hostname + ':8028', { 'connect timeout': 10000 });
+                $("#start_screen").hide();
+                $("#gamediv").show();
+                resizeCanvas();
                 makeEventListeners();
             }
 			
             function makeEventListeners() {
                 socket.on('connect', function() {
-					var rand = Math.floor(Math.random()*11);
-                    setClientDetails({name : "anand" + rand, id : rand});
+                    setClientDetails(login_data);
                 });
 
                 socket.on('disconnect', function() {
@@ -119,49 +236,97 @@
                     }
                 });
 
-                socket.on('registered', function(data) {
+                socket.on('iregistered', function(data) {
+					console.log("iregistered");
+                    //start own kingdom music.
                     userDetails = data.userDetails;
-                    listOfRooms = data.existingRooms;
-                    populateListOfRooms();
+                    if (data.towers) {
+                        populateTowers(data.towers);
+                    }
+                    if (data.usableUnits && data.usableUnits.length > 0) {
+                        populateUsableUnits(data.usableUnits);
+                    }
+                    if (data.usableTowers && data.usableTowers.length > 0) {
+                        populateUsableTowers(data.usableTowers);
+                    }
+                    if (userDetails && userDetails.kingdom) {
+                        loadKingdom(userDetails.kingdom);
+                    }
+                    myRoom = currentRoom = data.room;
+                    enableButtons();
                 });
 
-                socket.on('joined', function(data) {
+                socket.on('ijoined', function(data) {
+					console.log("i joined " + data.room);
                     currentRoom = data.room;
-                    //positionArray = data.value;
-                    //createBoxes(data.value);
-					enableButtons();
+					$.each(data.value, function(index, state) {
+						if (state.id != me.id) {
+							var opp = new Player(state.name, state.id, false);
+							playersOnBoard[state.id] = opp;
+							playersOnBoard[state.id].updatePosition(state);
+						}
+					});
+					whoami          = categories.Attacker;
+                    $('#friendList').html("");
+                    enableButtons();
                 });
 
                 socket.on('roomUpdate', function (data) {
                     var updateFrom = data.clientName;
+                    var updateFromId = data.clientId;
                     var updateType = data.eventName;
                     var value = data.value;
                     if(updateType == 'update') {
-                        positionArray =  value;
+						// no more comes here
+                        
                     } else if(updateType == 'join') {
-                        addBox(value.position);
+                        // create an opponent player object
+						var opp = new Player(updateFrom, updateFromId, false);
+						playersOnBoard[opp.id] = opp;
+						// add to the player list
                     } else if(updateType == 'leave') {
-                        removeBox(updateFrom);
+                        //removeBox(updateFrom);
                     }
                     console.log("Client: " + updateFrom + " Event: " + updateType + " Value: " + value);
                 });
 
+				socket.on('updateRoomList', function (data) {
+					listOfRooms = data.value.existingRooms;
+					populateListOfRooms();
+				});
+				
                 socket.on('reAdjust', function (data) {
-                    currentServerPositionArray = data.value;
+                    //currentServerPositionArray = data.value;
+                    if(data.battleOver) {
+                        indicateBattleOverAndReset();
+                        return;
+                    }
+					$.each(data.value, function(index, state) {
+						playersOnBoard[state.id].updatePosition(state);
+					});
                 });
             }
 
             function setClientDetails(data) {
-				me = new Player(data.name, data.id);
-				playersOnBoard.push(me);
-                socket.emit('setClientDetails', data);
+				me = new Player(data.username, data.id, false);
+				playersOnBoard[me.id] = me;
+				$("#whoami").html(me.name);
+                socket.emit('login', data);
             }
 
             function joinRoom(roomName) {
+				// first leave the room you are in
+				leaveRoom();
+				// reset your canvas
+				mcanvas = mainScene.getCanvas();
+				mcanvas.clear();
+				
                 socket.emit('joinRoom', { room: roomName });
             }
 
             function leaveRoom() {
+				// reset the player units and towers before leaving
+				me.leaveRoom();
                 socket.emit('leaveRoom', { room: currentRoom });
             }
 
@@ -173,69 +338,166 @@
 				if (state != null) {
 					batchedStates.push(state);
 				}
-				socket.emit('updateState', { states: batchedStates });
+				//socket.emit('updateState', { states: batchedStates });
 				
 				// empty the array - find the right way
-				batchedStates = new Array();
+				//batchedStates = new Array();
+			}
+			
+			function pushToServer() {
+				if (null != me && me.unitsOnBoard() > 0) {
+					states = me.getState();
+					socket.emit('updateState', { states: me.getState() });
+				
+					// empty the array - find the right way
+					batchedStates = new Array();
+				}
+                else if (null != me && me.towersOnBoard() > 0) {
+					if (!isInDesignMode) {
+						socket.emit('updateState', { states: me.getState() });
+					}
+                }
 			}
 
 			function enableButtons() {
 				if (whoami == categories.Attacker) {
 					$("#attacker_dashboard").show();
+                    $("#defender_dashboard").hide();
 				}
 				else {
+                    $("#attacker_dashboard").hide();
+                    $("#defender_dashboard").show();
 				}
 			}
         </script>
-		<div class="container-fluid">
-            <div class="row-fluid">
-                <div class="span2">
-                    <fb:login-button show-faces="true" width="200" max-rows="1"></fb:login-button>
-                    <br />
-                    <br />
-                    <select id='roomList' name='roomListSelect'>
-                    </select>
-                    <a class="btn" id="joinSelected" href="">JOIN</a>
-                    <br />
-                    <br />
-                    <input type='text' id='roomName' align='left' name='roomNameBtn'/>
-                    <a class="btn" id="createRoom" href="">CREATE</a>
-                </div>
-                <div class="span6">
-                    <div id="main_canvas">
-                        <canvas id="canvas1" width="760" height="465" style="border:1px; background-image: url(assets/img/background_map.png);">
-                        </canvas>
+        <div id="gamediv" style="display: none;">
+            <div class="navbar navbar-inverse navbar-fixed-top">
+                <div class="navbar-inner">
+                    <div class="container">
+                        <div class="nav-collapse collapse">
+                            <ul class="nav" id="attacker_dashboard" style="display: none;">
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Add Unit <b class="caret"></b></a>
+                                    <ul id="add_unit_dropdown" class="dropdown-menu">
+                                    </ul>
+                                </li>
+                            </ul>
+                            <ul class="nav" id="defender_dashboard">
+    							<li class="" id="whoami" style="color:red">
+                                </li>
+                                <li class="">
+                                    <a id="saveMode" href="#">Save</a>
+                                </li>
+                                <li class="">
+                                    <a id="designMode" href="#">Design Mode</a>
+                                </li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Add Tower <b class="caret"></b></a>
+                                    <ul id="add_tower_dropdown" class="dropdown-menu">
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-				<div class="span2" style="display:none" id="attacker_dashboard">
-					<input type="text" id="addUnit" class="btn" value="Add Unit">
-				</div>
+            </div>
+    		<div class="container-fluid">
+                <div id="main_canvas">
+                    <canvas id="canvas1" style="border:1px; background-size: 100%;">
+                    </canvas>
+                </div>
+            </div>
+            <div class="navbar navbar-inverse navbar-fixed-bottom">
+                <div class="navbar-inner">
+                    <div class="container">
+                        <div class="nav-collapse collapse">
+
+                            <ul class="nav" id="friendList">
+                            </ul>
+                            <form class="navbar-search pull-left" style="display: none;">
+                                <input type="text" class="search-query" placeholder="Search">
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <script>
-
-            $('#joinSelected').click( function() {
-                joinRoom($("#roomList option:selected").text());
-				return false;
+            $('#main_canvas').bind('resize', function(){
+                resizeCanvas();
             });
 
-            $('#createRoom').click( function() {
-                joinRoom($('#roomName').val());
-				return false;
+            function resizeCanvas() {
+                $('#canvas1').width($('#main_canvas').width().toString());
+                $('#canvas1').height($('#main_canvas').height().toString());
+            }
+
+            function populateListOfRooms() {
+                var i =0;
+                $('#friendList').html("");
+                for (var roomName in listOfRooms) {
+					roomName = roomName.replace('/','')
+                    if (!roomName || roomName == myRoom) {
+                        continue;
+                    }
+                    i++;
+                    if(i == 5) {
+                        $('#friendList').html("<a href='#' class='dropdown-toggle' data-toggle='dropdown'>Other Friends <b class='caret'></b></a><ul class='dropdown-menu id=extraFriendList'></ul>");
+                    }
+                    if(i < 5) {
+                        $('#friendList').append("<li><a class='friends' id='" + roomName + "' href='#'>" + roomName + "</a></li>");
+                    }
+                    else {
+                        $("#extraFriendList").append("<li><a class='friends' id='" + roomName + "' href='#'>" + roomName + "</a></li>");
+                    }    
+                }
+                $('.friends').click(function() {
+                    joinRoom($(this).attr("id"));
+                    return false;
+                });
+            }
+
+            function populateUsableUnits(usableUnitCodes) {
+                $('#add_unit_dropdown').html("");
+                for (var i = usableUnitCodes.length - 1; i >= 0; i--) {
+                    $('#add_unit_dropdown').append("<li><a class='add_unit_button' id='" + usableUnitCodes[i] + "' href='#'>" + unit_data[usableUnitCodes[i]].name + "</a></li>")
+                }
+                $('.add_unit_button').click(function() {
+                    var unitsOnBoard = me.unitsOnBoard();
+                    if (unitsOnBoard < TOTAL_UNITS) {
+                        var unit = new Unit(me, unitsOnBoard+1, {code: $(this).attr("id"), position:{ x: 0.125, y: 0.183 }}, false, true);
+                    }
+                    return false;
+                });
+            }
+
+            function populateUsableTowers(usableTowerCodes) {
+                $('#add_tower_dropdown').html("");
+                for (var i = usableTowerCodes.length - 1; i >= 0; i--) {
+                    $('#add_tower_dropdown').append("<li><a class='add_tower_button' id='" + usableTowerCodes[i] + "' href='#'>" + tower_data[usableTowerCodes[i]].name + "</a></li>")
+                }
+                $('.add_tower_button').click(function() {
+                    if (isInDesignMode) {
+                        addTower({code : $(this).attr("id"), position : { x: 0.100, y: 0.30 }});
+                    }
+                    else {
+                        alert("you must be in design mode to add");
+                    }                    
+                    return false;
+                });                
+            }
+
+            $('#designMode').click( function() {
+                isInDesignMode = true;
+                return false;
             });
-			
-			/* attacker dashboard */
-            $('#addUnit').click( function() {
-				var unitsOnBoard = me.unitsOnBoard();
-                if (unitsOnBoard < TOTAL_UNITS) {
-					var unit = new Unit(unitsOnBoard+1, true, { x: 20, y: 0 });
-					me.addUnit(unit);
-				}
-				return false;
+
+            $('#saveMode').click( function() {
+                isInDesignMode = false;
+				states = me.getState();
+                socket.emit('saveTowers', { states: me.getState() });
+                return false;
             });
-			
-			
-			/* defender dashboard */
 			
 
             var canvasDoc = document.getElementById('canvas1');
@@ -251,10 +513,12 @@
 
             canvasDoc.onmouseup = function (event) {
 				if (null != currentSelectedUnit) {
-					var relX = event.offsetX / canvasDoc.width;
-					var relY = event.offsetY / canvasDoc.height;
+					var relX = (event.offsetX - (currentSelectedUnit.mapResource.width/2)) / canvasDoc.width;
+					var relY = (event.offsetY - (currentSelectedUnit.mapResource.height/2)) / canvasDoc.height;
 					currentSelectedUnit.updateTarget({x : relX, y : relY });
-					currentSelectedUnit = null;
+					
+					currentSelectedUnit.mapResource.opacity = currentSelectedUnit.mapResource.opacity < 1 ? 1 : 0.5 ;
+                    currentSelectedUnit = null;
 				}
             }
 
@@ -262,44 +526,20 @@
                 name: "MainScene",
                 materials: {
                     images: {
-                        knight: "assets/img/knight.png"
+                        knight: "assets/img/knight.png",
                     }
                 },
                 ready: function(stage) {
                 },
                 render: function(stage) {
-                    for (var i = 0; i < playersOnBoard.length; i++) {
-						playersOnBoard[i].update();
-						/*
-                        var remX = (positionArray[i].position.x * canvasDoc.width) - boxes[i].x;
-                        var remY = (positionArray[i].position.y * canvasDoc.height)- boxes[i].y;
-                        var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-                        if(dist != 0) {
-                            boxes[i].x += (remX / dist);
-                            boxes[i].y += (remY / dist);
-                        }
-
-                        if(currentServerPositionArray && currentServerPositionArray[i] && currentServerPositionArray.position) {
-                            if( Math.abs((boxes[i].x / canvasDoc.width) - currentServerPositionArray[i].position.x) > 0.005 ) {
-                                boxes[i].x = currentServerPositionArray[i].position.x * canvasDoc.width;
-                            }
-
-                            if( Math.abs((boxes[i].y / canvasDoc.height) - currentServerPositionArray[i].position.y) > 0.005 ) {
-                                boxes[i].y = currentServerPositionArray[i].position.y * canvasDoc.height;
-                            }
-                        }
-						*/
-
+                    for (var key in playersOnBoard) {
+						playersOnBoard[key].update();
                     }
+
                     stage.refresh();
+					pushToServer();
                 }
             });
-
-            function Box(position) {
-                var button = mainScene.createElement(64,64);
-                button.drawImage("knight");
-                return button;
-            }
 
             function removeBox(clientName) {
                 for (var i = 0; i < positionArray.length; i++) {
@@ -309,62 +549,65 @@
                     }
                 }
             }
-/*
-            function createBoxes(value) {
-                for (var i = 0; i < value.length; i++) {
-                    addBox(value[i].position);
+
+            function populateTowers(listOfTowers) {
+				console.log("populateTowers");
+                for (var i = listOfTowers.length - 1; i >= 0; i--) {
+                    addTower(listOfTowers[i])
                 }
-                //canvasLoop.start();
             }
 
-            function addBox(position) {
-                boxes.push(Box(position));
-                mainScene.getStage().append(boxes[boxes.length - 1])
-                //canvas.addChild(boxes[boxes.length - 1]);
-            }
-*/
-            function populateListOfRooms() {
-                for (var roomName in listOfRooms) {
-                    $("#roomList").append("<option value='1'>" + roomName.replace('/','') + "</option>") 
+            function addTower(tower) {
+                var towersOnBoard = me.towersOnBoard();
+                if (towersOnBoard < TOTAL_UNITS) {
+                    var myTowerObj = new Tower(me,towersOnBoard+1, tower, false, true); 
+                   // me.addTower(myTowerObj);
                 }
+            }
+
+            function indicateBattleOverAndReset() {
+                //TODO: Check if attacker or defender, reset them to their kingdoms, play music, remove filter etc.
             }
 
             function loadKingdom(kingdom) {
-                var staticUnits = kingdom.buildings;
+                //var staticUnits = kingdom.buildings;
                 var background = kingdom.theme.background;
+                $('#canvas1').css('background', 'url(' + background + ') no-repeat');
+                $('#canvas1').css('background-size', '100%');
                 //background must be a URL
                 //canvas.background.set("image('" + background + "'");
                 //staticUnits is an array of units with each having an x and a y.
+                /*
                 for( var i = staticUnits.length - 1; i >= 0; i--) {
                     loadStaticUnit(staticUnits[i]);
                 }
+                */
             }
             
             var currentStaticUnits = new Array();
 
             function loadStaticUnit(staticUnit) {
-                /*
-                var staticUnit = canvas.display.rectangle({
-                    x: position.x,
-                    y: position.y,
-                    origin: { x: "center", y: "center" },
-                    width: 60,
-                    height: 40,
-                    fill: "linear-gradient(315deg, #079, #013)",
-                    shadow: "0 0 20px rgba(0,0,0, 0.8)"
-                });
-                canvas.addChild(staticUnit);
-                */
                 currentStaticUnits.push(staticUnit);
             }
 
             function removeAllStaticUnits() {
                 for( var i = currentStaticUnits.length - 1; i >= 0; i--) {
-                    //canvas.removeChild(currentStaticUnits[i]);
                     currentStaticUnits.splice(i,1);
                 }
             }
 
         </script>
+        <script src="assets/js/bootstrap-transition.js"></script>
+        <script src="assets/js/bootstrap-alert.js"></script>
+        <script src="assets/js/bootstrap-modal.js"></script>
+        <script src="assets/js/bootstrap-dropdown.js"></script>
+        <script src="assets/js/bootstrap-scrollspy.js"></script>
+        <script src="assets/js/bootstrap-tab.js"></script>
+        <script src="assets/js/bootstrap-tooltip.js"></script>
+        <script src="assets/js/bootstrap-popover.js"></script>
+        <script src="assets/js/bootstrap-button.js"></script>
+        <script src="assets/js/bootstrap-collapse.js"></script>
+        <script src="assets/js/bootstrap-carousel.js"></script>
+        <script src="assets/js/bootstrap-typeahead.js"></script>
     </body>
 </html>

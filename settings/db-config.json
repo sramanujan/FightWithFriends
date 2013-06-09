@@ -1,0 +1,6 @@
+{
+   "hosts" : [ "localhost:8091" ],
+   "user" : "fwf-root",
+   "password" : "fwf-rootpwd",
+   "bucket" : "fwf"
+}

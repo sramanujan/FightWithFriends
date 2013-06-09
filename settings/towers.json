@@ -1,0 +1,18 @@
+{
+    "001": {
+        "name": "EsuohThgil Ytima",
+        "image": "assets/img/BROKEN-Tower_Anim_Low_Res.png",
+        "width": 250,
+        "height": 211,
+        "health":1000,
+        "projectileImage": "assets/img/flame.png",
+        "projectileSpeed": 0.004,
+        "projectileSound": "assets/sound/big_fire_sound.mp3",
+        "range": 0.2,
+        "hitsPerSecond": 1,
+        "frames": 24,
+        "requirements": {
+            "level": 1
+        }
+    }
+}

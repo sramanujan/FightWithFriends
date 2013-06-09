@@ -1,6 +1,0 @@
-{
-   "hosts" : [ "dev2-hackathon:8091" ],
-   "user" : "fwf-root",
-   "password" : "fwf-rootpwd",
-   "bucket" : "fwf"
-}
