@@ -1,5 +1,6 @@
 var SERVER = true;
 require('./db.js');
+// db={enabled:false};
 require('./protected/player.js');
 var fs = require('fs');
 
@@ -26,7 +27,7 @@ io.sockets.on('connection', function (socket) {
     console.log("Connection initiated.....");
     socket.roomUpdate = function(eventType) {
 		if (socket[data_namespace].player) {
-			room = socket[data_namespace].room;
+			room = socket[data_namespace].currentRoom;
 			clientName = socket[data_namespace].player.name;
 			clientId = socket[data_namespace].player.id;
 			var value = 'unknown';
@@ -41,7 +42,7 @@ io.sockets.on('connection', function (socket) {
 							  }
 							  break;
 			}
-			console.log("sending event " + eventType + " for user " + clientName);
+			console.log("sending event " + eventType + " to room " + room + " for user " + clientName);
 			socket.broadcast.to(room).emit('roomUpdate', { clientName: clientName, clientId: clientId, eventName: eventType, value: value});
 		}
         //io.sockets.in(room).emit('roomUpdate', { clientName: clientName, eventName: eventType, value: value});
@@ -68,6 +69,7 @@ io.sockets.on('connection', function (socket) {
             }
         }
         socket.join(socket[data_namespace].player.name);
+		socket[data_namespace].myRoom = socket[data_namespace].currentRoom = socket[data_namespace].player.name;
         socket.emit('iregistered', data);
     }
 
@@ -100,6 +102,7 @@ io.sockets.on('connection', function (socket) {
             });
         } else {
             console.log("COUCHBASE GLOBAL BUCKET NOT AVAILABLE!!");
+			// socket.sendUserDetails( { id: data.id, username: data.username, level: 1, kingdom: { theme: {background: "assets/img/background_map_3.png"}}});
         }
     });
     
@@ -133,9 +136,16 @@ io.sockets.on('connection', function (socket) {
 	// this is called when 'I' join a room
     socket.on('joinRoom', function (data) {
         socket.join(data.room);
-        socket[data_namespace].room = data.room;
-        socket[data_namespace].targetPosition = { x: 0, y: 0 };
-        socket[data_namespace].currentPosition = { x: 0, y: 0 };
+        socket[data_namespace].currentRoom = data.room;
+		if (socket[data_namespace].myRoom == socket[data_namespace].currentRoom) {
+			socket[data_namespace].player.battle.state = "planning";
+			socket[data_namespace].player.battle.whoami = categories.Defender;
+			socket[data_namespace].player.units = {};
+		}
+		else {
+			socket[data_namespace].player.battle.state = "inprogress";
+			socket[data_namespace].player.battle.whoami = categories.Attacker;
+		}
         value = new Array();
         var clientList = io.sockets.clients(data.room);
         for (var i = 0; i < clientList.length; i++) {
@@ -150,7 +160,7 @@ io.sockets.on('connection', function (socket) {
         console.log("leave room... " + data.room);
         socket.roomUpdate('leave');
         socket.leave(data.room);
-        socket[data_namespace].room = null;
+        socket[data_namespace].currentRoom = null;
     });
 
     socket.on('updateState', function (update) {
@@ -170,8 +180,8 @@ io.sockets.on('connection', function (socket) {
 		if (null != socket[data_namespace].player) {
 			console.log("disconnect... " + socket[data_namespace].player.name);
 			socket.roomUpdate('leave');
-			socket.leave(socket[data_namespace].room);
-			socket[data_namespace].room = null;
+			socket.leave(socket[data_namespace].currentRoom);
+			socket[data_namespace].currentRoom = null;
 		}
     });
 
@@ -190,24 +200,25 @@ setInterval(function() {
 		var states = new Array();
         for (var i = 0; i < clientList.length; i++) {
             value.push( clientList[i][data_namespace].player.getState() );
-            if(clientList[i][data_namespace].player.battleOver) {
-                battleOver = true;
+            if(clientList[i][data_namespace].player.battle.state == "over") {
+                // battleOver = true;
+				console.log("and we have a winner");
+				value = { battleOver: true, victor : clientList[i][data_namespace].player.battle.victor };
                 break;
             }
         }
-		if(battleOver) {
-            value = { battleOver: true };
-            for (var i = 0; i < clientList.length; i++) {
-                clientList[i][data_namespace].player.performAfterEffectsAndReset();
-            } 
-        }
-        io.sockets.in(properName).emit('reAdjust', { value : value }); 
+		// if(battleOver) {
+            // value = { battleOver: true };
+            // for (var i = 0; i < clientList.length; i++) {
+                //clientList[i][data_namespace].player.performAfterEffectsAndReset();
+            // } 
+        // }
+        io.sockets.in(properName).emit('reAdjust', { value : value, room : properName }); 
     }
-	// update room once in 10 secs
-	
 	
 }, 100);
 
+// update room once in 10 secs
 setInterval(function() {
 	data = {}
 	data.existingRooms = io.sockets.manager.rooms;

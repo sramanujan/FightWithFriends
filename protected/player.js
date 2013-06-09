@@ -4,6 +4,7 @@
  * @param config
  * @param helpers
  */
+categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
 
 Player = function(name, id, isServer) {
 	this.name 	= name;
@@ -14,7 +15,7 @@ Player = function(name, id, isServer) {
 	this.totalUnits = 0;
 	this.totalTowers = 0;
 	this.isServer = isServer;
-	this.battleOver = false;
+	this.battle = {state:"planning", whoami : categories.Defender};
 	
 	this.addUnit = function(unit) {
 		if (!this.isServer)
@@ -99,17 +100,21 @@ Player = function(name, id, isServer) {
 	
 	this.getState = function() {
 		unitPositions = {};
-		towerPositions = {};
-		for(var key in this.units) {
-			if (key != 'undefined') {
-				unitPositions[key] = this.units[key].getState();
-				this.checkVictoryPosition(unitPositions[key].position);
+		if (this.battle.whoami == categories.Attacker) {
+			for(var key in this.units) {
+				if (key != 'undefined') {
+					unitPositions[key] = this.units[key].getState();
+					if (this.isServer)
+						this.checkVictoryPosition(unitPositions[key].position);
+				}
 			}
 		}
 		towerPositions = {};
-		for(var key in this.towers) {
-			if (key != 'undefined') {
-				towerPositions[key] = this.towers[key].getState();
+		if (this.battle.whoami == categories.Defender) {
+			for(var key in this.towers) {
+				if (key != 'undefined') {
+					towerPositions[key] = this.towers[key].getState();
+				}
 			}
 		}
 		return {name : this.name, id : this.id, units : unitPositions, towers : towerPositions};
@@ -119,11 +124,13 @@ Player = function(name, id, isServer) {
 		for(var key in this.units) {
 			if (key != 'undefined') {
 				this.units[key].mapResource.remove();
+				this.totalUnits--;
 			}
 		}
 		for(var key in this.towers) {
 			if (key != 'undefined') {
 				this.towers[key].mapResource.remove();
+				this.totalTowers--;
 			}
 		}
 		this.units = {};
@@ -132,14 +139,12 @@ Player = function(name, id, isServer) {
 
 	this.checkVictoryPosition = function(position) {
 		//TODO: Temporary, change this with appropriate position check
-		if(position.x > 0.90 && position.y > 0.90) {
-			this.battleOver = true;
+		if(position.x > 0.80 && position.y > 0.80) {
+			this.battle.state = "over";
+			this.battle.victor = this.id;
 		}
 	}
 
-	this.performAfterEffectsAndReset = function() {
-
-	}
 };
 
 Projectile = function(owner, startPosition, targetRelativePosition, imgObject, projectileData) {
@@ -370,7 +375,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.currentPosition = unit.position;
 	this.isServer = isServer;
 	this.isTower = false;
-	this.targetPosition = {x : 0.95, y : 0.95};
+	this.targetPosition = {x : 0.85, y : 0.85};
 	this.range = unit_data[unit.code].range;
 	this.hitsPerSecond = unit_data[unit.code].hitsPerSecond;
 	this.speed = unit_data[unit.code].unitSpeed;
@@ -384,7 +389,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 
 	    this.proImgObject = unitProjectileImages[this.code];
 	    this.proSpeed = unit_data[this.code].projectileSpeed;
-	    this.targetPosition = {x : 0.95, y : 0.95};
+	    this.targetPosition = {x : 0.85, y : 0.85};
 		this.mapResource.cparent = this;
 
 		// check if it is my unit only then add mouse listener
@@ -434,10 +439,10 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		var relativeSpeed = this.speed;
 		//If unit has reached its target position, update target to goal
 		if((Math.abs(this.targetPosition.x - this.currentPosition.x) < 0.01 )&& (Math.abs(this.targetPosition.y - this.currentPosition.y)< 0.01)) {
-			this.targetPosition.x = 0.95;
-			this.targetPosition.y = 0.95;
+			this.targetPosition.x = 0.85;
+			this.targetPosition.y = 0.85;
 
-			relativeSpeed = relativeSpeed * 65;
+			relativeSpeed = relativeSpeed * 0.85;
 		}
 
 		var remX = this.targetPosition.x - this.currentPosition.x;
@@ -449,7 +454,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		}
 		var c = this.targetPosition.y - slope*(this.targetPosition.x);
 		var xSpeed = 0.001; //1 pixel per 100 milliseconds
-		if(dist > 0.05) {
+		if(dist > 0.005) {
 
 			if(remX > 0) {
 				if(Math.abs(remX) > 0.001) {
@@ -468,9 +473,9 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			this.currentPosition.y = this.targetPosition.y;
 		}
 
-		console.log("Plan to reach ("+this.targetPosition.x+","+this.targetPosition.y+",) now at ("+this.currentPosition.x+","+this.currentPosition.y+")");
-		this.currentPosition.x = Math.min(this.currentPosition.x,0.95);
-		this.currentPosition.y = Math.min(this.currentPosition.y,0.95);
+		// console.log("Plan to reach ("+this.targetPosition.x+","+this.targetPosition.y+",) now at ("+this.currentPosition.x+","+this.currentPosition.y+")");
+		this.currentPosition.x = Math.min(this.currentPosition.x,0.85);
+		this.currentPosition.y = Math.min(this.currentPosition.y,0.85);
 		this.mapResource.x = this.currentPosition.x * canvasDoc.width;
 		this.mapResource.y = this.currentPosition.y * canvasDoc.height;
 		this.getTowerInRange() ;

@@ -196,7 +196,7 @@
 
 			var TOTAL_UNITS = 5;
 			var SERVER = false;
-			var categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
+			//var categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
 			var COLORS = new Array("blue", "red", "green", "yellow");
             var isInDesignMode = false;
 			
@@ -205,11 +205,13 @@
             var listOfRooms = {};
             var currentRoom = null;
             var myRoom = null;
+			var battleMode = false;
 			
             var positionArray = new Array();
             var currentServerPositionArray = new Array();
 			var me 				= null;
 			var playersOnBoard 	= {};
+			var numPlayersOnBoard 	= 0;
 			var currentSelectedUnit = null;
 			
 			//var whoami			= categories.Attacker;
@@ -237,7 +239,7 @@
                 });
 
                 socket.on('iregistered', function(data) {
-					console.log("iregistered");
+					console.log("i registered");
                     //start own kingdom music.
                     userDetails = data.userDetails;
                     if (data.towers) {
@@ -259,16 +261,32 @@
                 socket.on('ijoined', function(data) {
 					console.log("i joined " + data.room);
                     currentRoom = data.room;
+					
 					$.each(data.value, function(index, state) {
 						if (state.id != me.id) {
 							var opp = new Player(state.name, state.id, false);
 							playersOnBoard[state.id] = opp;
-							playersOnBoard[state.id].updatePosition(state);
+							numPlayersOnBoard++;
 						}
+						// update my positions as well - i might be returning home
+						playersOnBoard[state.id].updatePosition(state);
 					});
-					whoami          = categories.Attacker;
-                    $('#friendList').html("");
+					if (data.room == myRoom) {
+						whoami          = categories.Defender;
+						me.battle.whoami 			= categories.Defender;
+						me.battle.state				= "planning";
+						endBattle();
+					}
+					else {
+						whoami          = categories.Attacker;
+						me.battle.whoami          = categories.Attacker;
+						me.battle.state				= "inprogress";
+						battleMode 		= true;
+						startBattle();
+					}
                     enableButtons();
+					// un pause canvas - this starts the render loop
+					mainScene.pause(false);
                 });
 
                 socket.on('roomUpdate', function (data) {
@@ -277,22 +295,50 @@
                     var updateType = data.eventName;
                     var value = data.value;
                     if(updateType == 'update') {
-						// no more comes here
-                        
-                    } else if(updateType == 'join') {
+						// no more comes here    
+                    } 
+					else if(updateType == 'join') {
+						// this is called when an opponent joins
                         // create an opponent player object
 						var opp = new Player(updateFrom, updateFromId, false);
-						playersOnBoard[opp.id] = opp;
 						// add to the player list
-                    } else if(updateType == 'leave') {
-                        //removeBox(updateFrom);
+						playersOnBoard[opp.id] = opp;
+						numPlayersOnBoard++;
+						
+						// start battle if not already started
+						if (!battleMode && whoami == categories.Defender) {
+							battleMode = true;
+							toggleBattleMode();
+							me.battle.state				= "inprogress";
+						}
+                    } 
+					else if(updateType == 'leave') {
+						// first remove player from list
+						if (playersOnBoard[updateFromId] != null) {
+							playersOnBoard[updateFromId].leaveRoom();
+							delete playersOnBoard[updateFromId];
+							numPlayersOnBoard--;
+						}
+                        // check if i am the last user, means all users left.. get out of battle mode
+						if (numPlayersOnBoard <= 1) {
+							if (whoami == categories.Defender) {
+								battleMode = false;
+								toggleBattleMode();
+							}
+							else {
+								// if iam attacking then leave room get home
+								returnToBase(myRoom);
+							}
+						}
                     }
                     console.log("Client: " + updateFrom + " Event: " + updateType + " Value: " + value);
                 });
 
 				socket.on('updateRoomList', function (data) {
-					listOfRooms = data.value.existingRooms;
-					populateListOfRooms();
+					if (battleMode == false) {
+						listOfRooms = data.value.existingRooms;
+						populateListOfRooms();
+					}
 				});
 				
                 socket.on('reAdjust', function (data) {
@@ -301,48 +347,57 @@
                         indicateBattleOverAndReset();
                         return;
                     }
-					$.each(data.value, function(index, state) {
-						playersOnBoard[state.id].updatePosition(state);
-					});
+					if (data.room == currentRoom) {
+						$.each(data.value, function(index, state) {
+							if (playersOnBoard[state.id] != null)
+								playersOnBoard[state.id].updatePosition(state);
+						});
+					}
                 });
             }
 
             function setClientDetails(data) {
 				me = new Player(data.username, data.id, false);
 				playersOnBoard[me.id] = me;
+				numPlayersOnBoard++;
 				$("#whoami").html(me.name);
                 socket.emit('login', data);
             }
 
             function joinRoom(roomName) {
-				// first leave the room you are in
-				leaveRoom();
 				// reset your canvas
 				mcanvas = mainScene.getCanvas();
 				mcanvas.clear();
+				mainScene.pause(true);
+				
+				// leave the room you are in
+				leaveRoom();
 				
                 socket.emit('joinRoom', { room: roomName });
             }
-
+			
             function leaveRoom() {
+				battleMode = false;
 				// reset the player units and towers before leaving
-				me.leaveRoom();
+				removeAllPlayersExceptMe();
+				
+				//me.leaveRoom();
                 socket.emit('leaveRoom', { room: currentRoom });
             }
 
+			function startBattle() {
+			}
+			
+			function endBattle() {
+			}
+
+			function returnToBase() {
+				joinRoom(myRoom);
+			}
+			
             function stateUpdate(posX, posY) {
                 socket.emit('stateUpdate', { position: { x: posX, y: posY } });
             }
-			
-			function updateState(state, force) {
-				if (state != null) {
-					batchedStates.push(state);
-				}
-				//socket.emit('updateState', { states: batchedStates });
-				
-				// empty the array - find the right way
-				//batchedStates = new Array();
-			}
 			
 			function pushToServer() {
 				if (null != me && me.unitsOnBoard() > 0) {
@@ -360,9 +415,13 @@
 			}
 
 			function enableButtons() {
+				$('#friendList').html("");
 				if (whoami == categories.Attacker) {
 					$("#attacker_dashboard").show();
                     $("#defender_dashboard").hide();
+					
+					// show return to base button
+					$('#friendList').append("<li><a class='returntobase' href='#' onClick='returnToBase(); return false;'>Return to Base</a></li>")
 				}
 				else {
                     $("#attacker_dashboard").hide();
@@ -421,6 +480,21 @@
                     </div>
                 </div>
             </div>
+			<div class="fade-screen" id="fade-screen">
+				<span style="margin:12px 0px 0px 30px; font-size:24px; color:white; display:block;">BATTLE ON</span>
+			</div>
+			<div class="final-message" id="final-message-lost">
+				<div class="jumbotron">
+					<h1>LOST!! LOST!!</h1>
+					<p class="lead">Game will reset in 5 secs!</p>
+				</div>
+			</div>
+			<div class="final-message" id="final-message-won">
+				<div class="jumbotron">
+					<h1>VICTORY!!</h1>
+					<p class="lead">Return to Home Base in 5 secs!</p>
+				</div>
+			</div>
         </div>
         <script>
             $('#main_canvas').bind('resize', function(){
@@ -442,7 +516,7 @@
                     }
                     i++;
                     if(i == 5) {
-                        $('#friendList').html("<a href='#' class='dropdown-toggle' data-toggle='dropdown'>Other Friends <b class='caret'></b></a><ul class='dropdown-menu id=extraFriendList'></ul>");
+                        $('#friendList').append("<li><a href='#' class='dropdown-toggle' data-toggle='dropdown'>Other Friends <b class='caret'></b></a><ul class='dropdown-menu id=extraFriendList'></ul></li>");
                     }
                     if(i < 5) {
                         $('#friendList').append("<li><a class='friends' id='" + roomName + "' href='#'>" + roomName + "</a></li>");
@@ -509,8 +583,6 @@
                 canvas.Scene.call("MainScene");
             });
 
-            var boxes = new Array();
-
             canvasDoc.onmouseup = function (event) {
 				if (null != currentSelectedUnit) {
 					var relX = (event.offsetX - (currentSelectedUnit.mapResource.width/2)) / canvasDoc.width;
@@ -562,16 +634,6 @@
             var globalProjectileHeight = 50;
             var globalProjectileWidth = 50;
 
-
-            function removeBox(clientName) {
-                for (var i = 0; i < positionArray.length; i++) {
-                    if(positionArray[i].clientName == clientName) {
-                        //canvas.removeChild(boxes[i]);
-                        boxes.splice(i,1);
-                    }
-                }
-            }
-
             function populateTowers(listOfTowers) {
 				console.log("populateTowers");
                 for (var i = listOfTowers.length - 1; i >= 0; i--) {
@@ -589,8 +651,49 @@
 
             function indicateBattleOverAndReset() {
                 //TODO: Check if attacker or defender, reset them to their kingdoms, play music, remove filter etc.
+				if (whoami == categories.Defender) {
+					$("#final-message-lost").show();
+					setTimeout(function() {
+						$("#final-message-lost").hide();
+						battleMode = false;
+						toggleBattleMode();
+					}, 5000);
+
+				}
+				else {
+					$("#final-message-won").show();
+					setTimeout(function() {
+						$("#final-message-won").hide();
+						// if iam attacking then leave room get home
+						returnToBase(myRoom);
+					}, 5000);
+				}
             }
 
+			function removeAllPlayersExceptMe() {
+				for (var key in playersOnBoard) {
+					if (key != "undefined") {
+						playersOnBoard[key].leaveRoom();
+						if (me.id != key && playersOnBoard[key] != null) {
+							delete playersOnBoard[key];
+							numPlayersOnBoard--;
+						}
+					}
+				}				
+			}
+			
+			
+			function toggleBattleMode() {
+				if (battleMode == true) {
+					// show fade screen
+					$("#fade-screen").show();
+				}
+				else {
+					// remove fade screen
+					$("#fade-screen").hide();
+				}
+			}
+			
             function loadKingdom(kingdom) {
                 //var staticUnits = kingdom.buildings;
                 var background = kingdom.theme.background;
