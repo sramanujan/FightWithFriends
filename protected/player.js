@@ -255,7 +255,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			this.mapResource.remove();
 			return false;
 		}
-		if(this && this.mapResource ) {
+		if(this && this.mapResource) {
 			this.mapResource.x = (this.currentPosition.x * canvasDoc.width);
 			this.mapResource.y = (this.currentPosition.y * canvasDoc.height);
 			this.isInUnitRange();
@@ -370,7 +370,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.currentPosition = unit.position;
 	this.isServer = isServer;
 	this.isTower = false;
-	this.targetPosition = {x : 0.95, y : 0.95};
+	this.targetPosition = {x : 0.295, y : 0.295};
 	this.range = unit_data[unit.code].range;
 	this.hitsPerSecond = unit_data[unit.code].hitsPerSecond;
 	if (!isServer) {
@@ -428,6 +428,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			return false;
 		}
 		//If unit has reached its target position, update target to goal
+		/*
 		if(this.targetPosition.x == this.currentPosition.x && this.targetPosition.y == this.currentPosition.y) {
 			this.targetPosition.x = 0.95;
 			this.targetPosition.y = 0.95;
@@ -441,7 +442,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			slope = remY/remX;
 		}
 		var c = this.targetPosition.y - slope*(this.targetPosition.x);
-		var xSpeed = 0.0001; //1 pixel per 100 milliseconds
+		var xSpeed = 0.01; //1 pixel per 100 milliseconds
 		if(dist > 0.05) {
 			this.currentPosition.x += xSpeed;
 			this.currentPosition.y = slope*this.currentPosition.x + c;
@@ -451,9 +452,22 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		}
 		this.currentPosition.x = Math.min(this.currentPosition.x,0.95);
 		this.currentPosition.y = Math.min(this.currentPosition.x,0.95);
+		*/
+		
+		var remX = this.targetPosition.x - this.currentPosition.x;
+		var remY = this.targetPosition.y - this.currentPosition.y;
+		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+		if(dist > 0.05) {
+			this.currentPosition.x += (remX / dist)*0.05;
+			this.currentPosition.y += (remY / dist)*0.05;
+		} else {
+			this.currentPosition.x += remX;
+			this.currentPosition.y += remY;
+		}
+		
 		this.mapResource.x = this.currentPosition.x * canvasDoc.width;
 		this.mapResource.y = this.currentPosition.y * canvasDoc.height;
-		var towerToAttack = this.getTowerInRange() ;
+		this.getTowerInRange() ;
 		this.isInTowerRange();
 		this.updateHealthBar();
 	};
