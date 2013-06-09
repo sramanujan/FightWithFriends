@@ -142,15 +142,16 @@ Player = function(name, id, isServer) {
 	}
 };
 
-Projectile = function(owner, startPosition, targetRelativePosition, imgObject, speed) {
-	var projectileObj =  mainScene.createElement(20,20);
-    projectileObj.drawImage(imgObject);
+Projectile = function(owner, startPosition, targetRelativePosition, imgObject, projectileData) {
+	this.projectileData = projectileData;
+
+	var projectileObj =  mainScene.createElement(globalProjectileWidth, globalProjectileHeight);
+    projectileObj.drawImage(imgObject, 0, 0, projectileData.width, projectileData.height, 0, 0, globalProjectileWidth, globalProjectileHeight);
     projectileObj.x = startPosition.x;
     projectileObj.y = startPosition.y;
 
     this.mapResource = projectileObj;
     this.targetRelativePosition = {x: targetRelativePosition.x, y: targetRelativePosition.y}
-    this.speed = speed;
     this.hasHit = false;
 	if (!this.isServer)
 		mainScene.getStage().append(this.mapResource);
@@ -167,9 +168,9 @@ Projectile = function(owner, startPosition, targetRelativePosition, imgObject, s
 				this.hasHit = true;
 				this.mapResource.remove();
 				return false;
-			} else if(this.speed < totalDist) {
-				this.mapResource.x += canvasDoc.width * remX * (this.speed /  totalDist);
-				this.mapResource.y += canvasDoc.height * remY * (this.speed /  totalDist);	
+			} else if(this.projectileData.speed < totalDist) {
+				this.mapResource.x += canvasDoc.width * remX * (this.projectileData.speed /  totalDist);
+				this.mapResource.y += canvasDoc.height * remY * (this.projectileData.speed /  totalDist);	
 				return true;
 			} else {
 				this.mapResource.x += canvasDoc.width * remX;
@@ -196,10 +197,10 @@ Tower = function(player, id, tower, isServer, isOwner) {
 	this.hitsPerSecond = tower_data[tower.code].hitsPerSecond;
     if (!isServer) {
 	    var imgObject = towerImages[tower.code];
-	    var towerObj =  mainScene.createElement(100,100);
-		towerObj.drawImage(imgObject);
+	    var towerObj =  mainScene.createElement(globalTowerWidth, globalTowerHeight);
+		towerObj.drawImage(imgObject, 0, 0, tower_data[tower.code].width, tower_data[tower.code].height, 0, 0, globalTowerWidth, globalTowerHeight);
 		this.mapResource = towerObj;
-		this.healthBar = new HealthBar(this.mapResource, 200, 0, this.maxHealth);
+		this.healthBar = new HealthBar(this.mapResource, globalTowerWidth, 0, this.maxHealth);
 		
 		this.mapResource.cparent = this;
 	    this.proImgObject = towerProjectileImages[tower.code];
@@ -208,6 +209,9 @@ Tower = function(player, id, tower, isServer, isOwner) {
    		this.state = "alive";
 		if (this.isOwner) {
 			this.mapResource.on("mousedown", function(e) {
+				this.cparent.mouseDown(e);
+			});
+			this.mapResource.on("touchstart", function(e) {
 				this.cparent.mouseDown(e);
 			});
 		}
@@ -300,7 +304,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 		if(this.lastProjectileFiredTime != null && ((new Date().getTime() - this.lastProjectileFiredTime)/1000 < 1/this.hitsPerSecond)) {
 			return;
 		}
-		new Projectile(this.player, {x: this.mapResource.x,y: this.mapResource.y}, target, this.proImgObject, this.proSpeed);
+		new Projectile(this.player, {x: this.mapResource.x,y: this.mapResource.y}, target, this.proImgObject, { width: tower_data[this.code].projectileWidth, height: tower_data[this.code].projectileHeight, speed: tower_data[this.code].projectileSpeed });
 		this.lastProjectileFiredTime = new Date().getTime();
 	}
 
@@ -366,15 +370,15 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	this.currentPosition = unit.position;
 	this.isServer = isServer;
 	this.isTower = false;
-	this.targetPosition = {x : 0, y : 0};
+	this.targetPosition = {x : 0.95, y : 0.95};
 	this.range = unit_data[unit.code].range;
 	this.hitsPerSecond = unit_data[unit.code].hitsPerSecond;
 	if (!isServer) {
 	    var imgObject = unitImages[unit.code];
-	    var unitObj =  mainScene.createElement(64,64);
-		unitObj.drawImage(imgObject);
+	    var unitObj =  mainScene.createElement(globalUnitWidth, globalUnitHeight);
+		unitObj.drawImage(imgObject, 0, 0, unit_data[unit.code].width, unit_data[unit.code].height, 0, 0, globalUnitWidth, globalUnitHeight);
 		this.mapResource = unitObj;
-		this.healthBar = new HealthBar(this.mapResource, 50, 0, this.maxHealth);
+		this.healthBar = new HealthBar(this.mapResource, globalUnitWidth, 0, this.maxHealth);
 
 	    this.proImgObject = unitProjectileImages[this.code];
 	    this.proSpeed = unit_data[this.code].projectileSpeed;
@@ -383,6 +387,9 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		// check if it is my unit only then add mouse listener
 		if (this.isOwner) {
 			this.mapResource.on("mousedown", function(e) {
+				this.cparent.mouseDown(e);
+			});
+			this.mapResource.on("touchstart", function(e) {
 				this.cparent.mouseDown(e);
 			});
 		}
@@ -420,17 +427,30 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			this.mapResource.remove();
 			return false;
 		}
+		//If unit has reached its target position, update target to goal
+		if(this.targetPosition.x == this.currentPosition.x && this.targetPosition.y == this.currentPosition.y) {
+			this.targetPosition.x = 0.95;
+			this.targetPosition.y = 0.95;
+		}
+
 		var remX = this.targetPosition.x - this.currentPosition.x;
 		var remY = this.targetPosition.y - this.currentPosition.y;
 		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-		if(dist > 0.05) {
-			this.currentPosition.x += (remX / dist)*0.05;
-			this.currentPosition.y += (remY / dist)*0.05;
-		} else {
-			this.currentPosition.x += remX;
-			this.currentPosition.y += remY;
+		var slope = 0;
+		if(remX != 0) {
+			slope = remY/remX;
 		}
-		
+		var c = this.targetPosition.y - slope*(this.targetPosition.x);
+		var xSpeed = 0.0001; //1 pixel per 100 milliseconds
+		if(dist > 0.05) {
+			this.currentPosition.x += xSpeed;
+			this.currentPosition.y = slope*this.currentPosition.x + c;
+		} else {
+			this.currentPosition.x = this.targetPosition.x;
+			this.currentPosition.y = this.targetPosition.y;
+		}
+		this.currentPosition.x = Math.min(this.currentPosition.x,0.95);
+		this.currentPosition.y = Math.min(this.currentPosition.x,0.95);
 		this.mapResource.x = this.currentPosition.x * canvasDoc.width;
 		this.mapResource.y = this.currentPosition.y * canvasDoc.height;
 		var towerToAttack = this.getTowerInRange() ;
@@ -514,7 +534,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		if(this.lastProjectileFiredTime != null && ((new Date().getTime() - this.lastProjectileFiredTime)/1000 < 1/this.hitsPerSecond)) {
 			return;
 		}
-		new Projectile(this.player, {x: this.mapResource.x, y: this.mapResource.y}, target, this.proImgObject, this.proSpeed);
+		new Projectile(this.player, {x: this.mapResource.x, y: this.mapResource.y}, target, this.proImgObject, { width: unit_data[this.code].projectileWidth, height: unit_data[this.code].projectileHeight, speed: unit_data[this.code].projectileSpeed });
 		this.lastProjectileFiredTime = new Date().getTime();
 	}
 };

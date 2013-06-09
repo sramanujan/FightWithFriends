@@ -20,7 +20,7 @@ import android.webkit.WebViewClient;
         webSettings.setJavaScriptEnabled(true);
         //myWebView.addJavascriptInterface(new WebAppInterface(this), "Android");
         myWebView.setWebViewClient(new WebViewClient());
-        myWebView.loadUrl("http://fb.fwf.dev2-hackathon.zc2.zynga.com");
+        myWebView.loadUrl("http://192.168.1.5");
     }
 
 
