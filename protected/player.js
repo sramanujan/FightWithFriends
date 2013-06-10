@@ -211,9 +211,6 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			this.mapResource.on("mousedown", function(e) {
 				this.cparent.mouseDown(e);
 			});
-			this.mapResource.on("touchstart", function(e) {
-				this.cparent.mouseDown(e);
-			});
 		}
 	}
 	// this has to be placed here - has to be called after mapResource is created on client
@@ -386,9 +383,6 @@ Unit = function(player, id, unit, isServer, isOwner) {
 		// check if it is my unit only then add mouse listener
 		if (this.isOwner) {
 			this.mapResource.on("mousedown", function(e) {
-				this.cparent.mouseDown(e);
-			});
-			this.mapResource.on("touchstart", function(e) {
 				this.cparent.mouseDown(e);
 			});
 		}
