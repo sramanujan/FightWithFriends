@@ -4,7 +4,7 @@
         "image": "assets/img/BROKEN-Tower_Anim_Low_Res.png",
         "width": 250,
         "height": 211,
-        "health":1000,
+        "health":2500,
         "projectileImage": "assets/img/flame.png",
         "projectileSpeed": 0.004,
         "projectileSound": "assets/sound/big_fire_sound.mp3",

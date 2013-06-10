@@ -289,7 +289,7 @@
 					
 					$.each(data.value, function(index, state) {
 						if (state.id != me.id) {
-							var opp = new Player(state.name, state.id, false);
+							var opp = new Player(state.name, state.id, false, numPlayersOnBoard + 1);
 							playersOnBoard[state.id] = opp;
 							numPlayersOnBoard++;
 						}
@@ -325,7 +325,7 @@
 					else if(updateType == 'join') {
 						// this is called when an opponent joins
                         // create an opponent player object
-						var opp = new Player(updateFrom, updateFromId, false);
+						var opp = new Player(updateFrom, updateFromId, false, numPlayersOnBoard+1);
 						// add to the player list
 						playersOnBoard[opp.id] = opp;
 						numPlayersOnBoard++;
@@ -382,7 +382,7 @@
             }
 
             function setClientDetails(data) {
-				me = new Player(data.username, data.id, false);
+				me = new Player(data.username, data.id, false, numPlayersOnBoard+1);
 				playersOnBoard[me.id] = me;
 				numPlayersOnBoard++;
 				$("#whoami").html(me.name);

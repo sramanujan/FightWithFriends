@@ -81,7 +81,7 @@ io.sockets.on('connection', function (socket) {
             socket[data_namespace].db_bucket = db.bucket;
         }
         var data2 = {};
-        socket[data_namespace].player = new Player(data.username, data.id, true);
+        socket[data_namespace].player = new Player(data.username, data.id, true, 0);
         if(db.enabled) {
             socket[data_namespace].db_bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
                 if(!doc || err || !db.isValidPlayerObject(doc)) {
@@ -102,7 +102,7 @@ io.sockets.on('connection', function (socket) {
             });
         } else {
             console.log("COUCHBASE GLOBAL BUCKET NOT AVAILABLE!!");
-			// socket.sendUserDetails( { id: data.id, username: data.username, level: 1, kingdom: { theme: {background: "assets/img/background_map_3.png"}}});
+			//socket.sendUserDetails( { id: data.id, username: data.username, level: 1, kingdom: { theme: {background: "assets/img/background_map_3.png"}}});
         }
     });
     

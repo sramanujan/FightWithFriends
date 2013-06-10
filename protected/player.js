@@ -6,9 +6,10 @@
  */
 categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
 
-Player = function(name, id, isServer) {
+Player = function(name, id, isServer, numPlayersOnBoard) {
 	this.name 	= name;
 	this.id 	= id.toString();
+	this.colorCode = numPlayersOnBoard;
 	this.units = {};
 	this.towers = {};
 	this.projectiles = new Array();
@@ -205,7 +206,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 	    var towerObj =  mainScene.createElement(globalTowerWidth, globalTowerHeight);
 		towerObj.drawImage(imgObject, 0, 0, tower_data[tower.code].width, tower_data[tower.code].height, 0, 0, globalTowerWidth, globalTowerHeight);
 		this.mapResource = towerObj;
-		this.healthBar = new HealthBar(this.mapResource, globalTowerWidth, 0, this.maxHealth);
+		this.healthBar = new HealthBar(this.mapResource, globalTowerWidth, 0, this.maxHealth, 0);
 		
 		this.mapResource.cparent = this;
 	    this.proImgObject = towerProjectileImages[tower.code];
@@ -342,7 +343,7 @@ Tower = function(player, id, tower, isServer, isOwner) {
 	};
 };
 
-HealthBar = function(parentResource, size, initial, max) {
+HealthBar = function(parentResource, size, initial, max, color) {
 	this.maxHealth = max;
 	this.size = size;
 	this.initial = initial;
@@ -352,7 +353,18 @@ HealthBar = function(parentResource, size, initial, max) {
 	parentResource.append(this.lifeBar);
 
 	this.deathBar.fillStyle = "red";
-	this.lifeBar.fillStyle = "green";
+	if (color == 0) {
+		this.lifeBar.fillStyle = "green";
+	}
+	else if (color == 1) {
+		this.lifeBar.fillStyle = "pink";
+	}
+	else if (color == 2) {
+		this.lifeBar.fillStyle = "blue";
+	}
+	else if (color == 3) {
+		this.lifeBar.fillStyle = "yellow";
+	}
 	this.deathBar.fillRect(0,0,this.size,10);
 	this.lifeBar.fillRect(0,0,this.size,10);
 
@@ -382,7 +394,7 @@ Unit = function(player, id, unit, isServer, isOwner) {
 	    var unitObj =  mainScene.createElement(globalUnitWidth, globalUnitHeight);
 		unitObj.drawImage(imgObject, 0, 0, unit_data[unit.code].width, unit_data[unit.code].height, 0, 0, globalUnitWidth, globalUnitHeight);
 		this.mapResource = unitObj;
-		this.healthBar = new HealthBar(this.mapResource, globalUnitWidth, 0, this.maxHealth);
+		this.healthBar = new HealthBar(this.mapResource, globalUnitWidth, 0, this.maxHealth, this.player.colorCode);
 
 	    this.proImgObject = unitProjectileImages[this.code];
 	    this.proSpeed = unit_data[this.code].projectileSpeed;
@@ -429,46 +441,29 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			this.mapResource.remove();
 			return false;
 		}
+
 		var relativeSpeed = this.speed;
 		//If unit has reached its target position, update target to goal
-		if((Math.abs(this.targetPosition.x - this.currentPosition.x) < 0.01 )&& (Math.abs(this.targetPosition.y - this.currentPosition.y)< 0.01)) {
+		if(this.targetPosition.x == this.currentPosition.x && this.targetPosition.y == this.currentPosition.y) {
+
+			// shud also move around towers?
 			this.targetPosition.x = 0.85;
 			this.targetPosition.y = 0.85;
 
-			relativeSpeed = relativeSpeed * 0.85;
+			relativeSpeed = relativeSpeed * 0.35;
 		}
 
 		var remX = this.targetPosition.x - this.currentPosition.x;
 		var remY = this.targetPosition.y - this.currentPosition.y;
 		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-		var slope = 0;
-		if(remX != 0) {
-			slope = remY/remX;
-		}
-		var c = this.targetPosition.y - slope*(this.targetPosition.x);
-		var xSpeed = 0.001; //1 pixel per 100 milliseconds
-		if(dist > 0.005) {
 
-			if(remX > 0) {
-				if(Math.abs(remX) > 0.001) {
-					this.currentPosition.x += xSpeed;
-				}
-			}
-			else {
-				if(Math.abs(remX) > 0.001) {
-					this.currentPosition.x -= xSpeed;
-				}
-			}
-			
-			this.currentPosition.y = slope*this.currentPosition.x + c;
+		if(dist > this.speed) {
+			this.currentPosition.x += (remX / dist)*relativeSpeed;
+			this.currentPosition.y += (remY / dist)*relativeSpeed;
 		} else {
-			this.currentPosition.x = this.targetPosition.x;
-			this.currentPosition.y = this.targetPosition.y;
-		}
-
-		// console.log("Plan to reach ("+this.targetPosition.x+","+this.targetPosition.y+",) now at ("+this.currentPosition.x+","+this.currentPosition.y+")");
-		this.currentPosition.x = Math.min(this.currentPosition.x,0.85);
-		this.currentPosition.y = Math.min(this.currentPosition.y,0.85);
+			this.currentPosition.x += remX;
+			this.currentPosition.y += remY;
+		}		
 		this.mapResource.x = this.currentPosition.x * canvasDoc.width;
 		this.mapResource.y = this.currentPosition.y * canvasDoc.height;
 		this.getTowerInRange() ;
