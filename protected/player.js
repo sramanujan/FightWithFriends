@@ -216,9 +216,6 @@ Tower = function(player, id, tower, isServer, isOwner) {
 			this.mapResource.on("mousedown", function(e) {
 				this.cparent.mouseDown(e);
 			});
-			this.mapResource.on("touchstart", function(e) {
-				this.cparent.mouseDown(e);
-			});
 		}
 	}
 	// this has to be placed here - has to be called after mapResource is created on client
@@ -397,10 +394,6 @@ Unit = function(player, id, unit, isServer, isOwner) {
 			this.mapResource.on("mousedown", function(e) {
 				this.cparent.mouseDown(e);
 			});
-			this.mapResource.on("touchstart", function(e) {
-				this.cparent.mouseDown(e);
-			});
-			
 		}
 	    this.health = unit_data[unit.code].health;
 	    this.state = "alive";

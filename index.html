@@ -4,6 +4,7 @@
     <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
     <script src="protected/player.js"></script>
     <script src="assets/js/jquery.ba-resize.min.js"></script>
+    <script src="assets/js/hammer.min.js"></script>
         <title> Fight With Friends! </title> 
         <!-- Le styles -->
         <link href="assets/css/bootstrap.css" rel="stylesheet">
@@ -40,7 +41,11 @@
             <div id="loading_div" class="container" style="display: none; width: 400;">
                 <h1 "text-align:center">Loading...</h1>
                 <div class="progress progress-striped active">
-                    <div id="progress_bar" class="bar" style="width: 0%;"></div>
+                    <!--<div id="progress_bar" class="bar" style="width: 0%;"></div>-->
+                    <div id="progress_bar1" class="bar bar-danger" style="width: 0%"></div>
+                    <div id="progress_bar2" class="bar bar-warning" style="width: 0%"></div>
+                    <div id="progress_bar3" class="bar bar-success" style="width: 0%"></div>
+                    <div id="progress_bar4" class="bar bar-info" style="width: 0%"></div>
                 </div>
             </div>
         </div>
@@ -65,8 +70,11 @@
             var unitProjectileSounds = {};
             var globalSounds = {};
 
-            var load_status = 0;
-            var load_total = 7;
+            var progress_status = 1;
+            var assets_completed = false;
+            var json_completed = false;
+            var socket_completed = false;
+            var login_completed = false;
 
             var towerAssetsLoaded = 0;
             var towerAssetsToLoad = 0;
@@ -82,7 +90,6 @@
                 }
                 login_data = { id: login, username: login };
                 login_entered = true;
-                load_status++;
                 $("#login_div").hide();
                 $("#loading_div").show();
                 checkIfLoadComplete();
@@ -93,7 +100,6 @@
             $.getJSON('settings/global-sounds.json', function(data) {
                 global_data = data;
                 global_loaded = true;
-                load_status++;
                 loadGlobalAssetData();
                 checkIfLoadComplete();
             });
@@ -101,7 +107,6 @@
             $.getJSON('settings/units.json', function(data) {
                 unit_data = data;
                 units_loaded = true;
-                load_status++;
                 loadUnitAssetData();
                 checkIfLoadComplete();
             });
@@ -109,7 +114,6 @@
             $.getJSON('settings/towers.json', function(data) {
                 tower_data = data;
                 towers_loaded = true;
-                load_status++;
                 loadTowerAssetData();
                 checkIfLoadComplete();
             });
@@ -136,7 +140,6 @@
                         unitProjectileImages[this.key] = this;
                         if(unitAssetsLoaded == unitAssetsToLoad) {
                             unit_assets_loaded = true;
-                            load_status++;
                             checkIfLoadComplete();
                         }
                     };
@@ -165,7 +168,6 @@
                         towerProjectileImages[this.key] = this;
                         if(towerAssetsLoaded == towerAssetsToLoad) {
                             tower_assets_loaded = true;
-                            load_status++;
                             checkIfLoadComplete();
                         }
                     };
@@ -175,21 +177,43 @@
 
             function loadGlobalAssetData() {
                 global_assets_loaded = true;
-                load_status++;
             }
 
             if(typeof io == "undefined") {
                 $.getScript('http://' + window.location.hostname + ':8028/socket.io/socket.io.js', function() {
                     socket_io_loaded = true;
-                    load_status++;
                     checkIfLoadComplete();
                 });
             }
 
 
             function checkIfLoadComplete() {
-                $("#progress_bar").width(Math.floor(100 * load_status / load_total ).toString() + "%");
-                if(units_loaded && towers_loaded && socket_io_loaded && tower_assets_loaded && unit_assets_loaded && login_entered && global_loaded && global_assets_loaded) {
+                //$("#progress_bar").width(Math.floor(100 * load_status / load_total ).toString() + "%");
+                if(units_loaded && towers_loaded && global_loaded && !json_completed) {
+                    $("#progress_bar" + progress_status.toString()).width("25%");
+                    $("#progress_bar" + progress_status.toString()).html("JSON Loaded");
+                    progress_status++;
+                    json_completed = true;
+                }
+                if(tower_assets_loaded && unit_assets_loaded && global_assets_loaded && !assets_completed) {
+                    $("#progress_bar" + progress_status.toString()).width("25%");
+                    $("#progress_bar" + progress_status.toString()).html("Assets Loaded");
+                    progress_status++;
+                    assets_completed = true;
+                }
+                if(socket_io_loaded && !socket_completed) {
+                    $("#progress_bar" + progress_status.toString()).width("25%");
+                    $("#progress_bar" + progress_status.toString()).html("Socket Loaded");
+                    progress_status++;
+                    socket_completed = true;
+                }
+                if(login_entered && !login_completed) {
+                    $("#progress_bar" + progress_status.toString()).width("25%");
+                    $("#progress_bar" + progress_status.toString()).html("Completed Login!");
+                    progress_status++;
+                    login_completed = true;
+                }
+                if(progress_status == 5) {
                     loadCompleted();
                 }
             }
@@ -592,17 +616,6 @@
 					currentSelectedUnit.mapResource.opacity = currentSelectedUnit.mapResource.opacity < 1 ? 1 : 0.5 ;
                     currentSelectedUnit = null;
 				}
-            }
-
-            canvasDoc.ontouchend = function (event) {
-                if (null != currentSelectedUnit) {
-                    var relX = (event.offsetX - (currentSelectedUnit.mapResource.width/2)) / canvasDoc.width;
-                    var relY = (event.offsetY - (currentSelectedUnit.mapResource.height/2)) / canvasDoc.height;
-                    currentSelectedUnit.updateTarget({x : relX, y : relY });
-                    
-                    currentSelectedUnit.mapResource.opacity = currentSelectedUnit.mapResource.opacity < 1 ? 1 : 0.5 ;
-                    currentSelectedUnit = null;
-                }
             }
 
             var mainScene = canvas.Scene.new({
