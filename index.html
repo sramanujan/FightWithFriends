@@ -5,6 +5,7 @@
     <script src="protected/player.js"></script>
     <script src="assets/js/jquery.ba-resize.min.js"></script>
     <script src="assets/js/hammer.min.js"></script>
+    <!--<script src="lib/prototype.js"></script> -->
         <title> Fight With Friends! </title> 
         <!-- Le styles -->
         <link href="assets/css/bootstrap.css" rel="stylesheet">
@@ -81,6 +82,12 @@
             var towerAssetsToLoad = 0;
             var unitAssetsLoaded = 0;
             var unitAssetsToLoad = 0;
+            var entities = new Array();
+            var numEntities = 0;
+            //var globalInputs = new Array();
+            var globalInputs = {};
+            var numInputs = 0;
+            var item_data = null;
 
             $('#login_button,#anonymous_button').click( function() {
                 var login = '';
@@ -116,6 +123,13 @@
                 tower_data = data;
                 towers_loaded = true;
                 loadTowerAssetData();
+                checkIfLoadComplete();
+            });
+
+            $.getJSON('settings/items.json', function(data) {
+                item_data = data;
+                towers_loaded = true;
+                //loadTowerAssetData();
                 checkIfLoadComplete();
             });
 
@@ -286,7 +300,14 @@
                 socket.on('ijoined', function(data) {
 					console.log("i joined " + data.room);
                     currentRoom = data.room;
-					
+					if(data.numEntities >0 ) {
+                        for(var i =0 ; i<data.numEntities ; i++) {
+                            var entity = new Entity(data.entities[i].code,item_data,data.entities[i].owner, data.entities[i].isAIControlled,data.entities[i].isDefender, i);
+                            numEntities++;
+                            entities.push(entity);
+                        }
+
+                    }
 					$.each(data.value, function(index, state) {
 						if (state.id != me.id) {
 							var opp = new Player(state.name, state.id, false, numPlayersOnBoard + 1);
@@ -425,6 +446,11 @@
             }
 			
 			function pushToServer() {
+                if(numInputs != 0) {
+                    socket.emit('parseInputs',{senderId: me.id, inputs: globalInputs});
+                    numInputs = 0;
+                    globalInputs = {};
+                }
 				if (null != me && me.unitsOnBoard() > 0) {
 					states = me.getState();
 					socket.emit('updateState', { states: me.getState() });
@@ -577,7 +603,7 @@
                 }
                 $('.add_tower_button').click(function() {
                     if (isInDesignMode) {
-                        addTower({code : $(this).attr("id"), position : { x: 0.100, y: 0.30 }});
+                        addTower({code : $(this).attr("id"), position : { x: 0.100, y: 0.30 }}, me.id);
                     }
                     else {
                         alert("you must be in design mode to add");
@@ -651,16 +677,23 @@
             function populateTowers(listOfTowers) {
 				console.log("populateTowers");
                 for (var i = listOfTowers.length - 1; i >= 0; i--) {
-                    addTower(listOfTowers[i])
+                    addTower(listOfTowers[i], me.id)
                 }
             }
 
-            function addTower(tower) {
+            function addTower(tower , owner) {
                 var towersOnBoard = me.towersOnBoard();
-                if (towersOnBoard < TOTAL_UNITS) {
+
+                var myTower = new Entity("001",tower_data,owner, false, true, numEntities);
+                entities.push(myTower);
+                var params = {code: "001", owner: owner,isAIControlled: false, isDefender: true};
+                var input = {action: "addEntity", params: params };
+                globalInputs[numInputs] = input;
+                numInputs++;
+                /*if (towersOnBoard < TOTAL_UNITS) {
                     var myTowerObj = new Tower(me,towersOnBoard+1, tower, false, true); 
                    // me.addTower(myTowerObj);
-                }
+                }*/
             }
 
             function indicateBattleOverAndReset() {

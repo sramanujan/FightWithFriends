@@ -4,6 +4,7 @@
  * @param config
  * @param helpers
  */
+categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
 var Position = function(x,y) {
 	this.x = x;
 	this.y = y;
@@ -21,20 +22,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
     	this.isAIControlled = isAIControlled;
     	this.isDefender = isDefender;
     	this.index = index;
-  		var imgObject = towerImages[this.code];
-	    var towerObj =  mainScene.createElement(globalTowerWidth, globalTowerHeight);
-		towerObj.drawImage(imgObject, 0, 0, data[this.code].width, data[this.code].height, 0, 0, globalTowerWidth, globalTowerHeight);
-		this.mapResource = towerObj;
-		mainScene.getStage().append(this.mapResource);
-  		this.mapResource.cparent = this;
-  		this.mapResource.on("mousedown", function(e) {
-				this.cparent.mouseDown(e);
-		});
-
-		this.mouseDown = function(event) {
-			currentSelectedUnit = this;
-			this.mapResource.opacity = this.mapResource.opacity < 1 ? 1 : 0.5 ;
-		}
+  		
 
   	this.update =function() {
 
@@ -59,16 +47,6 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 
  };
 
-/*var Unit = Class.create(Entity, {
-	initialize : function($super, code,data,ownerId, isAIControlled) {
-
-	}
-})*/
-
-
-
-
-categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
 
 Player = function(name, id, isServer, numPlayersOnBoard) {
 	this.name 	= name;
