@@ -112,7 +112,7 @@
                 checkIfLoadComplete();
             });
 
-            $.getJSON('settings/units.json', function(data) {
+            /*$.getJSON('settings/units.json', function(data) {
                 unit_data = data;
                 units_loaded = true;
                 loadUnitAssetData();
@@ -124,15 +124,79 @@
                 towers_loaded = true;
                 loadTowerAssetData();
                 checkIfLoadComplete();
-            });
+            });*/
 
+            Object.filter = function( obj, predicate) {
+                var result = {}, key;
+                // ---------------^---- as noted by @CMS, 
+                //      always declare variables with the "var" keyword
+
+                for (key in obj) {
+                    if (obj.hasOwnProperty(key) && !predicate(obj[key])) {
+                        result[key] = obj[key];
+                    }
+                }
+
+                return result;
+            };
             $.getJSON('settings/items.json', function(data) {
                 item_data = data;
+                var jsonData = JSON.stringify(data);
+                tower_data = filterData(data, "tower");
+                unit_data = filterData(data,"unit");
                 towers_loaded = true;
+                units_loaded = true;
+                //loadUnitAssetData();
                 //loadTowerAssetData();
+                //loadTowerAssetData();
+                loadAssetData();
                 checkIfLoadComplete();
             });
 
+            function filterData(data, type) {
+                var dest = {};
+                for(key in data) {
+                    var obj = data[key];
+                    if(obj.type == type) {
+                        dest[key] = obj;
+                    }
+                }
+                return dest;
+            }
+            var itemImages = {};
+            var itemAssetsToLoad = 0;
+            var itemAssetsLoaded = 0;
+            var item_assets_loaded = false;
+            function loadAssetData() {
+                for(var key in item_data) {
+                    var imgsrc = item_data[key].image;
+                    itemImages[key] = new Image();
+                    itemAssetsToLoad++;
+                    itemImages[key].onload = function(){
+                        itemAssetsLoaded ++;
+                    };
+                    itemImages[key].src = imgsrc;
+                }
+
+                for(var key in item_data) {
+                    var imgsrc = item_data[key].projectileImage;
+                    var img = new Image();
+                    img.key = key;
+                    itemAssetsToLoad++;
+                    img.onload = function(){
+                        itemAssetsLoaded ++;
+                        unitProjectileImages[this.key] = this;
+                        if(itemAssetsLoaded == itemAssetsToLoad) {
+                            item_assets_loaded = true;
+                            tower_assets_loaded = true;
+                            unit_assets_loaded = true;
+                            checkIfLoadComplete();
+                            
+                        }
+                    };
+                    img.src = imgsrc;
+                }
+            }
 
             function loadUnitAssetData() {
                 for(var key in unit_data) {
@@ -400,6 +464,45 @@
 						});
 					}
                 });
+
+                socket.on('parseInputs', function(data) {
+                    if(data.senderId == me.id) {
+                        return false;
+                    }
+                    var inputs = data.value;
+                    for(var key in inputs) {
+                        var input = inputs[key];
+                        var action = input.action;
+                        var params = input.params;
+                        console.log("Perform "+action + "on server with params="+JSON.stringify(params));
+                    //Will have to replace with anonymous function logic
+                        if(action == "addEntity" ) {
+                            //console.log("numEntities = " + numEntities[socket[data_namespace].currentRoom])
+                            var entity = new Entity(params.code,item_data,params.owner, params.isAIControlled,params.isDefender, numEntities);
+                            numEntities++ ;
+                            //console.log(JSON.stringify(entities));
+                            //console.log(socket[data_namespace].currentRoom+ "))))))))");
+                            if(entities == null) {
+                                entities = new Array();
+                    
+                            }
+                            entities[entity.index] = entity;
+                            //entities[socket[data_namespace].currentRoom][entity.index] = entities;
+                            //console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][entity.index].index));
+
+                        }
+
+                        if(action == "updateTargetPosition") {
+                            var index = params.entityIndex;
+                            var position = new Position(params.x,params.y);
+                            entities[index].updateTarget(position);
+                            //console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][index].targetPosition));
+                        }
+                    }
+
+
+
+                });
             }
 
             function setClientDetails(data) {
@@ -588,10 +691,17 @@
                     $('#add_unit_dropdown').append("<li><a class='add_unit_button' id='" + usableUnitCodes[i] + "' href='#'>" + unit_data[usableUnitCodes[i]].name + "</a></li>")
                 }
                 $('.add_unit_button').click(function() {
-                    var unitsOnBoard = me.unitsOnBoard();
+                    /*var unitsOnBoard = me.unitsOnBoard();
                     if (unitsOnBoard < TOTAL_UNITS) {
                         var unit = new Unit(me, unitsOnBoard+1, {code: $(this).attr("id"), position:{ x: 0.125, y: 0.183 }}, false, true);
-                    }
+                    }*/
+                    var entity = new Entity($(this).attr("id"),item_data, me.id, true, false, numEntities);
+                    numEntities++;
+                    entities.push(entity);
+                    var params = {code: entity.code, owner: me.id,isAIControlled: true, isDefender: false};
+                    var input = {action: "addEntity", params: params };
+                    globalInputs[numInputs] = input;
+                    numInputs++;
                     return false;
                 });
             }
@@ -640,6 +750,10 @@
 					var relY = (event.offsetY - (currentSelectedUnit.mapResource.height/2)) / canvasDoc.height;
 					currentSelectedUnit.updateTarget({x : relX, y : relY });
 					
+                    var params = {x: relX , y: relY , entityIndex: currentSelectedUnit.index};
+                    var input = {action: "updateTargetPosition", params: params };
+                    globalInputs[numInputs] = input;
+                    numInputs++;
 					currentSelectedUnit.mapResource.opacity = currentSelectedUnit.mapResource.opacity < 1 ? 1 : 0.5 ;
                     currentSelectedUnit = null;
 				}
@@ -658,7 +772,9 @@
                     for (var key in playersOnBoard) {
 						playersOnBoard[key].update();
                     }
-
+                    for(var i = 0 ;i <numEntities ; i++) {
+                        entities[i].update();
+                    }
                     stage.refresh();
 					pushToServer();
                 }
@@ -685,6 +801,7 @@
                 var towersOnBoard = me.towersOnBoard();
 
                 var myTower = new Entity("001",tower_data,owner, false, true, numEntities);
+                numEntities++;
                 entities.push(myTower);
                 var params = {code: "001", owner: owner,isAIControlled: false, isDefender: true};
                 var input = {action: "addEntity", params: params };
@@ -730,6 +847,7 @@
 			}
 			
 			
+
 			function toggleBattleMode() {
 				if (battleMode == true) {
 					// show fade screen

@@ -1,8 +1,8 @@
 var couchbase = require("couchbase");
 var fs = require('fs');
 
-var dbConfigFilename = 'settings/db-config.json';
-var anonymousDbConfigFilename = 'settings/anonymous-db-config.json';
+var dbConfigFilename = '../settings/db-config.json';
+var anonymousDbConfigFilename = '../settings/anonymous-db-config.json';
 
 db = {
     enabled: true

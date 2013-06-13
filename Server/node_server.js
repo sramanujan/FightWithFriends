@@ -18,11 +18,12 @@ io.set('log level', 1); // reduce logging
 var data_namespace = 'IOSOCKET';
 var roomArray = new Array();
 
-var entities = {};//new Array();
+var entities = null;//new Array();
 var numEntities = {};//0;
 unit_data = JSON.parse(fs.readFileSync("../settings/units.json"));
 tower_data = JSON.parse(fs.readFileSync("../settings/towers.json"));
 item_data = JSON.parse(fs.readFileSync("../settings/items.json"));
+var timers = {};
 
 io.sockets.on('connection', function (socket) {
 
@@ -58,6 +59,7 @@ io.sockets.on('connection', function (socket) {
         data.usableUnits = new Array();
         data.usableTowers = new Array();
         myEntities = new Array();//Need more refactor here
+        //entities[socket[data_namespace].currentRoom] = new Array();
         for (var code in unit_data) {
             for (var requirement in unit_data[code].requirements) {
                 if (unit_data[code].requirements[requirement] >= data.userDetails[requirement]) {
@@ -74,10 +76,23 @@ io.sockets.on('connection', function (socket) {
         }
         socket.join(socket[data_namespace].player.name);
 		socket[data_namespace].myRoom = socket[data_namespace].currentRoom = socket[data_namespace].player.name;
-        entities[socket[data_namespace].currentRoom] = myEntities;
+        if(entities == null) {
+            entities = {};
+        }
+        entities[socket[data_namespace].currentRoom] = null;
         numEntities[socket[data_namespace].currentRoom] = 0;//Need refactor where db used
-        data.entities = entities[socket[data_namespace].currentRoom];
+        timers[socket[data_namespace].currentRoom] = setInterval(updateEntities,100);
+        data.entities =entities[socket[data_namespace].currentRoom];
         socket.emit('iregistered', data);
+    }
+
+    function updateEntities() {
+        //console.log("Update here");
+        for(var key in entities) {
+            for(var index in entities[key]) {
+                entities[key][index].update();
+            }
+        }
     }
 
     socket.on('login', function (data) {
@@ -158,8 +173,8 @@ io.sockets.on('connection', function (socket) {
         for (var i = 0; i < clientList.length; i++) {
             value.push( clientList[i][data_namespace].player.getState() );
         }
-        data.entities = entities[socket[data_namespace].currentRoom];
-        data.numEntities =numEntities[socket[data_namespace].currentRoom]
+        data.entities = entities[data.room];
+        data.numEntities =numEntities[data.room];
 		console.log("user " + socket[data_namespace].player.name + " just joined - " + data.room);
         socket.emit('ijoined', { room: data.room, value: value, entities : data.entities, numEntities : data.numEntities });
         socket.roomUpdate('join');
@@ -191,17 +206,33 @@ io.sockets.on('connection', function (socket) {
             var input = inputs[key];
             var action = input.action;
             var params = input.params;
-            console.log("Perform "+action + "on server with params="+params);
+            console.log("Perform "+action + "on server with params="+JSON.stringify(params));
             //Will have to replace with anonymous function logic
             if(action == "addEntity" ) {
+                console.log("numEntities = " + numEntities[socket[data_namespace].currentRoom])
                 var entity = new Entity(params.code,item_data,params.owner, params.isAIControlled,params.isDefender, numEntities[socket[data_namespace].currentRoom]);
-                numEntities[socket[data_namespace].currentRoom] = numEntities[socket[data_namespace].currentRoom]+1;
-                entities[socket[data_namespace].currentRoom].push(entity);
+                numEntities[socket[data_namespace].currentRoom] = numEntities[socket[data_namespace].currentRoom] +1 ;
                 console.log(JSON.stringify(entities));
+                console.log(socket[data_namespace].currentRoom+ "))))))))");
+                if(entities[socket[data_namespace].currentRoom] == null) {
+                    entities[socket[data_namespace].currentRoom] = {};
+                    
+                }
+                entities[socket[data_namespace].currentRoom][entity.index] = entity;
+                //entities[socket[data_namespace].currentRoom][entity.index] = entities;
+                console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][entity.index].index));
 
             }
+
+            if(action == "updateTargetPosition") {
+                var index = params.entityIndex;
+                var position = new Position(params.x,params.y);
+                entities[socket[data_namespace].currentRoom][index].updateTarget(position);
+                console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][index].targetPosition));
+            }
         }
-        socket.emit('parseInputs', { senderId: data.senderId, value: data.inputs });
+        var properName = socket[data_namespace].currentRoom.replace('/','');
+        io.sockets.in(properName).emit('parseInputs', { senderId: data.senderId, value: data.inputs });
 
     });
 
@@ -233,6 +264,7 @@ setInterval(function() {
                 // battleOver = true;
 				console.log("and we have a winner");
 				value = { battleOver: true, victor : clientList[i][data_namespace].player.battle.victor };
+                io.sockets.in(properName).emit('reAdjust', { value : value, room : properName }); 
                 break;
             }
         }
@@ -242,7 +274,7 @@ setInterval(function() {
                 //clientList[i][data_namespace].player.performAfterEffectsAndReset();
             // } 
         // }
-        io.sockets.in(properName).emit('reAdjust', { value : value, room : properName }); 
+        //io.sockets.in(properName).emit('reAdjust', { value : value, room : properName }); 
     }
 	
 }, 100);

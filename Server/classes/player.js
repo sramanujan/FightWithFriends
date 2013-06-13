@@ -5,7 +5,7 @@
  * @param helpers
  */
 categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
-var Position = function(x,y) {
+Position = function(x,y) {
 	this.x = x;
 	this.y = y;
 }
@@ -22,11 +22,36 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
     	this.isAIControlled = isAIControlled;
     	this.isDefender = isDefender;
     	this.index = index;
+    	this.state = "alive";
   		
 
   	this.update =function() {
+  		//console.log("Update entity");
+  		
+		var relativeSpeed = this.speed;
+		//If unit has reached its target position, update target to goal
+		if(this.targetPosition.x == this.currentPosition.x && this.targetPosition.y == this.currentPosition.y && this.isAIControlled) {
 
+			// shud also move around towers?
+			this.targetPosition.x = 0.85;
+			this.targetPosition.y = 0.85;
+
+			relativeSpeed = relativeSpeed * 0.35;
+		}
+
+		var remX = this.targetPosition.x - this.currentPosition.x;
+		var remY = this.targetPosition.y - this.currentPosition.y;
+		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+
+		if(dist > this.speed) {
+			this.currentPosition.x += (remX / dist)*relativeSpeed;
+			this.currentPosition.y += (remY / dist)*relativeSpeed;
+		} else {
+			this.currentPosition.x += remX;
+			this.currentPosition.y += remY;
+		}		
   	};
+
  	this.parseInput =  function(functionName, params) {
 
  	};
