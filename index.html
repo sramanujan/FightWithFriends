@@ -367,6 +367,8 @@
 					if(data.numEntities >0 ) {
                         for(var i =0 ; i<data.numEntities ; i++) {
                             var entity = new Entity(data.entities[i].code,item_data,data.entities[i].owner, data.entities[i].isAIControlled,data.entities[i].isDefender, i);
+                            entity.updateTarget(data.entities[i].targetPosition);
+                            entity.updatePosition(data.entities[i].currentPosition);
                             numEntities++;
                             entities.push(entity);
                         }
@@ -774,6 +776,9 @@
                     }
                     for(var i = 0 ;i <numEntities ; i++) {
                         entities[i].update();
+                        if(entities[i].state == "alive") {
+                            entities[i].resolveBattle(entities);
+                        }
                     }
                     stage.refresh();
 					pushToServer();

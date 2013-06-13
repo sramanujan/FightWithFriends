@@ -24,6 +24,19 @@ unit_data = JSON.parse(fs.readFileSync("../settings/units.json"));
 tower_data = JSON.parse(fs.readFileSync("../settings/towers.json"));
 item_data = JSON.parse(fs.readFileSync("../settings/items.json"));
 var timers = {};
+var timer = setInterval(updateEntities,17);
+
+function updateEntities() {
+        //console.log("Update here");
+        for(var key in entities) {
+            for(var index in entities[key]) {
+                entities[key][index].update();
+                if(entities[key][index].state == "alive") {
+                    entities[key][index].resolveBattle(entities[key]);
+                }
+            }
+        }
+    }
 
 io.sockets.on('connection', function (socket) {
 
@@ -81,19 +94,12 @@ io.sockets.on('connection', function (socket) {
         }
         entities[socket[data_namespace].currentRoom] = null;
         numEntities[socket[data_namespace].currentRoom] = 0;//Need refactor where db used
-        timers[socket[data_namespace].currentRoom] = setInterval(updateEntities,100);
+        //timers[socket[data_namespace].currentRoom] = setInterval(updateEntities,100);
         data.entities =entities[socket[data_namespace].currentRoom];
         socket.emit('iregistered', data);
     }
 
-    function updateEntities() {
-        //console.log("Update here");
-        for(var key in entities) {
-            for(var index in entities[key]) {
-                entities[key][index].update();
-            }
-        }
-    }
+    
 
     socket.on('login', function (data) {
         console.log("login name and id [" + data.username + ":" + data.id +"]");

@@ -14,7 +14,10 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
     	this.code = code;
     	this.health = data[code].health;
     	this.range = data[code].range;
-   	 	var position = new Position(100,100);
+   	 	var position = new Position(0.10,0.10);
+   	 	var targetPosition = new Position(0.2, 0.3);
+    	this.targetPosition = targetPosition;
+    	this.currentPosition = position;
     	this.targetPosition = position;
     	this.currentPosition = position;
     	this.enemy = null;
@@ -26,30 +29,56 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   		
 
   	this.update =function() {
-  		//console.log("Update entity");
-  		
-		var relativeSpeed = this.speed;
-		//If unit has reached its target position, update target to goal
-		if(this.targetPosition.x == this.currentPosition.x && this.targetPosition.y == this.currentPosition.y && this.isAIControlled) {
+  		if(this.state == "dead") {
+				//this.mapResource.remove();
+				return false;
+			}
+			var relativeSpeed = this.speed;
+			//If unit has reached its target position, update target to goal
+			if((Math.abs(this.targetPosition.x - this.currentPosition.x) < 0.01 )&& (Math.abs(this.targetPosition.y - this.currentPosition.y)< 0.01) && isAIControlled) {
+				this.targetPosition.x = 0.75;
+				this.targetPosition.y = 0.75;
 
-			// shud also move around towers?
-			this.targetPosition.x = 0.85;
-			this.targetPosition.y = 0.85;
+				relativeSpeed = relativeSpeed ;//* 65;
+			}
+			if(!this.isAIControlled) {
+				this.currentPosition = this.targetPosition;
+			}
+			else {
+				var remX = this.targetPosition.x - this.currentPosition.x;
+				var remY = this.targetPosition.y - this.currentPosition.y;
+				var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+				var slope = 0;
+				if(remX != 0) {
+					slope = remY/remX;
+				}
+				var c = this.targetPosition.y - slope*(this.targetPosition.x);
+				var xSpeed = 0.001; //1 pixel per 100 milliseconds
+				if(dist > 0.05) {
 
-			relativeSpeed = relativeSpeed * 0.35;
-		}
+					if(remX > 0) {
+						if(Math.abs(remX) > 0.001) {
+							this.currentPosition.x += xSpeed;
+						}
+					}
+					else {
+						if(Math.abs(remX) > 0.001) {
+							this.currentPosition.x -= xSpeed;
+					}
+				}
 
-		var remX = this.targetPosition.x - this.currentPosition.x;
-		var remY = this.targetPosition.y - this.currentPosition.y;
-		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+				this.currentPosition.y = slope*this.currentPosition.x + c;
 
-		if(dist > this.speed) {
-			this.currentPosition.x += (remX / dist)*relativeSpeed;
-			this.currentPosition.y += (remY / dist)*relativeSpeed;
-		} else {
-			this.currentPosition.x += remX;
-			this.currentPosition.y += remY;
-		}		
+				} 
+				else {
+					this.currentPosition.x = this.targetPosition.x;
+					this.currentPosition.y = this.targetPosition.y;
+				}
+			}
+
+			//console.log("Plan to reach ("+this.targetPosition.x+","+this.targetPosition.y+",) now at ("+this.currentPosition.x+","+this.currentPosition.y+")");
+			this.currentPosition.x = Math.min(this.currentPosition.x,0.95);
+			this.currentPosition.y = Math.min(this.currentPosition.y,0.95);	
   	};
 
  	this.parseInput =  function(functionName, params) {
@@ -68,6 +97,42 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   	reduceHealth= function(delta) {
   		this.health -=delta;
   	};
+
+  	this.resolveBattle = function(entities) {
+  		//console.log(this.code + " RESOLVEBATTLE");
+  		var minDistance = 100000;
+  		var nearestOpponent = null;
+  		for(key in entities) {
+  			var entity = entities[key];
+  			if(key == this.index ) {
+  				continue;
+  			}
+  			if(entity.state == "dead") {
+  				continue;
+  			}
+  			if(entity.isDefender && this.isDefender) {
+  				continue;
+  			}
+  			var remX = entity.currentPosition.x - this.currentPosition.x;
+  			var remY = entity.currentPosition.y - this.currentPosition.y;
+  			var dest = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+  			//console.log("Total distance diff = "+dest);
+  			if(dest < minDistance) {
+  				minDistance = dest;
+  				nearestOpponent = entity;
+  			}
+  		}
+  		if(nearestOpponent != null) {
+  			if(minDistance <= this.range) {
+  				nearestOpponent.health -= 10;
+  				console.log(this.code + " attacked "+ nearestOpponent.code);
+  				if(nearestOpponent.health <= 0) {
+  					nearestOpponent.state = "dead";
+  					console.log("YAY KILLED ON SERVER FINALLY");
+  				}
+  			}
+  		}
+  	}
 
 
  };

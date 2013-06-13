@@ -85,7 +85,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 			}
 			var relativeSpeed = this.speed;
 			//If unit has reached its target position, update target to goal
-			if((Math.abs(this.targetPosition.x - this.currentPosition.x) < 0.01 )&& (Math.abs(this.targetPosition.y - this.currentPosition.y)< 0.01)) {
+			if((Math.abs(this.targetPosition.x - this.currentPosition.x) < 0.01 )&& (Math.abs(this.targetPosition.y - this.currentPosition.y)< 0.01) && isAIControlled) {
 				this.targetPosition.x = 0.75;
 				this.targetPosition.y = 0.75;
 
@@ -149,6 +149,39 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   	reduceHealth= function(delta) {
   		this.health -=delta;
   	};
+
+  	this.resolveBattle = function(entities) {
+  		var minDistance = 100000;
+  		var nearestOpponent = null;
+  		for(key in entities) {
+  			var entity = entities[key];
+  			if(key == this.index ) {
+  				continue;
+  			}
+  			if(entity.state == "dead") {
+  				continue;
+  			}
+  			if(entity.isDefender && this.isDefender) {
+  				continue;
+  			}
+  			var remX = entity.currentPosition.x - this.currentPosition.x;
+  			var remY = entity.currentPosition.y - this.currentPosition.y;
+  			var dest = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+  			console.log("Total distance diff = "+dest);
+  			if(dest < minDistance) {
+  				minDistance = dest;
+  				nearestOpponent = entity;
+  			}
+  		}
+  		if(nearestOpponent != null) {
+  			if(minDistance <= this.range) {
+  				nearestOpponent.health -= 10;
+  				if(nearestOpponent.health <= 0) {
+  					nearestOpponent.state = "dead";
+  				}
+  			}
+  		}
+  	}
 
 
  };
