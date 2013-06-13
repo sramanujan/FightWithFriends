@@ -4,7 +4,8 @@
  * @param config
  * @param helpers
  */
-var Position = function(x,y) {
+categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
+Position = function(x,y) {
 	this.x = x;
 	this.y = y;
 }
@@ -12,44 +13,21 @@ var Position = function(x,y) {
 Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
     	this.code = code;
     	this.health = data[code].health;
-    	this.maxHealth = data[code].health;
     	this.range = data[code].range;
-   	 	var position = new Position(0.10,0.10);
-   	 	var targetPosition = new Position(0.2, 0.3);
-    	this.targetPosition = targetPosition;
+   	 	var position = new Position(100,100);
+    	this.targetPosition = position;
     	this.currentPosition = position;
     	this.enemy = null;
     	this.ownerId = ownerId;
     	this.isAIControlled = isAIControlled;
     	this.isDefender = isDefender;
     	this.index = index;
-    	this.speed = 0.002;
-    	//this.speed = 
-  		var imgObject = itemImages[this.code];
-	    var towerObj =  mainScene.createElement(globalTowerWidth, globalTowerHeight);
-		towerObj.drawImage(imgObject, 0, 0, data[this.code].width, data[this.code].height, 0, 0, globalTowerWidth, globalTowerHeight);
-		this.mapResource = towerObj;
-		mainScene.getStage().append(this.mapResource);
-  		this.mapResource.cparent = this;
-  		if(this.ownerId == me.id) {
-  			this.mapResource.on("mousedown", function(e) {
-				this.cparent.mouseDown(e);
-			});
-  		}
-		this.state = "alive";
-
-		this.mouseDown = function(event) {
-			currentSelectedUnit = this;
-			this.mapResource.opacity = this.mapResource.opacity < 1 ? 1 : 0.5 ;
-		}
+    	this.state = "alive";
+  		
 
   	this.update =function() {
+  		//console.log("Update entity");
   		
-  		/*if(this.state == "dead") {
-			this.mapResource.remove();
-			return false;
-		}
-
 		var relativeSpeed = this.speed;
 		//If unit has reached its target position, update target to goal
 		if(this.targetPosition.x == this.currentPosition.x && this.targetPosition.y == this.currentPosition.y && this.isAIControlled) {
@@ -60,77 +38,18 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 
 			relativeSpeed = relativeSpeed * 0.35;
 		}
-		if(!this.isAIControlled) {
-			this.currentPosition = this.targetPosition;
-		}
-		else {
-			var remX = this.targetPosition.x - this.currentPosition.x;
-			var remY = this.targetPosition.y - this.currentPosition.y;
-			var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 
-			if(dist > this.speed) {
-				this.currentPosition.x += (remX / dist)*relativeSpeed;
-				this.currentPosition.y += (remY / dist)*relativeSpeed;
-			} else {
-				this.currentPosition.x += remX;
-				this.currentPosition.y += remY;
-			}
+		var remX = this.targetPosition.x - this.currentPosition.x;
+		var remY = this.targetPosition.y - this.currentPosition.y;
+		var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
+
+		if(dist > this.speed) {
+			this.currentPosition.x += (remX / dist)*relativeSpeed;
+			this.currentPosition.y += (remY / dist)*relativeSpeed;
+		} else {
+			this.currentPosition.x += remX;
+			this.currentPosition.y += remY;
 		}		
-		this.mapResource.x = this.currentPosition.x * canvasDoc.width;
-		this.mapResource.y = this.currentPosition.y * canvasDoc.height;*/
-
-			if(this.state == "dead") {
-				this.mapResource.remove();
-				return false;
-			}
-			var relativeSpeed = this.speed;
-			//If unit has reached its target position, update target to goal
-			if((Math.abs(this.targetPosition.x - this.currentPosition.x) < 0.01 )&& (Math.abs(this.targetPosition.y - this.currentPosition.y)< 0.01)) {
-				this.targetPosition.x = 0.75;
-				this.targetPosition.y = 0.75;
-
-				relativeSpeed = relativeSpeed ;//* 65;
-			}
-			if(!this.isAIControlled) {
-				this.currentPosition = this.targetPosition;
-			}
-			else {
-				var remX = this.targetPosition.x - this.currentPosition.x;
-				var remY = this.targetPosition.y - this.currentPosition.y;
-				var dist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-				var slope = 0;
-				if(remX != 0) {
-					slope = remY/remX;
-				}
-				var c = this.targetPosition.y - slope*(this.targetPosition.x);
-				var xSpeed = 0.001; //1 pixel per 100 milliseconds
-				if(dist > 0.05) {
-
-					if(remX > 0) {
-						if(Math.abs(remX) > 0.001) {
-							this.currentPosition.x += xSpeed;
-						}
-					}
-					else {
-						if(Math.abs(remX) > 0.001) {
-							this.currentPosition.x -= xSpeed;
-					}
-				}
-
-				this.currentPosition.y = slope*this.currentPosition.x + c;
-
-				} 
-				else {
-					this.currentPosition.x = this.targetPosition.x;
-					this.currentPosition.y = this.targetPosition.y;
-				}
-			}
-
-			console.log("Plan to reach ("+this.targetPosition.x+","+this.targetPosition.y+",) now at ("+this.currentPosition.x+","+this.currentPosition.y+")");
-			this.currentPosition.x = Math.min(this.currentPosition.x,0.95);
-			this.currentPosition.y = Math.min(this.currentPosition.y,0.95);
-			this.mapResource.x = this.currentPosition.x * canvasDoc.width;
-			this.mapResource.y = this.currentPosition.y * canvasDoc.height;
   	};
 
  	this.parseInput =  function(functionName, params) {
@@ -153,16 +72,6 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 
  };
 
-/*var Unit = Class.create(Entity, {
-	initialize : function($super, code,data,ownerId, isAIControlled) {
-
-	}
-})*/
-
-
-
-
-categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
 
 Player = function(name, id, isServer, numPlayersOnBoard) {
 	this.name 	= name;

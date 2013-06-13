@@ -5,7 +5,7 @@ var dbConfigFilename = '../settings/db-config.json';
 var anonymousDbConfigFilename = '../settings/anonymous-db-config.json';
 
 db = {
-    enabled: true
+    enabled: false
 }; 
 
 db.playerTemplate = { 
