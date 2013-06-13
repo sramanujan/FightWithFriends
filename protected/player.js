@@ -29,6 +29,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 	    var towerObj =  mainScene.createElement(globalTowerWidth, globalTowerHeight);
 		towerObj.drawImage(imgObject, 0, 0, data[this.code].width, data[this.code].height, 0, 0, globalTowerWidth, globalTowerHeight);
 		this.mapResource = towerObj;
+		this.healthBar = new HealthBar(this.mapResource, globalTowerWidth, 0, this.maxHealth, 0);
 		mainScene.getStage().append(this.mapResource);
   		this.mapResource.cparent = this;
   		if(this.ownerId == me.id) {
@@ -37,14 +38,24 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 			});
   		}
 		this.state = "alive";
-
+		this.proImgObject = unitProjectileImages[this.code];
+	    this.proSpeed = item_data[this.code].projectileSpeed;
+	    this.hitsPerSecond = item_data[this.code].hitsPerSecond;
 		this.mouseDown = function(event) {
 			currentSelectedUnit = this;
 			this.mapResource.opacity = this.mapResource.opacity < 1 ? 1 : 0.5 ;
 		}
+		this.projectile = null;
+		this.fireProjectile = function(target) {
+			if(this.lastProjectileFiredTime != null && ((new Date().getTime() - this.lastProjectileFiredTime)/1000 < 1/this.hitsPerSecond)) {
+				return;
+			}
+			this.projectile = new Projectile( {x: this.mapResource.x,y: this.mapResource.y}, target, this.proImgObject, { width: item_data[this.code].projectileWidth, height: item_data[this.code].projectileHeight, speed: item_data[this.code].projectileSpeed });
+			this.lastProjectileFiredTime = new Date().getTime();
+		}
 
   	this.update =function() {
-  		
+
   		/*if(this.state == "dead") {
 			this.mapResource.remove();
 			return false;
@@ -79,10 +90,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 		this.mapResource.x = this.currentPosition.x * canvasDoc.width;
 		this.mapResource.y = this.currentPosition.y * canvasDoc.height;*/
 
-			if(this.state == "dead") {
-				this.mapResource.remove();
-				return false;
-			}
+			
 			var relativeSpeed = this.speed;
 			//If unit has reached its target position, update target to goal
 			if((Math.abs(this.targetPosition.x - this.currentPosition.x) < 0.01 )&& (Math.abs(this.targetPosition.y - this.currentPosition.y)< 0.01) && isAIControlled) {
@@ -129,9 +137,28 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 			console.log("Plan to reach ("+this.targetPosition.x+","+this.targetPosition.y+",) now at ("+this.currentPosition.x+","+this.currentPosition.y+")");
 			this.currentPosition.x = Math.min(this.currentPosition.x,0.95);
 			this.currentPosition.y = Math.min(this.currentPosition.y,0.95);
-			this.mapResource.x = this.currentPosition.x * canvasDoc.width;
-			this.mapResource.y = this.currentPosition.y * canvasDoc.height;
+			
   	};
+
+  	this.updateMapResource = function() {
+  		if(this.state == "dead") {
+				this.mapResource.remove();
+				return false;
+		}
+
+		/*if(this.projectile != null) {
+  			var val = this.projectile.update();
+  			if(!val) {
+  				this.projectile = null;
+  			}
+  		}*/
+  		if(this.enemy != null) {
+			//this.fireProjectile(this.enemy.currentPosition);
+		}
+  		this.mapResource.x = this.currentPosition.x * canvasDoc.width;
+		this.mapResource.y = this.currentPosition.y * canvasDoc.height;
+		this.healthBar.updateHealth(this.health);
+  	}
 
  	this.parseInput =  function(functionName, params) {
 
@@ -146,8 +173,9 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   		this.currentPosition = position;
   	};
 
-  	reduceHealth= function(delta) {
+  	this.reduceHealth= function(delta) {
   		this.health -=delta;
+  		
   	};
 
   	this.resolveBattle = function(entities) {
@@ -167,7 +195,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   			var remX = entity.currentPosition.x - this.currentPosition.x;
   			var remY = entity.currentPosition.y - this.currentPosition.y;
   			var dest = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-  			console.log("Total distance diff = "+dest);
+  			//console.log("Total distance diff = "+dest);
   			if(dest < minDistance) {
   				minDistance = dest;
   				nearestOpponent = entity;
@@ -175,11 +203,15 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   		}
   		if(nearestOpponent != null) {
   			if(minDistance <= this.range) {
-  				nearestOpponent.health -= 10;
+  				nearestOpponent.reduceHealth(10);//arbitrary number
+  				this.enemy = nearestOpponent;
   				if(nearestOpponent.health <= 0) {
   					nearestOpponent.state = "dead";
   				}
   			}
+  		}
+  		else {
+  			this.enemy = null;
   		}
   	}
 
@@ -339,7 +371,7 @@ Player = function(name, id, isServer, numPlayersOnBoard) {
 
 };
 
-Projectile = function(owner, startPosition, targetRelativePosition, imgObject, projectileData) {
+Projectile = function( startPosition, targetRelativePosition, imgObject, projectileData) {
 	this.projectileData = projectileData;
 
 	var projectileObj =  mainScene.createElement(globalProjectileWidth, globalProjectileHeight);
@@ -353,8 +385,8 @@ Projectile = function(owner, startPosition, targetRelativePosition, imgObject, p
 	if (!this.isServer)
 		mainScene.getStage().append(this.mapResource);
 	console.log("add new projectile ");
-	this.owner = owner;
-	this.owner.projectiles.push(this);
+	//this.owner = owner;
+	//this.owner.projectiles.push(this);
 
 	this.update = function() {
 		if(this && this.mapResource ) {

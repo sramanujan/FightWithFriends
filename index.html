@@ -88,7 +88,19 @@
             var globalInputs = {};
             var numInputs = 0;
             var item_data = null;
+            var timer = setInterval( entityUpdate, 100);
 
+
+            function entityUpdate() {
+                for(var i = 0 ;i <numEntities ; i++) {
+                        entities[i].update();
+                        if(entities[i].state == "alive") {
+                            entities[i].resolveBattle(entities);
+                        }
+                    }
+                    pushToServer();
+
+            }
             $('#login_button,#anonymous_button').click( function() {
                 var login = '';
                 if(!$('input[id=loginId]').val()) {
@@ -774,14 +786,19 @@
                     for (var key in playersOnBoard) {
 						playersOnBoard[key].update();
                     }
+
                     for(var i = 0 ;i <numEntities ; i++) {
+                        entities[i].updateMapResource();
+                        //entities[i]
+                    }
+                    /*for(var i = 0 ;i <numEntities ; i++) {
                         entities[i].update();
                         if(entities[i].state == "alive") {
                             entities[i].resolveBattle(entities);
                         }
-                    }
+                    }*/
                     stage.refresh();
-					pushToServer();
+					//pushToServer();
                 }
             });
 

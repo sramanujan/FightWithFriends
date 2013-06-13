@@ -24,7 +24,7 @@ unit_data = JSON.parse(fs.readFileSync("../settings/units.json"));
 tower_data = JSON.parse(fs.readFileSync("../settings/towers.json"));
 item_data = JSON.parse(fs.readFileSync("../settings/items.json"));
 var timers = {};
-var timer = setInterval(updateEntities,17);
+var timer = setInterval(updateEntities,100);
 
 function updateEntities() {
         //console.log("Update here");
