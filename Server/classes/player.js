@@ -26,6 +26,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 	this.index = index;
 	this.state = "alive";
     this.lastMoved = new Date().getTime();
+    this.fixed = false;
 
   	this.update =function() {
         var time = new Date().getTime();
@@ -47,6 +48,9 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
             this.currentTilePosition = this.targetTilePosition;
         }
         else {
+        	if(this.fixed == true) {
+        		return false;
+        	}
             //var targetAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.targetTilePosition);
             var remX = this.targetTilePosition.x - this.currentTilePosition.x;
             var remY = this.targetTilePosition.y - this.currentTilePosition.y;
@@ -118,10 +122,12 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   		}
   		if(nearestOpponent != null) {
   			if(minDistance <= this.range) {
+  				this.fixed = true;
   				nearestOpponent.health -= 10;
   				console.log(this.code + " attacked "+ nearestOpponent.code);
   				if(nearestOpponent.health <= 0) {
   					nearestOpponent.state = "dead";
+  					this.fixed = false;
   					console.log("YAY KILLED ON SERVER FINALLY");
   				}
   			}
