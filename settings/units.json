@@ -1,40 +1,46 @@
 {
-    "001": {
+    "002": {
         "name": "Uber Knight",
         "image": "assets/img/BROKEN-knight.png",
         "width": 75,
         "height": 63,
         "health": 1500,
-        "unitSpeed": 0.002,
+        "tileSpeed": 0.5,
         "projectileImage": "assets/img/bullet.png",
         "projectileSpeed": 0.002,
         "projectileSound": "assets/sound/bullet_sound.mp3",
         "projectileWidth": 40,
         "projectileHeight": 14,
+        "range": 3,
+        "projectileCode": "001",
         "range": 0.2,
         "hitsPerSecond": 1,
-        "frames": 24,
         "requirements": {
             "level": 1
-        }
+        },
+        "3dobject": "assets/js-object/bandido2.js",
+        "damage": 100
     },
-    "002": {
+    "003": {
         "name": "X-Galactic Warrior",
         "image": "assets/img/BROKEN-Alien_Anim_01.png",
         "width": 257,
         "height": 212,
         "health":4000,
-        "unitSpeed": 0.001,
         "projectileImage": "assets/img/bullet.png",
         "projectileSpeed": 0.002,
         "projectileSound": "assets/sound/bullet_sound.mp3",
         "projectileWidth": 40,
         "projectileHeight": 14,
+        "range": 3,
+        "speed": 0.5,
+        "projectileCode": "001",
         "range": 0.2,
         "hitsPerSecond": 1,
-        "frames": 24,
         "requirements": {
             "level": 1
-        }
+        },
+        "3dobject": "assets/js-object/bandido2.js",
+        "damage": 100
     }
 }

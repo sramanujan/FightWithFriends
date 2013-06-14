@@ -2,9 +2,12 @@
 <head> 
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
-    <script src="protected/player.js"></script>
+    <script src="Client/player.js"></script>
+    <script src="Common/map.js"></script>
+    <script src="Client/graphics.js"></script>
     <script src="assets/js/jquery.ba-resize.min.js"></script>
     <script src="assets/js/hammer.min.js"></script>
+    <!--<script src="lib/prototype.js"></script> -->
         <title> Fight With Friends! </title> 
         <!-- Le styles -->
         <link href="assets/css/bootstrap.css" rel="stylesheet">
@@ -81,7 +84,25 @@
             var towerAssetsToLoad = 0;
             var unitAssetsLoaded = 0;
             var unitAssetsToLoad = 0;
+            var entities = new Array();
+            var numEntities = 0;
+            //var globalInputs = new Array();
+            var globalInputs = {};
+            var numInputs = 0;
+            var item_data = null;
+            var timer = setInterval( entityUpdate, 100);
 
+
+            function entityUpdate() {
+                for(var i = 0 ;i <numEntities ; i++) {
+                        entities[i].update();
+                        if(entities[i].state == "alive") {
+                            entities[i].resolveBattle(entities);
+                        }
+                    }
+                    pushToServer();
+
+            }
             $('#login_button,#anonymous_button').click( function() {
                 var login = '';
                 if(!$('input[id=loginId]').val()) {
@@ -105,7 +126,7 @@
                 checkIfLoadComplete();
             });
 
-            $.getJSON('settings/units.json', function(data) {
+            /*$.getJSON('settings/units.json', function(data) {
                 unit_data = data;
                 units_loaded = true;
                 loadUnitAssetData();
@@ -117,8 +138,76 @@
                 towers_loaded = true;
                 loadTowerAssetData();
                 checkIfLoadComplete();
+            });*/
+
+            Object.filter = function( obj, predicate) {
+                var result = {}, key;
+                // ---------------^---- as noted by @CMS, 
+                //      always declare variables with the "var" keyword
+
+                for (key in obj) {
+                    if (obj.hasOwnProperty(key) && !predicate(obj[key])) {
+                        result[key] = obj[key];
+                    }
+                }
+
+                return result;
+            };
+            $.getJSON('settings/items.json', function(data) {
+                item_data = data;
+                var jsonData = JSON.stringify(data);
+                tower_data = filterData(data, "tower");
+                unit_data = filterData(data,"unit");
+                towers_loaded = true;
+                units_loaded = true;
+                loadAssetData();
+                checkIfLoadComplete();
             });
 
+            function filterData(data, type) {
+                var dest = {};
+                for(key in data) {
+                    var obj = data[key];
+                    if(obj.type == type) {
+                        dest[key] = obj;
+                    }
+                }
+                return dest;
+            }
+            var itemImages = {};
+            var itemAssetsToLoad = 0;
+            var itemAssetsLoaded = 0;
+            var item_assets_loaded = false;
+            function loadAssetData() {
+                for(var key in item_data) {
+                    var imgsrc = item_data[key].image;
+                    itemImages[key] = new Image();
+                    itemAssetsToLoad++;
+                    itemImages[key].onload = function(){
+                        itemAssetsLoaded ++;
+                    };
+                    itemImages[key].src = imgsrc;
+                }
+
+                for(var key in item_data) {
+                    var imgsrc = item_data[key].projectileImage;
+                    var img = new Image();
+                    img.key = key;
+                    itemAssetsToLoad++;
+                    img.onload = function(){
+                        itemAssetsLoaded ++;
+                        unitProjectileImages[this.key] = this;
+                        if(itemAssetsLoaded == itemAssetsToLoad) {
+                            item_assets_loaded = true;
+                            tower_assets_loaded = true;
+                            unit_assets_loaded = true;
+                            checkIfLoadComplete();
+                            
+                        }
+                    };
+                    img.src = imgsrc;
+                }
+            }
 
             function loadUnitAssetData() {
                 for(var key in unit_data) {
@@ -286,10 +375,19 @@
                 socket.on('ijoined', function(data) {
 					console.log("i joined " + data.room);
                     currentRoom = data.room;
-					
+					if(data.numEntities >0 ) {
+                        for(var i =0 ; i<data.numEntities ; i++) {
+                            var entity = new Entity(data.entities[i].code,item_data,data.entities[i].owner, data.entities[i].isAIControlled,data.entities[i].isDefender, i);
+                            entity.updateTargetTile(data.entities[i].targetTilePosition);
+                            entity.updatePosition(data.entities[i].currentTilePosition);
+                            numEntities++;
+                            entities.push(entity);
+                        }
+
+                    }
 					$.each(data.value, function(index, state) {
 						if (state.id != me.id) {
-							var opp = new Player(state.name, state.id, false, numPlayersOnBoard + 1);
+							var opp = new Player(state.name, state.id, numPlayersOnBoard + 1);
 							playersOnBoard[state.id] = opp;
 							numPlayersOnBoard++;
 						}
@@ -325,7 +423,7 @@
 					else if(updateType == 'join') {
 						// this is called when an opponent joins
                         // create an opponent player object
-						var opp = new Player(updateFrom, updateFromId, false, numPlayersOnBoard+1);
+						var opp = new Player(updateFrom, updateFromId, numPlayersOnBoard+1);
 						// add to the player list
 						playersOnBoard[opp.id] = opp;
 						numPlayersOnBoard++;
@@ -379,10 +477,49 @@
 						});
 					}
                 });
+
+                socket.on('parseInputs', function(data) {
+                    if(data.senderId == me.id) {
+                        return false;
+                    }
+                    var inputs = data.value;
+                    for(var key in inputs) {
+                        var input = inputs[key];
+                        var action = input.action;
+                        var params = input.params;
+                        console.log("Perform "+action + "on server with params="+JSON.stringify(params));
+                    //Will have to replace with anonymous function logic
+                        if(action == "addEntity" ) {
+                            //console.log("numEntities = " + numEntities[socket[data_namespace].currentRoom])
+                            var entity = new Entity(params.code,item_data,params.owner, params.isAIControlled,params.isDefender, numEntities);
+                            numEntities++ ;
+                            //console.log(JSON.stringify(entities));
+                            //console.log(socket[data_namespace].currentRoom+ "))))))))");
+                            if(entities == null) {
+                                entities = new Array();
+                    
+                            }
+                            entities[entity.index] = entity;
+                            //entities[socket[data_namespace].currentRoom][entity.index] = entities;
+                            //console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][entity.index].index));
+
+                        }
+
+                        if(action == "updateTargetPosition") {
+                            var index = params.entityIndex;
+                            var position = new Position(params.x,params.y);
+                            entities[index].updateTargetTile(position);
+                            //console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][index].targetPosition));
+                        }
+                    }
+
+
+
+                });
             }
 
             function setClientDetails(data) {
-				me = new Player(data.username, data.id, false, numPlayersOnBoard+1);
+				me = new Player(data.username, data.id, numPlayersOnBoard+1);
 				playersOnBoard[me.id] = me;
 				numPlayersOnBoard++;
 				$("#whoami").html(me.name);
@@ -391,10 +528,13 @@
 
             function joinRoom(roomName) {
 				// reset your canvas
+
+/*************** GRAPHICS *************/                
 				mcanvas = mainScene.getCanvas();
 				mcanvas.clear();
 				mainScene.pause(true);
-				
+/*************** GRAPHICS *************/
+
 				// leave the room you are in
 				leaveRoom();
 				
@@ -425,6 +565,11 @@
             }
 			
 			function pushToServer() {
+                if(numInputs != 0) {
+                    socket.emit('parseInputs',{senderId: me.id, inputs: globalInputs});
+                    numInputs = 0;
+                    globalInputs = {};
+                }
 				if (null != me && me.unitsOnBoard() > 0) {
 					states = me.getState();
 					socket.emit('updateState', { states: me.getState() });
@@ -562,10 +707,17 @@
                     $('#add_unit_dropdown').append("<li><a class='add_unit_button' id='" + usableUnitCodes[i] + "' href='#'>" + unit_data[usableUnitCodes[i]].name + "</a></li>")
                 }
                 $('.add_unit_button').click(function() {
-                    var unitsOnBoard = me.unitsOnBoard();
+                    /*var unitsOnBoard = me.unitsOnBoard();
                     if (unitsOnBoard < TOTAL_UNITS) {
                         var unit = new Unit(me, unitsOnBoard+1, {code: $(this).attr("id"), position:{ x: 0.125, y: 0.183 }}, false, true);
-                    }
+                    }*/
+                    var entity = new Entity($(this).attr("id"),item_data, me.id, true, false, numEntities);
+                    numEntities++;
+                    entities.push(entity);
+                    var params = {code: entity.code, owner: me.id,isAIControlled: true, isDefender: false};
+                    var input = {action: "addEntity", params: params };
+                    globalInputs[numInputs] = input;
+                    numInputs++;
                     return false;
                 });
             }
@@ -577,7 +729,7 @@
                 }
                 $('.add_tower_button').click(function() {
                     if (isInDesignMode) {
-                        addTower({code : $(this).attr("id"), position : { x: 0.100, y: 0.30 }});
+                        addTower({code : $(this).attr("id"), position : { x: 0.100, y: 0.30 }}, me.id);
                     }
                     else {
                         alert("you must be in design mode to add");
@@ -593,13 +745,16 @@
 
             $('#saveMode').click( function() {
                 isInDesignMode = false;
-				states = me.getState();
+				/*
+                states = me.getState();
                 socket.emit('saveTowers', { states: me.getState() });
+                */
                 return false;
             });
 			
-
             var canvasDoc = document.getElementById('canvas1');
+            GlobalGraphics.init(canvasDoc);
+            
             var canvasWidth = canvasDoc.width;
             var canvasHeight = canvasDoc.height;
 
@@ -610,10 +765,13 @@
 
             canvasDoc.onmouseup = function (event) {
 				if (null != currentSelectedUnit) {
-					var relX = (event.offsetX - (currentSelectedUnit.mapResource.width/2)) / canvasDoc.width;
-					var relY = (event.offsetY - (currentSelectedUnit.mapResource.height/2)) / canvasDoc.height;
-					currentSelectedUnit.updateTarget({x : relX, y : relY });
+                    var params = MAP_CONFIG.convertAbsoluteToTile({x: event.offsetX, y: event.offsetY});
+					currentSelectedUnit.updateTargetAbsolute({x : event.offsetX, y : event.offsetY });
 					
+                    params.entityIndex = currentSelectedUnit.index;
+                    var input = {action: "updateTargetPosition", params: params };
+                    globalInputs[numInputs] = input;
+                    numInputs++;
 					currentSelectedUnit.mapResource.opacity = currentSelectedUnit.mapResource.opacity < 1 ? 1 : 0.5 ;
                     currentSelectedUnit = null;
 				}
@@ -633,8 +791,18 @@
 						playersOnBoard[key].update();
                     }
 
+                    for(var i = 0 ;i <numEntities ; i++) {
+                        entities[i].updateMapResource();
+                        //entities[i]
+                    }
+                    /*for(var i = 0 ;i <numEntities ; i++) {
+                        entities[i].update();
+                        if(entities[i].state == "alive") {
+                            entities[i].resolveBattle(entities);
+                        }
+                    }*/
                     stage.refresh();
-					pushToServer();
+					//pushToServer();
                 }
             });
 
@@ -651,16 +819,24 @@
             function populateTowers(listOfTowers) {
 				console.log("populateTowers");
                 for (var i = listOfTowers.length - 1; i >= 0; i--) {
-                    addTower(listOfTowers[i])
+                    addTower(listOfTowers[i], me.id)
                 }
             }
 
-            function addTower(tower) {
+            function addTower(tower , owner) {
                 var towersOnBoard = me.towersOnBoard();
-                if (towersOnBoard < TOTAL_UNITS) {
+
+                var myTower = new Entity("001",tower_data,owner, false, true, numEntities);
+                numEntities++;
+                entities.push(myTower);
+                var params = {code: "001", owner: owner,isAIControlled: false, isDefender: true};
+                var input = {action: "addEntity", params: params };
+                globalInputs[numInputs] = input;
+                numInputs++;
+                /*if (towersOnBoard < TOTAL_UNITS) {
                     var myTowerObj = new Tower(me,towersOnBoard+1, tower, false, true); 
                    // me.addTower(myTowerObj);
-                }
+                }*/
             }
 
             function indicateBattleOverAndReset() {
@@ -697,6 +873,7 @@
 			}
 			
 			
+
 			function toggleBattleMode() {
 				if (battleMode == true) {
 					// show fade screen
