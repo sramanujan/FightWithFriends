@@ -125,6 +125,15 @@ GlobalGraphics.init = function(elementName) {
         }
     });
 
+    canvasDoc.onmousedown = function (event) {
+        if (null != currentSelectedUnit) {
+            currentSelectedUnit.mouseUp({x : event.offsetX, y : event.offsetY });
+            currentSelectedUnit.drawableObject.setOpacity(currentSelectedUnit.drawableObject.getOpacity() < 1 ? 1 : 0.5);
+            currentSelectedUnit = null;
+        }
+    }
+
+/*
     canvasDoc.onmouseup = function (event) {
         if (null != currentSelectedUnit) {
             currentSelectedUnit.mouseUp({x : event.offsetX, y : event.offsetY });
@@ -132,6 +141,7 @@ GlobalGraphics.init = function(elementName) {
             currentSelectedUnit = null;
         }
     }
+    */
 }
 GlobalGraphics.pauseRendering = function() {
     mcanvas = mainScene.getCanvas();
