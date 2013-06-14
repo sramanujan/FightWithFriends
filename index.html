@@ -2,7 +2,9 @@
 <head> 
     <script src="assets/js/jquery.js"></script>
     <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
-    <script src="protected/player.js"></script>
+    <script src="Client/player.js"></script>
+    <script src="Common/map.js"></script>
+    <script src="Client/graphics.js"></script>
     <script src="assets/js/jquery.ba-resize.min.js"></script>
     <script src="assets/js/hammer.min.js"></script>
     <!--<script src="lib/prototype.js"></script> -->
@@ -158,9 +160,6 @@
                 unit_data = filterData(data,"unit");
                 towers_loaded = true;
                 units_loaded = true;
-                //loadUnitAssetData();
-                //loadTowerAssetData();
-                //loadTowerAssetData();
                 loadAssetData();
                 checkIfLoadComplete();
             });
@@ -379,8 +378,8 @@
 					if(data.numEntities >0 ) {
                         for(var i =0 ; i<data.numEntities ; i++) {
                             var entity = new Entity(data.entities[i].code,item_data,data.entities[i].owner, data.entities[i].isAIControlled,data.entities[i].isDefender, i);
-                            entity.updateTarget(data.entities[i].targetPosition);
-                            entity.updatePosition(data.entities[i].currentPosition);
+                            entity.updateTargetTile(data.entities[i].targetTilePosition);
+                            entity.updatePosition(data.entities[i].currentTilePosition);
                             numEntities++;
                             entities.push(entity);
                         }
@@ -388,7 +387,7 @@
                     }
 					$.each(data.value, function(index, state) {
 						if (state.id != me.id) {
-							var opp = new Player(state.name, state.id, false, numPlayersOnBoard + 1);
+							var opp = new Player(state.name, state.id, numPlayersOnBoard + 1);
 							playersOnBoard[state.id] = opp;
 							numPlayersOnBoard++;
 						}
@@ -424,7 +423,7 @@
 					else if(updateType == 'join') {
 						// this is called when an opponent joins
                         // create an opponent player object
-						var opp = new Player(updateFrom, updateFromId, false, numPlayersOnBoard+1);
+						var opp = new Player(updateFrom, updateFromId, numPlayersOnBoard+1);
 						// add to the player list
 						playersOnBoard[opp.id] = opp;
 						numPlayersOnBoard++;
@@ -509,7 +508,7 @@
                         if(action == "updateTargetPosition") {
                             var index = params.entityIndex;
                             var position = new Position(params.x,params.y);
-                            entities[index].updateTarget(position);
+                            entities[index].updateTargetTile(position);
                             //console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][index].targetPosition));
                         }
                     }
@@ -520,7 +519,7 @@
             }
 
             function setClientDetails(data) {
-				me = new Player(data.username, data.id, false, numPlayersOnBoard+1);
+				me = new Player(data.username, data.id, numPlayersOnBoard+1);
 				playersOnBoard[me.id] = me;
 				numPlayersOnBoard++;
 				$("#whoami").html(me.name);
@@ -529,10 +528,13 @@
 
             function joinRoom(roomName) {
 				// reset your canvas
+
+/*************** GRAPHICS *************/                
 				mcanvas = mainScene.getCanvas();
 				mcanvas.clear();
 				mainScene.pause(true);
-				
+/*************** GRAPHICS *************/
+
 				// leave the room you are in
 				leaveRoom();
 				
@@ -743,13 +745,16 @@
 
             $('#saveMode').click( function() {
                 isInDesignMode = false;
-				states = me.getState();
+				/*
+                states = me.getState();
                 socket.emit('saveTowers', { states: me.getState() });
+                */
                 return false;
             });
 			
-
             var canvasDoc = document.getElementById('canvas1');
+            GlobalGraphics.init(canvasDoc);
+            
             var canvasWidth = canvasDoc.width;
             var canvasHeight = canvasDoc.height;
 
@@ -760,11 +765,10 @@
 
             canvasDoc.onmouseup = function (event) {
 				if (null != currentSelectedUnit) {
-					var relX = (event.offsetX - (currentSelectedUnit.mapResource.width/2)) / canvasDoc.width;
-					var relY = (event.offsetY - (currentSelectedUnit.mapResource.height/2)) / canvasDoc.height;
-					currentSelectedUnit.updateTarget({x : relX, y : relY });
+                    var params = MAP_CONFIG.convertAbsoluteToTile({x: event.offsetX, y: event.offsetY});
+					currentSelectedUnit.updateTargetAbsolute({x : event.offsetX, y : event.offsetY });
 					
-                    var params = {x: relX , y: relY , entityIndex: currentSelectedUnit.index};
+                    params.entityIndex = currentSelectedUnit.index;
                     var input = {action: "updateTargetPosition", params: params };
                     globalInputs[numInputs] = input;
                     numInputs++;
