@@ -42,16 +42,35 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 		currentSelectedUnit = this;
 		this.mapResource.opacity = this.mapResource.opacity < 1 ? 1 : 0.5 ;
 	}
+    this.healthBar = new HealthBar(this.mapResource, globalTowerWidth, 0, this.maxHealth, 0);
+    this.proImgObject = unitProjectileImages[this.code];
 /*************** GRAPHICS *************/    
+    
+    this.proSpeed = item_data[this.code].projectileSpeed;
+    this.hitsPerSecond = item_data[this.code].hitsPerSecond;
+    this.projectile = null;
+    this.fireProjectile = function(target) {
+      if(this.lastProjectileFiredTime != null && ((new Date().getTime() - this.lastProjectileFiredTime)/1000 < 1/this.hitsPerSecond)) {
+        return;
+      }
 
-  	this.update =function() {
+/*************** GRAPHICS *************/   
+      this.projectile = new Projectile( {x: this.mapResource.x,y: this.mapResource.y}, target, this.proImgObject, { width: item_data[this.code].projectileWidth, height: item_data[this.code].projectileHeight, speed: item_data[this.code].projectileSpeed });
+/*************** GRAPHICS *************/        
+
+      this.lastProjectileFiredTime = new Date().getTime();
+    }
+
+
+
+    this.update =function() {
         var time = new Date().getTime();
-
+/*
 		if(this.state == "dead") {
 			this.mapResource.remove();
 			return false;
 		}
-
+*/
 		//If unit has reached its target position, update target to goal
         if(this.targetTilePosition.x == this.currentTilePosition.x && this.targetTilePosition.y == this.currentTilePosition.y && isAIControlled) {
             this.targetTilePosition.x = 14;
@@ -81,15 +100,22 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
             this.currentTilePosition.x += ratio * remX;
             this.currentTilePosition.y += ratio * remY;
 		}
-
-/*************** GRAPHICS *************/
-        this.currentAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.currentTilePosition);
-		this.mapResource.x = this.currentAbsolutePosition.x;
-		this.mapResource.y = this.currentAbsolutePosition.y;
-/*************** GRAPHICS *************/
-
+   
+        this.healthBar.updateHealth(this.health);
         this.lastMoved = time;
   	};
+
+/*************** GRAPHICS *************/
+    this.updateMapResource = function() {
+        if(this.state == "dead") {
+            this.mapResource.remove();
+            return false;
+        }
+        this.currentAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.currentTilePosition);
+        this.mapResource.x = this.currentAbsolutePosition.x;
+        this.mapResource.y = this.currentAbsolutePosition.y;
+    }
+/*************** GRAPHICS *************/    
 
  	this.parseInput =  function(functionName, params) {
 
@@ -142,7 +168,9 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   					nearestOpponent.state = "dead";
   				}
   			}
-  		}
+  		} else {
+            this.enemy = null;
+        }
   	}
 };
 
@@ -281,7 +309,7 @@ Player = function(name, id, numPlayersOnBoard) {
 	}
 };
 
-Projectile = function(owner, startPosition, targetRelativePosition, imgObject, projectileData) {
+Projectile = function( startPosition, targetRelativePosition, imgObject, projectileData) {
 	this.projectileData = projectileData;
 
 
@@ -301,8 +329,6 @@ Projectile = function(owner, startPosition, targetRelativePosition, imgObject, p
     this.targetRelativePosition = {x: targetRelativePosition.x, y: targetRelativePosition.y}
     this.hasHit = false;
 	console.log("add new projectile ");
-	this.owner = owner;
-	this.owner.projectiles.push(this);
 
 	this.update = function() {
 /*************** GRAPHICS *************/           
@@ -327,3 +353,37 @@ Projectile = function(owner, startPosition, targetRelativePosition, imgObject, p
 /*************** GRAPHICS *************/           
 	}
 }
+
+HealthBar = function(parentResource, size, initial, max, color) {
+    this.maxHealth = max;
+    this.size = size;
+    this.initial = initial;
+
+/*************** GRAPHICS *************/          
+    this.lifeBar = mainScene.createElement(this.size,10);
+    this.deathBar = mainScene.createElement(this.size,10);
+    parentResource.append(this.deathBar);
+    parentResource.append(this.lifeBar);
+
+    this.deathBar.fillStyle = "red";
+    if (color == 0) {
+        this.lifeBar.fillStyle = "green";
+    }
+    else if (color == 1) {
+        this.lifeBar.fillStyle = "pink";
+    }
+    else if (color == 2) {
+        this.lifeBar.fillStyle = "blue";
+    }
+    else if (color == 3) {
+        this.lifeBar.fillStyle = "yellow";
+    }
+    this.deathBar.fillRect(0,0,this.size,10);
+    this.lifeBar.fillRect(0,0,this.size,10);
+
+    this.updateHealth = function (health) {
+        this.lifeBar.fillRect(0,0, this.size * (health/this.maxHealth), 10);
+    };
+/*************** GRAPHICS *************/      
+
+};
