@@ -18,6 +18,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
     this.targetTilePosition = {x: 1, y: 1};
     this.currentTilePosition = {x: 1, y: 1};
     this.currentAbsolutePosition = {x: 0, y: 0};
+    this.rotation = 0;
 	this.enemy = null;
 	this.ownerId = ownerId;
 	this.isAIControlled = isAIControlled;
@@ -39,6 +40,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 	}
     this.mouseUp = function(position) {
         this.targetTilePosition = MAP_CONFIG.convertAbsoluteToTile(position);
+        this.updateRotations();
         globalInputs[numInputs] = {
             action: "updateTargetPosition", 
             params: {
@@ -67,6 +69,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
         if(this.targetTilePosition.x == this.currentTilePosition.x && this.targetTilePosition.y == this.currentTilePosition.y && isAIControlled) {
             this.targetTilePosition.x = 14;
             this.targetTilePosition.y = 7;
+            this.updateRotations();
 		}
 		if(!this.isAIControlled) {
 			this.currentTilePosition = this.targetTilePosition;
@@ -103,7 +106,12 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
             return false;
         }
         this.currentAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.currentTilePosition);
-        this.drawableObject.setPosition(this.currentAbsolutePosition)
+        this.drawableObject.setPosition(this.currentAbsolutePosition);
+        this.drawableObject.setRotation(this.rotation);
+    }
+    this.updateRotations = function() {
+        var targetAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.targetTilePosition);
+        this.rotation = (180/Math.PI) * Math.atan2(targetAbsolutePosition.y - this.currentAbsolutePosition.y, targetAbsolutePosition.x - this.currentAbsolutePosition.x);
     }  
 
  	this.parseInput =  function(functionName, params) {
@@ -115,6 +123,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 
     this.updateTargetTile = function(position) {
         this.targetTilePosition = position;
+        this.updateRotations();
     };
 
   	this.updatePosition =  function(position) {
@@ -202,6 +211,8 @@ Projectile = function(code, sourceEntity, targetEntity) {
         x: targetEntity.currentTilePosition.x,
         y: targetEntity.currentTilePosition.y
     };
+    var targetAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.targetTilePosition);
+    this.drawableObject.setRotation((180/Math.PI) * Math.atan2(targetAbsolutePosition.y - sourceEntity.currentAbsolutePosition.y, targetAbsolutePosition.x - sourceEntity.currentAbsolutePosition.x));
     this.hasHit = false;
     this.lastMoved = new Date().getTime();
 	console.log("add new projectile ");

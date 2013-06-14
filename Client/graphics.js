@@ -12,6 +12,7 @@ globalLifeBarHeight = 10;
 DrawableBar = function(size, color) {
     this.color = color;
     this.imageObj = mainScene.createElement(size, globalLifeBarHeight);
+    this.imageObj.setOriginPoint("middle");
     this.imageObj.fillStyle = color;
     this.imageObj.fillRect(0, 0, size, globalLifeBarHeight);
     this.setSize = function(size) {
@@ -46,6 +47,7 @@ DrawableObject = function(type, code, position, width, height, parent) {
 
     this.imageObj =  mainScene.createElement(finalWidth, finalHeight);
     this.imageObj.drawImage(itemImages[this.code], 0, 0, width, height, 0, 0, finalWidth, finalHeight);
+    this.imageObj.setOriginPoint("middle");
     this.imageObj.x = position.x;
     this.imageObj.y = position.y;
     this.imageObj.tParent = this;
@@ -98,6 +100,9 @@ DrawableObject = function(type, code, position, width, height, parent) {
     }
     this.addDrawableElement = function(drawableElement) {
         this.imageObj.append(drawableElement.imageObj);
+    }
+    this.setRotation = function(value) {
+        this.imageObj.rotation = value;
     }
 }
 
