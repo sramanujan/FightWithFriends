@@ -284,6 +284,9 @@ Player = function(name, id, numPlayersOnBoard) {
 Projectile = function(owner, startPosition, targetRelativePosition, imgObject, projectileData) {
 	this.projectileData = projectileData;
 
+
+    this.drawableObject = new DrawableObject('projectile');
+
 /*************** GRAPHICS *************/   
 	var projectileObj =  mainScene.createElement(globalProjectileWidth, globalProjectileHeight);
     projectileObj.drawImage(imgObject, 0, 0, projectileData.width, projectileData.height, 0, 0, globalProjectileWidth, globalProjectileHeight);
@@ -291,6 +294,8 @@ Projectile = function(owner, startPosition, targetRelativePosition, imgObject, p
     projectileObj.y = startPosition.y;
     this.mapResource = projectileObj;
     mainScene.getStage().append(this.mapResource);
+
+    this.drawableObject.init()
 /*************** GRAPHICS *************/       
 
     this.targetRelativePosition = {x: targetRelativePosition.x, y: targetRelativePosition.y}

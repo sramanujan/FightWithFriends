@@ -148,9 +148,6 @@
                 unit_data = filterData(data,"unit");
                 towers_loaded = true;
                 units_loaded = true;
-                //loadUnitAssetData();
-                //loadTowerAssetData();
-                //loadTowerAssetData();
                 loadAssetData();
                 checkIfLoadComplete();
             });
@@ -519,10 +516,13 @@
 
             function joinRoom(roomName) {
 				// reset your canvas
+
+/*************** GRAPHICS *************/                
 				mcanvas = mainScene.getCanvas();
 				mcanvas.clear();
 				mainScene.pause(true);
-				
+/*************** GRAPHICS *************/
+
 				// leave the room you are in
 				leaveRoom();
 				
@@ -740,8 +740,9 @@
                 return false;
             });
 			
-
             var canvasDoc = document.getElementById('canvas1');
+            GlobalGraphics.init(canvasDoc);
+            
             var canvasWidth = canvasDoc.width;
             var canvasHeight = canvasDoc.height;
 
