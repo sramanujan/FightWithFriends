@@ -4,6 +4,7 @@
     <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
     <script src="protected/player.js"></script>
     <script src="Common/map.js"></script>
+    <script src="Client/graphics.js"></script>
     <script src="assets/js/jquery.ba-resize.min.js"></script>
     <script src="assets/js/hammer.min.js"></script>
     <!--<script src="lib/prototype.js"></script> -->
@@ -377,7 +378,7 @@
                     }
 					$.each(data.value, function(index, state) {
 						if (state.id != me.id) {
-							var opp = new Player(state.name, state.id, false, numPlayersOnBoard + 1);
+							var opp = new Player(state.name, state.id, numPlayersOnBoard + 1);
 							playersOnBoard[state.id] = opp;
 							numPlayersOnBoard++;
 						}
@@ -413,7 +414,7 @@
 					else if(updateType == 'join') {
 						// this is called when an opponent joins
                         // create an opponent player object
-						var opp = new Player(updateFrom, updateFromId, false, numPlayersOnBoard+1);
+						var opp = new Player(updateFrom, updateFromId, numPlayersOnBoard+1);
 						// add to the player list
 						playersOnBoard[opp.id] = opp;
 						numPlayersOnBoard++;
@@ -509,7 +510,7 @@
             }
 
             function setClientDetails(data) {
-				me = new Player(data.username, data.id, false, numPlayersOnBoard+1);
+				me = new Player(data.username, data.id, numPlayersOnBoard+1);
 				playersOnBoard[me.id] = me;
 				numPlayersOnBoard++;
 				$("#whoami").html(me.name);

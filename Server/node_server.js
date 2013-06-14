@@ -133,34 +133,6 @@ io.sockets.on('connection', function (socket) {
 			socket.sendUserDetails( { id: data.id, username: data.username, level: 1, kingdom: { theme: {background: "assets/img/background_map_3.png"}}});
         }
     });
-    
-/*
-    socket.on('saveTowers', function (update) {
-        console.log("Saving towers...");
-        console.log(update);
-		if (null != socket[data_namespace].player) {
-			socket[data_namespace].player.updatePosition(update.states);
-            if(db.enabled) {
-                socket[data_namespace].db_bucket.get(socket[data_namespace].player.id, function (err, doc, meta) {
-                    if(!doc || err || !db.isValidPlayerObject(doc)) {
-                        console.log("SOME ERROR FETCHING BLOB!!");
-                    } else {
-                        var towers = new Array();
-                        for (var key in update.states.towers) {
-                            towers.push({code: update.states.towers[key].code, position: update.states.towers[key].position});
-                        }
-                        doc.towers = towers;
-                        socket[data_namespace].db_bucket.set(socket[data_namespace].player.id, doc, function(err, meta) {
-                            if(err) {
-                                console.log("GOT AN ERROR WHILE SETTING TO COUCHBASE");
-                            }
-                        });
-                    }
-                });    
-            }
-		}
-    });
-*/
 	
 	// this is called when 'I' join a room
     socket.on('joinRoom', function (data) {

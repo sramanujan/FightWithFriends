@@ -23,24 +23,26 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 	this.isAIControlled = isAIControlled;
 	this.isDefender = isDefender;
 	this.index = index;
-		var imgObject = itemImages[this.code];
+    this.lastMoved = new Date().getTime();
+    this.state = "alive";
+	
+/*************** GRAPHICS *************/
+    var imgObject = itemImages[this.code];
     var towerObj =  mainScene.createElement(globalTowerWidth, globalTowerHeight);
 	towerObj.drawImage(imgObject, 0, 0, data[this.code].width, data[this.code].height, 0, 0, globalTowerWidth, globalTowerHeight);
 	this.mapResource = towerObj;
 	mainScene.getStage().append(this.mapResource);
-		this.mapResource.cparent = this;
-    this.lastMoved = new Date().getTime();
-		if(this.ownerId == me.id) {
-			this.mapResource.on("mousedown", function(e) {
-			this.cparent.mouseDown(e);
-		});
-		}
-	this.state = "alive";
-
+	this.mapResource.cparent = this;
+	if(this.ownerId == me.id) {
+		this.mapResource.on("mousedown", function(e) {
+		  this.cparent.mouseDown(e);
+        });
+	}
 	this.mouseDown = function(event) {
 		currentSelectedUnit = this;
 		this.mapResource.opacity = this.mapResource.opacity < 1 ? 1 : 0.5 ;
 	}
+/*************** GRAPHICS *************/    
 
   	this.update =function() {
         var time = new Date().getTime();
@@ -52,9 +54,6 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 
 		//If unit has reached its target position, update target to goal
         if(this.targetTilePosition.x == this.currentTilePosition.x && this.targetTilePosition.y == this.currentTilePosition.y && isAIControlled) {
-		//if((Math.abs(this.targetPosition.x - this.currentPosition.x) < 0.01 )&& (Math.abs(this.targetPosition.y - this.currentPosition.y)< 0.01) && isAIControlled) {
-			//this.targetPosition.x = 0.75;
-			//this.targetPosition.y = 0.75;
             this.targetTilePosition.x = 14;
             this.targetTilePosition.y = 7;
 		}
@@ -83,13 +82,12 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
             this.currentTilePosition.y += ratio * remY;
 		}
 
-		//console.log("Plan to reach ("+this.targetTilePosition.x+","+this.targetTilePosition.y+",) now at ("+this.currentTilePosition.x+","+this.currentTilePosition.y+")");
-		//this.currentPosition.x = Math.min(this.currentPosition.x,0.95);
-		//this.currentPosition.y = Math.min(this.currentPosition.y,0.95);
-        //console.log("current x " + this.currentAbsolutePosition.x + " y " + this.currentAbsolutePosition.y);
+/*************** GRAPHICS *************/
         this.currentAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.currentTilePosition);
 		this.mapResource.x = this.currentAbsolutePosition.x;
 		this.mapResource.y = this.currentAbsolutePosition.y;
+/*************** GRAPHICS *************/
+
         this.lastMoved = time;
   	};
 
@@ -99,22 +97,22 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   	this.updateEnemy =  function(entity) {
 
   	};
+
+/*************** GRAPHICS *************/   
   	this.updateTargetAbsolute = function(position) {
         this.targetTilePosition = MAP_CONFIG.convertAbsoluteToTile(position);
   	};
+/*************** GRAPHICS *************/
+
     this.updateTargetTile = function(position) {
         this.targetTilePosition = position;
     };
+
   	this.updatePosition =  function(position) {
   		this.currentTilePosition = position;
   	};
 
-  	reduceHealth= function(delta) {
-  		this.health -=delta;
-  	};
-
   	this.resolveBattle = function(entities) {
-  		//TODO: Fix this - must read from json!!
         var minDistance = 100000;
   		var nearestOpponent = null;
   		for(key in entities) {
@@ -146,13 +144,11 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   			}
   		}
   	}
-
-
- };
+};
 
 categories = { Attacker : 1, Defender : 2, Voyeur : 3 };
 
-Player = function(name, id, isServer, numPlayersOnBoard) {
+Player = function(name, id, numPlayersOnBoard) {
 	this.name 	= name;
 	this.id 	= id.toString();
 	this.colorCode = numPlayersOnBoard;
@@ -161,20 +157,25 @@ Player = function(name, id, isServer, numPlayersOnBoard) {
 	this.projectiles = new Array();
 	this.totalUnits = 0;
 	this.totalTowers = 0;
-	this.isServer = isServer;
 	this.battle = {state:"planning", whoami : categories.Defender};
 	
 	this.addUnit = function(unit) {
-		if (!this.isServer)
-			mainScene.getStage().append(unit.mapResource);
+
+/*************** GRAPHICS *************/        
+		mainScene.getStage().append(unit.mapResource);
+/*************** GRAPHICS *************/        
+
 		console.log("add new unit " + unit.id);
 		this.units[unit.id] = unit;
 		this.totalUnits++;
 	};
 
 	this.addTower = function(tower) {
-		if (!this.isServer)
-			mainScene.getStage().append(tower.mapResource);
+
+/*************** GRAPHICS *************/        
+		mainScene.getStage().append(tower.mapResource);
+/*************** GRAPHICS *************/        
+
 		console.log("add new tower " + tower.id);
 		this.towers[tower.id] = tower;
 		this.totalTowers++;
@@ -197,14 +198,7 @@ Player = function(name, id, isServer, numPlayersOnBoard) {
 		for(var key in state.units) {
 			if (key != 'undefined') {
 				if (null == this.units[key] || undefined == this.units[key] ) {
-					console.log("RADSSSSS: got this in updateposition");
-					console.log(state.units[key]);
-					if(states.units[key].state != "dead") {
-						var unit = new Unit(this, key, {code: state.units[key].code, position: state.units[key].position}, this.isServer, false);
-						if (this.isServer) {
-							unit.health = state.units[key].health ;
-						}
-					}
+
 				}
 				else {
 					this.units[key].updateUnit(state, state.units[key]);
@@ -215,10 +209,7 @@ Player = function(name, id, isServer, numPlayersOnBoard) {
 		for(var key in state.towers) {
 			if (key != 'undefined') {
 				if (null == this.towers[key] || undefined == this.towers[key] ) {
-					console.log("CREATE A TOWER position " + JSON.stringify(state.towers[key]));
-					if(states.towers[key].state != "dead") {
-						var tower = new Tower(this, key, {code: "001", position: state.towers[key].position}, this.isServer, false);
-					}
+
 				}
 				else {
 					this.towers[key].updateTower(state, state.towers[key]);
@@ -232,7 +223,6 @@ Player = function(name, id, isServer, numPlayersOnBoard) {
 			if (key != 'undefined') {
 				this.units[key].update();
 			}
-
 		}
 		for(var key in this.towers) {
 			if (key != 'undefined')
@@ -251,8 +241,6 @@ Player = function(name, id, isServer, numPlayersOnBoard) {
 			for(var key in this.units) {
 				if (key != 'undefined') {
 					unitPositions[key] = this.units[key].getState();
-					if (this.isServer)
-						this.checkVictoryPosition(unitPositions[key].position);
 				}
 			}
 		}
@@ -270,48 +258,49 @@ Player = function(name, id, isServer, numPlayersOnBoard) {
 	this.leaveRoom = function() {
 		for(var key in this.units) {
 			if (key != 'undefined') {
+
+/*************** GRAPHICS *************/
 				this.units[key].mapResource.remove();
+/*************** GRAPHICS *************/                
+
 				this.totalUnits--;
 			}
 		}
 		for(var key in this.towers) {
 			if (key != 'undefined') {
+
+/*************** GRAPHICS *************/                
 				this.towers[key].mapResource.remove();
+/*************** GRAPHICS *************/                
+
 				this.totalTowers--;
 			}
 		}
 		this.units = {};
 		this.towers = {};
 	}
-
-	this.checkVictoryPosition = function(position) {
-		//TODO: Temporary, change this with appropriate position check
-		if(position.x > 0.80 && position.y > 0.80) {
-			this.battle.state = "over";
-			this.battle.victor = this.id;
-		}
-	}
-
 };
 
 Projectile = function(owner, startPosition, targetRelativePosition, imgObject, projectileData) {
 	this.projectileData = projectileData;
 
+/*************** GRAPHICS *************/   
 	var projectileObj =  mainScene.createElement(globalProjectileWidth, globalProjectileHeight);
     projectileObj.drawImage(imgObject, 0, 0, projectileData.width, projectileData.height, 0, 0, globalProjectileWidth, globalProjectileHeight);
     projectileObj.x = startPosition.x;
     projectileObj.y = startPosition.y;
-
     this.mapResource = projectileObj;
+    mainScene.getStage().append(this.mapResource);
+/*************** GRAPHICS *************/       
+
     this.targetRelativePosition = {x: targetRelativePosition.x, y: targetRelativePosition.y}
     this.hasHit = false;
-	if (!this.isServer)
-		mainScene.getStage().append(this.mapResource);
 	console.log("add new projectile ");
 	this.owner = owner;
 	this.owner.projectiles.push(this);
 
 	this.update = function() {
+/*************** GRAPHICS *************/           
 		if(this && this.mapResource ) {
 			var remX = (this.targetRelativePosition.x - (this.mapResource.x / canvasDoc.width));
 			var remY = (this.targetRelativePosition.y - (this.mapResource.y / canvasDoc.height));
@@ -330,6 +319,6 @@ Projectile = function(owner, startPosition, targetRelativePosition, imgObject, p
 				return true;
 			}
 		}
-
+/*************** GRAPHICS *************/           
 	}
 }

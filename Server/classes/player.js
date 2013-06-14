@@ -138,7 +138,6 @@ Player = function(name, id, isServer, numPlayersOnBoard) {
 	this.colorCode = numPlayersOnBoard;
 	this.units = {};
 	this.towers = {};
-	this.projectiles = new Array();
 	this.totalUnits = 0;
 	this.totalTowers = 0;
 	this.isServer = isServer;
@@ -212,16 +211,10 @@ Player = function(name, id, isServer, numPlayersOnBoard) {
 			if (key != 'undefined') {
 				this.units[key].update();
 			}
-
 		}
 		for(var key in this.towers) {
 			if (key != 'undefined')
 				this.towers[key].update();
-		}
-		for(var i = this.projectiles.length - 1; i >= 0; i--) {
-			if(this.projectiles[i].update() == false) {
-				this.projectiles.splice(i,1);
-			}
 		}
 	};
 	
@@ -272,73 +265,4 @@ Player = function(name, id, isServer, numPlayersOnBoard) {
 		}
 	}
 
-};
-
-Projectile = function(owner, startPosition, targetRelativePosition, imgObject, projectileData) {
-	this.projectileData = projectileData;
-
-	var projectileObj =  mainScene.createElement(globalProjectileWidth, globalProjectileHeight);
-    projectileObj.drawImage(imgObject, 0, 0, projectileData.width, projectileData.height, 0, 0, globalProjectileWidth, globalProjectileHeight);
-    projectileObj.x = startPosition.x;
-    projectileObj.y = startPosition.y;
-
-    this.mapResource = projectileObj;
-    this.targetRelativePosition = {x: targetRelativePosition.x, y: targetRelativePosition.y}
-    this.hasHit = false;
-	if (!this.isServer)
-		mainScene.getStage().append(this.mapResource);
-	console.log("add new projectile ");
-	this.owner = owner;
-	this.owner.projectiles.push(this);
-
-	this.update = function() {
-		if(this && this.mapResource ) {
-			var remX = (this.targetRelativePosition.x - (this.mapResource.x / canvasDoc.width));
-			var remY = (this.targetRelativePosition.y - (this.mapResource.y / canvasDoc.height));
-			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(totalDist < 0.05) {
-				this.hasHit = true;
-				this.mapResource.remove();
-				return false;
-			} else if(this.projectileData.speed < totalDist) {
-				this.mapResource.x += canvasDoc.width * remX * (this.projectileData.speed /  totalDist);
-				this.mapResource.y += canvasDoc.height * remY * (this.projectileData.speed /  totalDist);	
-				return true;
-			} else {
-				this.mapResource.x += canvasDoc.width * remX;
-				this.mapResource.y += canvasDoc.height * remY;
-				return true;
-			}
-		}
-
-	}
-}
-HealthBar = function(parentResource, size, initial, max, color) {
-	this.maxHealth = max;
-	this.size = size;
-	this.initial = initial;
-	this.lifeBar = mainScene.createElement(this.size,10);
-	this.deathBar = mainScene.createElement(this.size,10);
-	parentResource.append(this.deathBar);
-	parentResource.append(this.lifeBar);
-
-	this.deathBar.fillStyle = "red";
-	if (color == 0) {
-		this.lifeBar.fillStyle = "green";
-	}
-	else if (color == 1) {
-		this.lifeBar.fillStyle = "pink";
-	}
-	else if (color == 2) {
-		this.lifeBar.fillStyle = "blue";
-	}
-	else if (color == 3) {
-		this.lifeBar.fillStyle = "yellow";
-	}
-	this.deathBar.fillRect(0,0,this.size,10);
-	this.lifeBar.fillRect(0,0,this.size,10);
-
-	this.updateHealth = function (health) {
-		this.lifeBar.fillRect(0,0, this.size * (health/this.maxHealth), 10);
-	};
 };
