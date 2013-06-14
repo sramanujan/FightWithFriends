@@ -134,7 +134,7 @@ io.sockets.on('connection', function (socket) {
         }
     });
     
-
+/*
     socket.on('saveTowers', function (update) {
         console.log("Saving towers...");
         console.log(update);
@@ -160,6 +160,7 @@ io.sockets.on('connection', function (socket) {
             }
 		}
     });
+*/
 	
 	// this is called when 'I' join a room
     socket.on('joinRoom', function (data) {
@@ -234,7 +235,7 @@ io.sockets.on('connection', function (socket) {
                 var index = params.entityIndex;
                 var position = new Position(params.x,params.y);
                 entities[socket[data_namespace].currentRoom][index].updateTarget(position);
-                console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][index].targetPosition));
+                console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][index].targetTilePosition));
             }
         }
         var properName = socket[data_namespace].currentRoom.replace('/','');
