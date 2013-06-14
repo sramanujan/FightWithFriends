@@ -7,8 +7,9 @@
         frameRate:60,
         tag:'gameCanvas', //the dom element to run cocos2d on
         engineDir:'assets/cocos2d/',
-        appFiles:['MyFirstApp.js']
+        appFiles:[]
     };
+    //appFiles:['MyFirstApp.js']
     window.addEventListener('DOMContentLoaded', function () {
         //first load engine file if specified
         var s = d.createElement('script');
