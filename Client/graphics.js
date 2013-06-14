@@ -142,6 +142,21 @@ GlobalGraphics.resumeRendering = function() {
     // un pause canvas - this starts the render loop
     mainScene.pause(false);
 }
+GlobalGraphics.resize = function() {
+    mcanvas = mainScene.getCanvas();
+    mcanvas.setSize("browser", "browser");
+    globalWidth = canvasDoc.width;
+    globalHeight = canvasDoc.height;
+    globalUnitHeight = canvasDoc.height/10;
+    globalUnitWidth = canvasDoc.width/20;
+    globalTowerHeight = canvasDoc.height/5;
+    globalTowerWidth = canvasDoc.width/10;
+    globalProjectileHeight = canvasDoc.height/20;
+    globalProjectileWidth = canvasDoc.width/40;
+    globalLifeBarHeight = canvasDoc.height/100;
+    TILE_BREADTH = canvasDoc.height/10;
+    TILE_LENGTH = canvasDoc.width/20;
+}
 GlobalGraphics.loadKingdom = function(kingdom) {
     //var staticUnits = kingdom.buildings;
     var background = kingdom.theme.background;

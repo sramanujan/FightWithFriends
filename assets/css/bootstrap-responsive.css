@@ -1101,10 +1101,7 @@
   }
 }
 
-/**** @sramanujan ****
- * Changing min-width from 980 to 100
- */
-@media (min-width: 100px) {
+@media (min-width: 980px) {
   .nav-collapse.collapse {
     height: auto !important;
     overflow: visible !important;

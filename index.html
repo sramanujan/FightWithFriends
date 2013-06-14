@@ -268,6 +268,7 @@
                 socket = io.connect('http://' + window.location.hostname + ':8028', { 'connect timeout': 10000 });
                 $("#start_screen").hide();
                 $("#gamediv").show();
+                initGraphics();
                 makeEventListeners();
             }
 			
@@ -572,6 +573,17 @@
 			</div>
         </div>
         <script>
+            
+            function initGraphics() {
+                //$('#canvas1').width($('#main_canvas').width().toString());
+                //$('#canvas1').height($('#main_canvas').height().toString());
+                //GlobalGraphics.init('canvas1');
+                GlobalGraphics.resize();
+            }
+
+            GlobalGraphics.init('canvas1');
+
+
             function runUpdateLoop() {
                 for(var i = 0 ;i <numEntities ; i++) {
                     entities[i].updateDisplay();
@@ -645,8 +657,6 @@
                 isInDesignMode = true;
                 return false;
             });
-			
-            GlobalGraphics.init('canvas1');
 
             function populateTowers(listOfTowers) {
 				console.log("populateTowers");
