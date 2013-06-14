@@ -42,6 +42,18 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 		currentSelectedUnit = this;
 		this.mapResource.opacity = this.mapResource.opacity < 1 ? 1 : 0.5 ;
 	}
+    this.mouseUp = function(position) {
+        this.targetTilePosition = MAP_CONFIG.convertAbsoluteToTile(position);
+        globalInputs[numInputs] = {
+            action: "updateTargetPosition", 
+            params: {
+                x: this.targetTilePosition.x,
+                y: this.targetTilePosition.y,
+                entityIndex: this.index
+            }
+        };
+        numInputs++;
+    }
     this.healthBar = new HealthBar(this.mapResource, globalTowerWidth, 0, this.maxHealth, 0);
     this.proImgObject = unitProjectileImages[this.code];
 /*************** GRAPHICS *************/    
@@ -65,12 +77,6 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 
     this.update =function() {
         var time = new Date().getTime();
-/*
-		if(this.state == "dead") {
-			this.mapResource.remove();
-			return false;
-		}
-*/
 		//If unit has reached its target position, update target to goal
         if(this.targetTilePosition.x == this.currentTilePosition.x && this.targetTilePosition.y == this.currentTilePosition.y && isAIControlled) {
             this.targetTilePosition.x = 14;
@@ -124,11 +130,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 
   	};
 
-/*************** GRAPHICS *************/   
-  	this.updateTargetAbsolute = function(position) {
-        this.targetTilePosition = MAP_CONFIG.convertAbsoluteToTile(position);
-  	};
-/*************** GRAPHICS *************/
+
 
     this.updateTargetTile = function(position) {
         this.targetTilePosition = position;
@@ -149,7 +151,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   			if(entity.state == "dead") {
   				continue;
   			}
-  			if(entity.isDefender && this.isDefender) {
+  			if(entity.isDefender ^ this.isDefender) {
   				continue;
   			}
   			var remX = entity.currentTilePosition.x - this.currentTilePosition.x;

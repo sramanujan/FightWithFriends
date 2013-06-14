@@ -104,7 +104,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   			if(entity.state == "dead") {
   				continue;
   			}
-  			if(entity.isDefender && this.isDefender) {
+  			if(entity.isDefender ^ this.isDefender) {
   				continue;
   			}
   			var remX = entity.currentTilePosition.x - this.currentTilePosition.x;
