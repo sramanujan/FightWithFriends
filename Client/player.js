@@ -60,14 +60,13 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
     
     this.proSpeed = item_data[this.code].projectileSpeed;
     this.hitsPerSecond = item_data[this.code].hitsPerSecond;
-    this.projectile = null;
     this.fireProjectile = function(target) {
       if(this.lastProjectileFiredTime != null && ((new Date().getTime() - this.lastProjectileFiredTime)/1000 < 1/this.hitsPerSecond)) {
         return;
       }
 
 /*************** GRAPHICS *************/   
-      this.projectile = new Projectile( {x: this.mapResource.x,y: this.mapResource.y}, target, this.proImgObject, { width: item_data[this.code].projectileWidth, height: item_data[this.code].projectileHeight, speed: item_data[this.code].projectileSpeed });
+      projectiles.push(new Projectile( this, target, this.proImgObject, { width: item_data[this.code].projectileWidth, height: item_data[this.code].projectileHeight, speed: item_data[this.code].projectileSpeed }));
 /*************** GRAPHICS *************/        
 
       this.lastProjectileFiredTime = new Date().getTime();
@@ -151,13 +150,12 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   			if(entity.state == "dead") {
   				continue;
   			}
-  			if(entity.isDefender ^ this.isDefender) {
+  			if(!(entity.isDefender ^ this.isDefender)) {
   				continue;
   			}
   			var remX = entity.currentTilePosition.x - this.currentTilePosition.x;
   			var remY = entity.currentTilePosition.y - this.currentTilePosition.y;
   			var dest = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-  			console.log("Total distance diff = "+dest);
   			if(dest < minDistance) {
   				minDistance = dest;
   				nearestOpponent = entity;
@@ -166,6 +164,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   		if(nearestOpponent != null) {
   			if(minDistance <= this.range) {
   				nearestOpponent.health -= 10;
+                this.fireProjectile(nearestOpponent);
   				if(nearestOpponent.health <= 0) {
   					nearestOpponent.state = "dead";
   				}
@@ -182,70 +181,11 @@ Player = function(name, id, numPlayersOnBoard) {
 	this.name 	= name;
 	this.id 	= id.toString();
 	this.colorCode = numPlayersOnBoard;
-	this.units = {};
-	this.towers = {};
 	this.projectiles = new Array();
-	this.totalUnits = 0;
-	this.totalTowers = 0;
 	this.battle = {state:"planning", whoami : categories.Defender};
-	
-	this.addUnit = function(unit) {
 
-/*************** GRAPHICS *************/        
-		mainScene.getStage().append(unit.mapResource);
-/*************** GRAPHICS *************/        
-
-		console.log("add new unit " + unit.id);
-		this.units[unit.id] = unit;
-		this.totalUnits++;
-	};
-
-	this.addTower = function(tower) {
-
-/*************** GRAPHICS *************/        
-		mainScene.getStage().append(tower.mapResource);
-/*************** GRAPHICS *************/        
-
-		console.log("add new tower " + tower.id);
-		this.towers[tower.id] = tower;
-		this.totalTowers++;
-	};
-
-	this.towersOnBoard = function() {
-		return this.totalTowers;
-	};
-	
 	this.getUnits = function() {
 		return this.units;
-	};
-	
-	this.unitsOnBoard = function() {
-		return this.totalUnits;
-	};
-	
-	this.updatePosition = function(states) {
-		var state = states;
-		for(var key in state.units) {
-			if (key != 'undefined') {
-				if (null == this.units[key] || undefined == this.units[key] ) {
-
-				}
-				else {
-					this.units[key].updateUnit(state, state.units[key]);
-				}
-			}
-		}
-
-		for(var key in state.towers) {
-			if (key != 'undefined') {
-				if (null == this.towers[key] || undefined == this.towers[key] ) {
-
-				}
-				else {
-					this.towers[key].updateTower(state, state.towers[key]);
-				}
-			}
-		}
 	};
 
 	this.update = function() {
@@ -286,73 +226,50 @@ Player = function(name, id, numPlayersOnBoard) {
 	};
 	
 	this.leaveRoom = function() {
-		for(var key in this.units) {
-			if (key != 'undefined') {
-
-/*************** GRAPHICS *************/
-				this.units[key].mapResource.remove();
-/*************** GRAPHICS *************/                
-
-				this.totalUnits--;
-			}
-		}
-		for(var key in this.towers) {
-			if (key != 'undefined') {
-
-/*************** GRAPHICS *************/                
-				this.towers[key].mapResource.remove();
-/*************** GRAPHICS *************/                
-
-				this.totalTowers--;
-			}
-		}
-		this.units = {};
-		this.towers = {};
 	}
 };
 
-Projectile = function( startPosition, targetRelativePosition, imgObject, projectileData) {
+Projectile = function( sourceEntity, targetEntity, imgObject, projectileData) {
 	this.projectileData = projectileData;
-
-
-    this.drawableObject = new DrawableObject('projectile');
-
-/*************** GRAPHICS *************/   
-	var projectileObj =  mainScene.createElement(globalProjectileWidth, globalProjectileHeight);
-    projectileObj.drawImage(imgObject, 0, 0, projectileData.width, projectileData.height, 0, 0, globalProjectileWidth, globalProjectileHeight);
-    projectileObj.x = startPosition.x;
-    projectileObj.y = startPosition.y;
-    this.mapResource = projectileObj;
-    mainScene.getStage().append(this.mapResource);
-
-    this.drawableObject.init()
-/*************** GRAPHICS *************/       
-
-    this.targetRelativePosition = {x: targetRelativePosition.x, y: targetRelativePosition.y}
+    this.drawableObject = new DrawableObject('projectile', sourceEntity.currentAbsolutePosition, projectileData.width, projectileData.height, imgObject);
+    this.targetTilePosition = {
+        x: targetEntity.currentTilePosition.x,
+        y: targetEntity.currentTilePosition.y
+    };
     this.hasHit = false;
+    this.lastMoved = new Date().getTime();
 	console.log("add new projectile ");
 
-	this.update = function() {
-/*************** GRAPHICS *************/           
-		if(this && this.mapResource ) {
-			var remX = (this.targetRelativePosition.x - (this.mapResource.x / canvasDoc.width));
-			var remY = (this.targetRelativePosition.y - (this.mapResource.y / canvasDoc.height));
+	this.update = function(time) {         
+		if(this && this.drawableObject ) {
+            var currentTilePosition = MAP_CONFIG.convertAbsoluteToTile({x: this.drawableObject.getX(), y: this.drawableObject.getY()});
+
+            var remX = this.targetTilePosition.x - currentTilePosition.x;
+            var remY = this.targetTilePosition.y - currentTilePosition.y;
+
+            var movableDist = this.projectileData.speed * (time - this.lastMoved)/1000;
 			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
-			if(totalDist < 0.05) {
+
+			if(totalDist < 0.25) {
 				this.hasHit = true;
-				this.mapResource.remove();
+                this.drawableObject.remove();
+                this.lastMoved = time;
 				return false;
-			} else if(this.projectileData.speed < totalDist) {
-				this.mapResource.x += canvasDoc.width * remX * (this.projectileData.speed /  totalDist);
-				this.mapResource.y += canvasDoc.height * remY * (this.projectileData.speed /  totalDist);	
-				return true;
-			} else {
-				this.mapResource.x += canvasDoc.width * remX;
-				this.mapResource.y += canvasDoc.height * remY;
+			} else if( movableDist < totalDist) {
+                this.drawableObject.incrementPosition({
+                    x: remX * TILE_LENGTH * (movableDist /  totalDist),
+                    y: remY * TILE_BREADTH * (movableDist /  totalDist)
+                });
+                this.lastMoved = time;
 				return true;
 			}
-		}
-/*************** GRAPHICS *************/           
+            this.drawableObject.incrementPosition({
+                x: remX * TILE_LENGTH,
+                y: remY * TILE_BREADTH
+            });
+            this.lastMoved = time;
+			return true;
+		}      
 	}
 }
 

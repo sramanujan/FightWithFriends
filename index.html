@@ -84,6 +84,7 @@
             var unitAssetsToLoad = 0;
             var entities = new Array();
             var numEntities = 0;
+            var projectiles = new Array();
             //var globalInputs = new Array();
             var globalInputs = {};
             var numInputs = 0;
@@ -99,7 +100,6 @@
                         }
                     }
                     pushToServer();
-
             }
             $('#login_button,#anonymous_button').click( function() {
                 var login = '';
@@ -123,20 +123,6 @@
                 loadGlobalAssetData();
                 checkIfLoadComplete();
             });
-
-            /*$.getJSON('settings/units.json', function(data) {
-                unit_data = data;
-                units_loaded = true;
-                loadUnitAssetData();
-                checkIfLoadComplete();
-            });
-
-            $.getJSON('settings/towers.json', function(data) {
-                tower_data = data;
-                towers_loaded = true;
-                loadTowerAssetData();
-                checkIfLoadComplete();
-            });*/
 
             Object.filter = function( obj, predicate) {
                 var result = {}, key;
@@ -387,8 +373,6 @@
 							playersOnBoard[state.id] = opp;
 							numPlayersOnBoard++;
 						}
-						// update my positions as well - i might be returning home
-						playersOnBoard[state.id].updatePosition(state);
 					});
 					if (data.room == myRoom) {
 						whoami          = categories.Defender;
@@ -557,18 +541,6 @@
                     numInputs = 0;
                     globalInputs = {};
                 }
-				if (null != me && me.unitsOnBoard() > 0) {
-					states = me.getState();
-					socket.emit('updateState', { states: me.getState() });
-				
-					// empty the array - find the right way
-					batchedStates = new Array();
-				}
-                else if (null != me && me.towersOnBoard() > 0) {
-					if (!isInDesignMode) {
-						socket.emit('updateState', { states: me.getState() });
-					}
-                }
 			}
 
 			function enableButtons() {
@@ -652,11 +624,18 @@
         </div>
         <script>
             function runUpdateLoop() {
+                /*
                 for (var key in playersOnBoard) {
                     playersOnBoard[key].update();
                 }
+                */
                 for(var i = 0 ;i <numEntities ; i++) {
                     entities[i].updateMapResource();
+                }
+                for(var j = 0 ;j <projectiles.length ; j++) {
+                    if(projectiles[j].update(new Date().getTime()) == false) {
+                        projectiles.splice(j,1);
+                    }
                 }
             }
 
@@ -733,8 +712,6 @@
             }
 
             function addTower(tower , owner) {
-                var towersOnBoard = me.towersOnBoard();
-
                 var myTower = new Entity("001",tower_data,owner, false, true, numEntities);
                 numEntities++;
                 entities.push(myTower);

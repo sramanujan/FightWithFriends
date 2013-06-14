@@ -8,11 +8,65 @@ globalTowerWidth = 200;
 globalProjectileHeight = 50;
 globalProjectileWidth = 50;
 
-DrawableObject = function(type) {
+DrawableObject = function(type, position, width, height, imgObject) {
+    var finalWidth;
+    var finalHeight;
     switch(type) {
-        case 'tower':break;
-        case 'unit':break;
-        case 'projectile':break;
+        case 'tower':
+            finalHeight = globalTowerHeight;
+            finalWidth = globalTowerWidth;
+        break;
+        case 'unit':
+            finalHeight = globalUnitHeight;
+            finalWidth = globalUnitWidth;
+        break;
+        case 'projectile':
+            finalHeight = globalProjectileHeight;
+            finalWidth = globalProjectileWidth;            
+        break;
+    }
+
+    this.imageObj =  mainScene.createElement(finalWidth, finalHeight);
+    this.imageObj.drawImage(imgObject, 0, 0, width, height, 0, 0, finalWidth, finalHeight);
+    this.imageObj.x = position.x;
+    this.imageObj.y = position.y;
+    //this.mapResource = imageObj;
+    mainScene.getStage().append(this.imageObj);
+
+    this.remove = function() {
+        this.imageObj.remove();
+    }
+    this.incrementPosition = function(position) {
+        this.imageObj.x += position.x;
+        this.imageObj.y += position.y;
+    }
+    this.incrementX = function(x) {
+        this.imageObj.x += position.x;
+    }
+    this.incrementY = function(y) {
+        this.imageObj.y += position.y;
+    }
+    this.setPosition = function(position) {
+        this.imageObj.x = position.x;
+        this.imageObj.y = position.y;
+    }
+    this.setX = function(x) {
+        this.imageObj.x = position.x;
+    }
+    this.setY = function(y) {
+        this.imageObj.y = position.y;
+    }
+    this.getPosition = function() {
+        return {
+            x: this.imageObj.x,
+            y: this.imageObj.y
+        };
+    }
+    this.getX = function() {
+        return this.imageObj.x;        
+    }
+    this.getY = function() {
+        return this.imageObj.y;
     }
 }
 
