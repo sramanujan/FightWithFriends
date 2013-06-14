@@ -6,25 +6,23 @@
     <script src="Common/map.js"></script>
     <script src="Client/graphics.js"></script>
     <script src="assets/js/jquery.ba-resize.min.js"></script>
-    <script src="assets/js/hammer.min.js"></script>
-    <!--<script src="lib/prototype.js"></script> -->
-        <title> Fight With Friends! </title> 
-        <!-- Le styles -->
-        <link href="assets/css/bootstrap.css" rel="stylesheet">
-        <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
-        <link href="assets/css/main.css" rel="stylesheet">
+    <title> Fight With Friends! </title> 
+    <!-- Le styles -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="assets/css/main.css" rel="stylesheet">
 
-        <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-        <!--[if lt IE 9]>
-        <script src="assets/js/html5shiv.js"></script>
-        <![endif]-->
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+    <script src="assets/js/html5shiv.js"></script>
+    <![endif]-->
 
-        <!-- Fav and touch icons -->
-        <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/ico/apple-touch-icon-144-precomposed.png">
-        <link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/ico/apple-touch-icon-114-precomposed.png">
-        <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
-        <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
-        <link rel="shortcut icon" href="assets/ico/favicon.png">
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
+    <link rel="shortcut icon" href="assets/ico/favicon.png">
 </head>
     <body >
         <div id="start_screen">
@@ -86,6 +84,7 @@
             var unitAssetsToLoad = 0;
             var entities = new Array();
             var numEntities = 0;
+            var projectiles = new Array();
             //var globalInputs = new Array();
             var globalInputs = {};
             var numInputs = 0;
@@ -101,7 +100,6 @@
                         }
                     }
                     pushToServer();
-
             }
             $('#login_button,#anonymous_button').click( function() {
                 var login = '';
@@ -125,20 +123,6 @@
                 loadGlobalAssetData();
                 checkIfLoadComplete();
             });
-
-            /*$.getJSON('settings/units.json', function(data) {
-                unit_data = data;
-                units_loaded = true;
-                loadUnitAssetData();
-                checkIfLoadComplete();
-            });
-
-            $.getJSON('settings/towers.json', function(data) {
-                tower_data = data;
-                towers_loaded = true;
-                loadTowerAssetData();
-                checkIfLoadComplete();
-            });*/
 
             Object.filter = function( obj, predicate) {
                 var result = {}, key;
@@ -326,7 +310,6 @@
 			var me 				= null;
 			var playersOnBoard 	= {};
 			var numPlayersOnBoard 	= 0;
-			var currentSelectedUnit = null;
 			
 			//var whoami			= categories.Attacker;
             var whoami          = categories.Defender;
@@ -336,7 +319,6 @@
                 socket = io.connect('http://' + window.location.hostname + ':8028', { 'connect timeout': 10000 });
                 $("#start_screen").hide();
                 $("#gamediv").show();
-                resizeCanvas();
                 makeEventListeners();
             }
 			
@@ -366,7 +348,7 @@
                         populateUsableTowers(data.usableTowers);
                     }
                     if (userDetails && userDetails.kingdom) {
-                        loadKingdom(userDetails.kingdom);
+                        GlobalGraphics.loadKingdom(userDetails.kingdom);
                     }
                     myRoom = currentRoom = data.room;
                     enableButtons();
@@ -391,8 +373,6 @@
 							playersOnBoard[state.id] = opp;
 							numPlayersOnBoard++;
 						}
-						// update my positions as well - i might be returning home
-						playersOnBoard[state.id].updatePosition(state);
 					});
 					if (data.room == myRoom) {
 						whoami          = categories.Defender;
@@ -408,8 +388,7 @@
 						startBattle();
 					}
                     enableButtons();
-					// un pause canvas - this starts the render loop
-					mainScene.pause(false);
+                    GlobalGraphics.resumeRendering();
                 });
 
                 socket.on('roomUpdate', function (data) {
@@ -527,17 +506,9 @@
             }
 
             function joinRoom(roomName) {
-				// reset your canvas
-
-/*************** GRAPHICS *************/                
-				mcanvas = mainScene.getCanvas();
-				mcanvas.clear();
-				mainScene.pause(true);
-/*************** GRAPHICS *************/
-
+                GlobalGraphics.pauseRendering();
 				// leave the room you are in
-				leaveRoom();
-				
+				leaveRoom();	
                 socket.emit('joinRoom', { room: roomName });
             }
 			
@@ -570,18 +541,6 @@
                     numInputs = 0;
                     globalInputs = {};
                 }
-				if (null != me && me.unitsOnBoard() > 0) {
-					states = me.getState();
-					socket.emit('updateState', { states: me.getState() });
-				
-					// empty the array - find the right way
-					batchedStates = new Array();
-				}
-                else if (null != me && me.towersOnBoard() > 0) {
-					if (!isInDesignMode) {
-						socket.emit('updateState', { states: me.getState() });
-					}
-                }
 			}
 
 			function enableButtons() {
@@ -613,9 +572,6 @@
                             </ul>
                             <ul class="nav" id="defender_dashboard">
     							<li class="" id="whoami" style="color:red">
-                                </li>
-                                <li class="">
-                                    <a id="saveMode" href="#">Save</a>
                                 </li>
                                 <li class="">
                                     <a id="designMode" href="#">Design Mode</a>
@@ -667,13 +623,20 @@
 			</div>
         </div>
         <script>
-            $('#main_canvas').bind('resize', function(){
-                resizeCanvas();
-            });
-
-            function resizeCanvas() {
-               // $('#canvas1').width($('#main_canvas').width().toString());
-                //$('#canvas1').height($('#main_canvas').height().toString());
+            function runUpdateLoop() {
+                /*
+                for (var key in playersOnBoard) {
+                    playersOnBoard[key].update();
+                }
+                */
+                for(var i = 0 ;i <numEntities ; i++) {
+                    entities[i].updateMapResource();
+                }
+                for(var j = 0 ;j <projectiles.length ; j++) {
+                    if(projectiles[j].update(new Date().getTime()) == false) {
+                        projectiles.splice(j,1);
+                    }
+                }
             }
 
             function populateListOfRooms() {
@@ -707,10 +670,6 @@
                     $('#add_unit_dropdown').append("<li><a class='add_unit_button' id='" + usableUnitCodes[i] + "' href='#'>" + unit_data[usableUnitCodes[i]].name + "</a></li>")
                 }
                 $('.add_unit_button').click(function() {
-                    /*var unitsOnBoard = me.unitsOnBoard();
-                    if (unitsOnBoard < TOTAL_UNITS) {
-                        var unit = new Unit(me, unitsOnBoard+1, {code: $(this).attr("id"), position:{ x: 0.125, y: 0.183 }}, false, true);
-                    }*/
                     var entity = new Entity($(this).attr("id"),item_data, me.id, true, false, numEntities);
                     numEntities++;
                     entities.push(entity);
@@ -742,79 +701,8 @@
                 isInDesignMode = true;
                 return false;
             });
-
-            $('#saveMode').click( function() {
-                isInDesignMode = false;
-				/*
-                states = me.getState();
-                socket.emit('saveTowers', { states: me.getState() });
-                */
-                return false;
-            });
 			
-            var canvasDoc = document.getElementById('canvas1');
-            GlobalGraphics.init(canvasDoc);
-            
-            var canvasWidth = canvasDoc.width;
-            var canvasHeight = canvasDoc.height;
-
-            var canvas = CE.defines("canvas1").
-            ready(function() {
-                canvas.Scene.call("MainScene");
-            });
-
-            canvasDoc.onmouseup = function (event) {
-				if (null != currentSelectedUnit) {
-                    var params = MAP_CONFIG.convertAbsoluteToTile({x: event.offsetX, y: event.offsetY});
-					currentSelectedUnit.updateTargetAbsolute({x : event.offsetX, y : event.offsetY });
-					
-                    params.entityIndex = currentSelectedUnit.index;
-                    var input = {action: "updateTargetPosition", params: params };
-                    globalInputs[numInputs] = input;
-                    numInputs++;
-					currentSelectedUnit.mapResource.opacity = currentSelectedUnit.mapResource.opacity < 1 ? 1 : 0.5 ;
-                    currentSelectedUnit = null;
-				}
-            }
-
-            var mainScene = canvas.Scene.new({
-                name: "MainScene",
-                materials: {
-                    images: {
-                        knight: "assets/img/knight.png",
-                    }
-                },
-                ready: function(stage) {
-                },
-                render: function(stage) {
-                    for (var key in playersOnBoard) {
-						playersOnBoard[key].update();
-                    }
-
-                    for(var i = 0 ;i <numEntities ; i++) {
-                        entities[i].updateMapResource();
-                        //entities[i]
-                    }
-                    /*for(var i = 0 ;i <numEntities ; i++) {
-                        entities[i].update();
-                        if(entities[i].state == "alive") {
-                            entities[i].resolveBattle(entities);
-                        }
-                    }*/
-                    stage.refresh();
-					//pushToServer();
-                }
-            });
-
-            //TODO: Define global screen width and height, we will use percentages...
-            var globalHeight = 900;
-            var globalWidth = 1800;
-            var globalUnitHeight = 100;
-            var globalUnitWidth = 100;
-            var globalTowerHeight = 200;
-            var globalTowerWidth = 200;
-            var globalProjectileHeight = 50;
-            var globalProjectileWidth = 50;
+            GlobalGraphics.init('canvas1');
 
             function populateTowers(listOfTowers) {
 				console.log("populateTowers");
@@ -824,8 +712,6 @@
             }
 
             function addTower(tower , owner) {
-                var towersOnBoard = me.towersOnBoard();
-
                 var myTower = new Entity("001",tower_data,owner, false, true, numEntities);
                 numEntities++;
                 entities.push(myTower);
@@ -833,10 +719,6 @@
                 var input = {action: "addEntity", params: params };
                 globalInputs[numInputs] = input;
                 numInputs++;
-                /*if (towersOnBoard < TOTAL_UNITS) {
-                    var myTowerObj = new Tower(me,towersOnBoard+1, tower, false, true); 
-                   // me.addTower(myTowerObj);
-                }*/
             }
 
             function indicateBattleOverAndReset() {
@@ -885,20 +767,6 @@
 				}
 			}
 			
-            function loadKingdom(kingdom) {
-                //var staticUnits = kingdom.buildings;
-                var background = kingdom.theme.background;
-                $('#canvas1').css('background', 'url(' + background + ')');
-                //$('#canvas1').css('background-size', '100%');
-                //background must be a URL
-                //canvas.background.set("image('" + background + "'");
-                //staticUnits is an array of units with each having an x and a y.
-                /*
-                for( var i = staticUnits.length - 1; i >= 0; i--) {
-                    loadStaticUnit(staticUnits[i]);
-                }
-                */
-            }
             
             var currentStaticUnits = new Array();
 
