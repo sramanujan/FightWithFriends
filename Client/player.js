@@ -216,7 +216,7 @@ Projectile = function(code, sourceEntity, targetEntity) {
             var movableDist = this.data.speed * (time - this.lastMoved)/1000;
 			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 
-			if(totalDist < 0.25) {
+			if(totalDist < 0.75) {
 				this.hasHit = true;
                 this.drawableObject.remove();
                 this.lastMoved = time;
