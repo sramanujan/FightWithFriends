@@ -142,6 +142,7 @@
                 var jsonData = JSON.stringify(data);
                 tower_data = filterData(data, "tower");
                 unit_data = filterData(data,"unit");
+                projectile_data = filterData(data, "projectile");
                 towers_loaded = true;
                 units_loaded = true;
                 loadAssetData();
@@ -163,6 +164,7 @@
             var itemAssetsLoaded = 0;
             var item_assets_loaded = false;
             function loadAssetData() {
+                /*
                 for(var key in item_data) {
                     var imgsrc = item_data[key].image;
                     itemImages[key] = new Image();
@@ -172,15 +174,17 @@
                     };
                     itemImages[key].src = imgsrc;
                 }
+                */
 
                 for(var key in item_data) {
-                    var imgsrc = item_data[key].projectileImage;
+                    var imgsrc = item_data[key].image;
+                    //var imgsrc = item_data[key].projectileImage;
                     var img = new Image();
                     img.key = key;
                     itemAssetsToLoad++;
                     img.onload = function(){
                         itemAssetsLoaded ++;
-                        unitProjectileImages[this.key] = this;
+                        itemImages[this.key] = this;
                         if(itemAssetsLoaded == itemAssetsToLoad) {
                             item_assets_loaded = true;
                             tower_assets_loaded = true;
@@ -191,63 +195,9 @@
                     };
                     img.src = imgsrc;
                 }
+                
             }
 
-            function loadUnitAssetData() {
-                for(var key in unit_data) {
-                    var imgsrc = unit_data[key].image;
-                    unitImages[key] = new Image();
-                    unitAssetsToLoad++;
-                    unitImages[key].onload = function(){
-                        unitAssetsLoaded ++;
-                    };
-                    unitImages[key].src = imgsrc;
-                }
-
-                for(var key in unit_data) {
-                    var imgsrc = unit_data[key].projectileImage;
-                    var img = new Image();
-                    img.key = key;
-                    unitAssetsToLoad++;
-                    img.onload = function(){
-                        unitAssetsLoaded ++;
-                        unitProjectileImages[this.key] = this;
-                        if(unitAssetsLoaded == unitAssetsToLoad) {
-                            unit_assets_loaded = true;
-                            checkIfLoadComplete();
-                        }
-                    };
-                    img.src = imgsrc;
-                }
-            }
-
-            function loadTowerAssetData() {
-                for(var key in tower_data) {
-                    var imgsrc = tower_data[key].image;
-                    towerImages[key] = new Image();
-                    towerAssetsToLoad++;
-                    towerImages[key].onload = function(){
-                        towerAssetsLoaded ++;
-                    };
-                    towerImages[key].src = imgsrc;
-                }
-
-                for(var key in tower_data) {
-                    var imgsrc = tower_data[key].projectileImage;
-                    var img = new Image();
-                    img.key = key;
-                    towerAssetsToLoad++;
-                    img.onload = function(){
-                        towerAssetsLoaded++;
-                        towerProjectileImages[this.key] = this;
-                        if(towerAssetsLoaded == towerAssetsToLoad) {
-                            tower_assets_loaded = true;
-                            checkIfLoadComplete();
-                        }
-                    };
-                    img.src = imgsrc;
-                }
-            }
 
             function loadGlobalAssetData() {
                 global_assets_loaded = true;
@@ -259,7 +209,6 @@
                     checkIfLoadComplete();
                 });
             }
-
 
             function checkIfLoadComplete() {
                 //$("#progress_bar").width(Math.floor(100 * load_status / load_total ).toString() + "%");
@@ -624,13 +573,8 @@
         </div>
         <script>
             function runUpdateLoop() {
-                /*
-                for (var key in playersOnBoard) {
-                    playersOnBoard[key].update();
-                }
-                */
                 for(var i = 0 ;i <numEntities ; i++) {
-                    entities[i].updateMapResource();
+                    entities[i].updateDisplay();
                 }
                 for(var j = 0 ;j <projectiles.length ; j++) {
                     if(projectiles[j].update(new Date().getTime()) == false) {
