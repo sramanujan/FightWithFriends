@@ -8,7 +8,7 @@
         "projectile": "P001",
         "range": 3,
         "hitsPerSecond": 1,
-        "frames": 24,
+        "frames": 31,
         "requirements": {
             "level": 1
         },
@@ -24,7 +24,7 @@
         "projectile": "P002",
         "range": 3,
         "hitsPerSecond": 1,
-        "frames": 24,
+        "frames": 1,
         "requirements": {
             "level": 1
         },
@@ -40,7 +40,7 @@
         "projectile": "P002",
         "range": 3,
         "hitsPerSecond": 1,
-        "frames": 24,
+        "frames": 25,
         "requirements": {
             "level": 1
         },
@@ -51,6 +51,7 @@
         "width": 60,
         "height": 48,
         "speed": 1,
+        "frames": 1,
         "sound": "assets/sound/big_fire_sound.mp3",
         "type": "projectile"
     },
@@ -59,8 +60,35 @@
         "width": 40,
         "height": 14,
         "speed": 1,
+        "frames": 1,
         "sound": "assets/sound/bullet_sound.mp3",
         "type": "projectile"
+    },
+    "H001": {
+        "image": "assets/img/health_red.png", 
+        "width": 400,
+        "height": 100,
+        "speed": 1,
+        "frames": 1,
+        "sound": "assets/sound/bullet_sound.mp3",
+        "type": "health"
+    },
+    "H002": {
+        "image": "assets/img/health_green.png", 
+        "width": 400,
+        "height": 100,
+        "speed": 1,
+        "frames": 1,
+        "sound": "assets/sound/bullet_sound.mp3",
+        "type": "health"
+    },
+    "H003": {
+        "image": "assets/img/health_yellow.png", 
+        "width": 400,
+        "height": 100,
+        "speed": 1,
+        "frames": 1,
+        "sound": "assets/sound/bullet_sound.mp3",
+        "type": "health"
     }
-
 }

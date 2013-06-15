@@ -1,10 +1,38 @@
+<!DOCTYPE html>
 <html>
-    <body style="padding:0; margin: 0; background: #fff;">
-        <div style="text-align: center; font-size: 0">
-            <canvas id="gameCanvas" width="600" height="600">
-                Your browser does not support the canvas tag
-            </canvas>
+    <head>
+        <meta charset="utf-8">
+        <title>Cocos2d-html5 Hello World test</title>
+        <!--<link rel="icon" type="image/GIF" href="assets/img/favicon.ico"/>-->
+        <meta name="viewport" content="width=800,user-scalable=no"/>
+        <meta name="screen-orientation" content="portrait"/>
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <meta name="full-screen" content="yes"/>
+        <meta name="x5-fullscreen" content="true"/>
+        <style>
+            body, canvas, div {
+                -moz-user-select: none;
+                -webkit-user-select: none;
+                -ms-user-select: none;
+                -khtml-user-select: none;
+                -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+            }
+        </style>
+        <script src="assets/js/jquery.js"></script>
+        <script src="Client/player.js"></script>
+        <script src="Common/map.js"></script>
+        <script src="Client/graphics-cocos.js"></script>
+        <script src="Client/buttons.js"></script>
+    </head>
+    <body style="padding:0; margin: 0; background: #000;">
+        <div style="text-align: center;">
+            <canvas id="gameCanvas"></canvas>
         </div>
     </body>
+    <script>
+        canvasMain = document.getElementById("gameCanvas");
+        canvasMain.width  = window.innerWidth - 1;
+        canvasMain.height = window.innerHeight - 1;
+    </script>
+    <script src="assets/js/cocos2d.js"></script>
 </html>
-<script src="assets/js/cocos2d.js"></script>

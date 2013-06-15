@@ -27,16 +27,16 @@ var timers = {};
 var timer = setInterval(updateEntities,100);
 
 function updateEntities() {
-        //console.log("Update here");
-        for(var key in entities) {
-            for(var index in entities[key]) {
-                entities[key][index].update();
-                if(entities[key][index].state == "alive") {
-                    entities[key][index].resolveBattle(entities[key]);
-                }
+    //console.log("Update here");
+    for(var key in entities) {
+        for(var index in entities[key]) {
+            entities[key][index].update();
+            if(entities[key][index].state == "alive") {
+                entities[key][index].resolveBattle(entities[key]);
             }
         }
     }
+}
 
 io.sockets.on('connection', function (socket) {
 
@@ -99,8 +99,6 @@ io.sockets.on('connection', function (socket) {
         socket.emit('iregistered', data);
     }
 
-    
-
     socket.on('login', function (data) {
         console.log("login name and id [" + data.username + ":" + data.id +"]");
         if(data.id.split(':')[0] == "anonymous") {
@@ -141,7 +139,6 @@ io.sockets.on('connection', function (socket) {
 		if (socket[data_namespace].myRoom == socket[data_namespace].currentRoom) {
 			socket[data_namespace].player.battle.state = "planning";
 			socket[data_namespace].player.battle.whoami = categories.Defender;
-			socket[data_namespace].player.units = {};
 		}
 		else {
 			socket[data_namespace].player.battle.state = "inprogress";
@@ -164,19 +161,6 @@ io.sockets.on('connection', function (socket) {
         socket.roomUpdate('leave');
         socket.leave(data.room);
         socket[data_namespace].currentRoom = null;
-    });
-
-    socket.on('updateState', function (update) {
-		if (null != socket[data_namespace].player) {
-			socket[data_namespace].player.updatePosition(update.states);
-            if(socket[data_namespace].player.unitsOnBoard() > 0) {
-                // console.log("Message from attacker");
-            }
-            else if(socket[data_namespace].player.towersOnBoard() > 0) {
-                // console.log("Message from defencer");
-            }
-			//socket.roomUpdate('update');
-		}
     });
 
     socket.on('parseInputs', function(data) {
@@ -225,38 +209,6 @@ io.sockets.on('connection', function (socket) {
     });
 
 });
-
-setInterval(function() {
-    var existingRooms = io.sockets.manager.rooms;
-    for (var roomName in existingRooms) {
-        var properName = roomName.replace('/','');
-        if (properName == '' || properName == undefined || properName == 'undefined') {
-            continue;
-        }
-        var clientList = io.sockets.clients(properName);
-        var battleOver = false;
-        var value = new Array();
-		var states = new Array();
-        for (var i = 0; i < clientList.length; i++) {
-            value.push( clientList[i][data_namespace].player.getState() );
-            if(clientList[i][data_namespace].player.battle.state == "over") {
-                // battleOver = true;
-				console.log("and we have a winner");
-				value = { battleOver: true, victor : clientList[i][data_namespace].player.battle.victor };
-                io.sockets.in(properName).emit('reAdjust', { value : value, room : properName }); 
-                break;
-            }
-        }
-		// if(battleOver) {
-            // value = { battleOver: true };
-            // for (var i = 0; i < clientList.length; i++) {
-                //clientList[i][data_namespace].player.performAfterEffectsAndReset();
-            // } 
-        // }
-        //io.sockets.in(properName).emit('reAdjust', { value : value, room : properName }); 
-    }
-	
-}, 100);
 
 // update room once in 10 secs
 setInterval(function() {

@@ -26,11 +26,11 @@
         <script>
             if (navigator.userAgent.match(/iPad/)) {
                 GLOBAL_PLATFORM = "ipad";
-                SOCKETIO_HOST = '10.102.90.84';
+                SOCKETIO_HOST = '192.168.1.8';
                 //document.addEventListener("deviceready", onDeviceReady, false);
             } else if (navigator.userAgent.match(/Android/)) {
                 GLOBAL_PLATFORM = "android";
-                SOCKETIO_HOST = '10.102.90.84';
+                SOCKETIO_HOST = '192.168.1.8';
                 //document.addEventListener("deviceready", onDeviceReady, false);
             } else {
                 GLOBAL_PLATFORM = "web";
@@ -411,20 +411,6 @@
 						populateListOfRooms();
 					}
 				});
-				
-                socket.on('reAdjust', function (data) {
-                    //currentServerPositionArray = data.value;
-                    if(data.value.battleOver) {
-                        indicateBattleOverAndReset();
-                        return;
-                    }
-					if (data.room == currentRoom) {
-						$.each(data.value, function(index, state) {
-							if (playersOnBoard[state.id] != null)
-								playersOnBoard[state.id].updatePosition(state);
-						});
-					}
-                });
 
                 socket.on('parseInputs', function(data) {
                     if(data.senderId == me.id) {
@@ -438,18 +424,13 @@
                         console.log("Perform "+action + "on server with params="+JSON.stringify(params));
                     //Will have to replace with anonymous function logic
                         if(action == "addEntity" ) {
-                            //console.log("numEntities = " + numEntities[socket[data_namespace].currentRoom])
                             var entity = new Entity(params.code,item_data,params.owner, params.isAIControlled,params.isDefender, numEntities);
                             numEntities++ ;
-                            //console.log(JSON.stringify(entities));
-                            //console.log(socket[data_namespace].currentRoom+ "))))))))");
                             if(entities == null) {
                                 entities = new Array();
                     
                             }
                             entities[entity.index] = entity;
-                            //entities[socket[data_namespace].currentRoom][entity.index] = entities;
-                            //console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][entity.index].index));
 
                         }
 
@@ -457,7 +438,6 @@
                             var index = params.entityIndex;
                             var position = new Position(params.x,params.y);
                             entities[index].updateTargetTile(position);
-                            //console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][index].targetPosition));
                         }
                     }
 
@@ -718,7 +698,7 @@
 			function removeAllPlayersExceptMe() {
 				for (var key in playersOnBoard) {
 					if (key != "undefined") {
-						playersOnBoard[key].leaveRoom();
+						//playersOnBoard[key].leaveRoom();
 						if (me.id != key && playersOnBoard[key] != null) {
 							delete playersOnBoard[key];
 							numPlayersOnBoard--;
