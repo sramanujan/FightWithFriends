@@ -18,6 +18,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
     this.targetTilePosition = {x: 1, y: 1};
     this.currentTilePosition = {x: 1, y: 1};
     this.currentAbsolutePosition = {x: 0, y: 0};
+    this.rotation = 0;
 	this.enemy = null;
 	this.ownerId = ownerId;
 	this.isAIControlled = isAIControlled;
@@ -27,25 +28,21 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
     this.lastMoved = new Date().getTime();
     this.state = "alive";
 	
-/*************** GRAPHICS *************/
-    var imgObject = itemImages[this.code];
-    var towerObj =  mainScene.createElement(globalTowerWidth, globalTowerHeight);
-	towerObj.drawImage(imgObject, 0, 0, data[this.code].width, data[this.code].height, 0, 0, globalTowerWidth, globalTowerHeight);
-	this.mapResource = towerObj;
-	mainScene.getStage().append(this.mapResource);
-	this.mapResource.cparent = this;
+    this.drawableObject = new DrawableObject(this.data.type, this.code, {x: 0, y: 0}, this.data.width, this.data.height, this);
+
 	if(this.ownerId == me.id) {
-		this.mapResource.on("mousedown", function(e) {
-		  this.cparent.mouseDown(e);
+        this.drawableObject.addTouchAndClickListener(function(e) {
+            this.tParent.parent.mouseDown(e);
         });
 	}
 	this.mouseDown = function(event) {
 		currentSelectedUnit = this;
-		this.mapResource.opacity = this.mapResource.opacity < 1 ? 1 : 0.5 ;
+		this.drawableObject.setOpacity (this.drawableObject.getOpacity() < 1 ? 1 : 0.5 );
 	}
     this.mouseUp = function(position) {
         this.targetTilePosition = MAP_CONFIG.convertAbsoluteToTile(position);
         this.dragged = true;
+        this.updateRotations();
         globalInputs[numInputs] = {
             action: "updateTargetPosition", 
             params: {
@@ -56,25 +53,17 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
         };
         numInputs++;
     }
-    this.healthBar = new HealthBar(this.mapResource, globalTowerWidth, 0, this.maxHealth, 0);
-    this.proImgObject = unitProjectileImages[this.code];
-/*************** GRAPHICS *************/    
-    
-    this.proSpeed = item_data[this.code].projectileSpeed;
+
+    this.healthBar = new HealthBar(this.drawableObject, this.data.type, this.health, this.maxHealth, 0);
+
     this.hitsPerSecond = item_data[this.code].hitsPerSecond;
     this.fireProjectile = function(target) {
       if(this.lastProjectileFiredTime != null && ((new Date().getTime() - this.lastProjectileFiredTime)/1000 < 1/this.hitsPerSecond)) {
         return;
       }
-
-/*************** GRAPHICS *************/   
-      projectiles.push(new Projectile( this, target, this.proImgObject, { width: item_data[this.code].projectileWidth, height: item_data[this.code].projectileHeight, speed: item_data[this.code].projectileSpeed }));
-/*************** GRAPHICS *************/        
-
+      projectiles.push(new Projectile( this.data.projectile, this, target ));      
       this.lastProjectileFiredTime = new Date().getTime();
     }
-
-
 
     this.update =function() {
         var time = new Date().getTime();
@@ -83,6 +72,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
             this.targetTilePosition.x = 14;
             this.targetTilePosition.y = 7;
             this.dragged = false;
+            this.updateRotations();
 		}
 		if(!this.isAIControlled) {
 			this.currentTilePosition = this.targetTilePosition;
@@ -116,17 +106,19 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
         this.lastMoved = time;
   	};
 
-/*************** GRAPHICS *************/
-    this.updateMapResource = function() {
+    this.updateDisplay = function() {
         if(this.state == "dead") {
-            this.mapResource.remove();
+            this.drawableObject.remove();
             return false;
         }
         this.currentAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.currentTilePosition);
-        this.mapResource.x = this.currentAbsolutePosition.x;
-        this.mapResource.y = this.currentAbsolutePosition.y;
+        this.drawableObject.setPosition(this.currentAbsolutePosition);
+        this.drawableObject.setRotation(this.rotation);
     }
-/*************** GRAPHICS *************/    
+    this.updateRotations = function() {
+        var targetAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.targetTilePosition);
+        this.rotation = (180/Math.PI) * Math.atan2(targetAbsolutePosition.y - this.currentAbsolutePosition.y, targetAbsolutePosition.x - this.currentAbsolutePosition.x);
+    }  
 
  	this.parseInput =  function(functionName, params) {
 
@@ -135,10 +127,9 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 
   	};
 
-
-
     this.updateTargetTile = function(position) {
         this.targetTilePosition = position;
+        this.updateRotations();
     };
 
   	this.updatePosition =  function(position) {
@@ -200,23 +191,6 @@ Player = function(name, id, numPlayersOnBoard) {
 	this.getUnits = function() {
 		return this.units;
 	};
-
-	this.update = function() {
-		for(var key in this.units) {
-			if (key != 'undefined') {
-				this.units[key].update();
-			}
-		}
-		for(var key in this.towers) {
-			if (key != 'undefined')
-				this.towers[key].update();
-		}
-		for(var i = this.projectiles.length - 1; i >= 0; i--) {
-			if(this.projectiles[i].update() == false) {
-				this.projectiles.splice(i,1);
-			}
-		}
-	};
 	
 	this.getState = function() {
 		unitPositions = {};
@@ -242,13 +216,16 @@ Player = function(name, id, numPlayersOnBoard) {
 	}
 };
 
-Projectile = function( sourceEntity, targetEntity, imgObject, projectileData) {
-	this.projectileData = projectileData;
-    this.drawableObject = new DrawableObject('projectile', sourceEntity.currentAbsolutePosition, projectileData.width, projectileData.height, imgObject);
+Projectile = function(code, sourceEntity, targetEntity) {
+    this.code = code;
+    this.data = item_data[code];
+    this.drawableObject = new DrawableObject('projectile', this.code, sourceEntity.currentAbsolutePosition, this.data.width, this.data.height, this);
     this.targetTilePosition = {
         x: targetEntity.currentTilePosition.x,
         y: targetEntity.currentTilePosition.y
     };
+    var targetAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.targetTilePosition);
+    this.drawableObject.setRotation((180/Math.PI) * Math.atan2(targetAbsolutePosition.y - sourceEntity.currentAbsolutePosition.y, targetAbsolutePosition.x - sourceEntity.currentAbsolutePosition.x));
     this.hasHit = false;
     this.lastMoved = new Date().getTime();
 	console.log("add new projectile ");
@@ -260,10 +237,10 @@ Projectile = function( sourceEntity, targetEntity, imgObject, projectileData) {
             var remX = this.targetTilePosition.x - currentTilePosition.x;
             var remY = this.targetTilePosition.y - currentTilePosition.y;
 
-            var movableDist = this.projectileData.speed * (time - this.lastMoved)/1000;
+            var movableDist = this.data.speed * (time - this.lastMoved)/1000;
 			var totalDist = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
 
-			if(totalDist < 0.25) {
+			if(totalDist < 0.75) {
 				this.hasHit = true;
                 this.drawableObject.remove();
                 this.lastMoved = time;
@@ -286,36 +263,32 @@ Projectile = function( sourceEntity, targetEntity, imgObject, projectileData) {
 	}
 }
 
-HealthBar = function(parentResource, size, initial, max, color) {
+HealthBar = function(parentDrawableObject, type, initial, max, color) {
+    
     this.maxHealth = max;
-    this.size = size;
+
     this.initial = initial;
 
-/*************** GRAPHICS *************/          
-    this.lifeBar = mainScene.createElement(this.size,10);
-    this.deathBar = mainScene.createElement(this.size,10);
-    parentResource.append(this.deathBar);
-    parentResource.append(this.lifeBar);
+    switch(type) {
+        case "unit": this.size = globalUnitWidth;break;
+        case "tower": this.size = globalTowerWidth; break;
+    }
 
-    this.deathBar.fillStyle = "red";
-    if (color == 0) {
-        this.lifeBar.fillStyle = "green";
+    this.drawableBarDeath = new DrawableBar(this.size, "red");
+    parentDrawableObject.addDrawableElement(this.drawableBarDeath);
+
+    var lifeColor = "green";
+    switch(color) {
+        case 0: lifeColor = "green";
+        case 1: lifeColor = "pink";
+        case 2: lifeColor = "blue";
+        case 3: lifeColor = "yellow";
     }
-    else if (color == 1) {
-        this.lifeBar.fillStyle = "pink";
-    }
-    else if (color == 2) {
-        this.lifeBar.fillStyle = "blue";
-    }
-    else if (color == 3) {
-        this.lifeBar.fillStyle = "yellow";
-    }
-    this.deathBar.fillRect(0,0,this.size,10);
-    this.lifeBar.fillRect(0,0,this.size,10);
+
+    this.drawableBarLife = new DrawableBar((this.initial/this.maxHealth) * this.size, lifeColor);
+    parentDrawableObject.addDrawableElement(this.drawableBarLife);
 
     this.updateHealth = function (health) {
-        this.lifeBar.fillRect(0,0, this.size * (health/this.maxHealth), 10);
-    };
-/*************** GRAPHICS *************/      
-
+        this.drawableBarLife.setSize(this.size * (health/this.maxHealth));
+    }
 };

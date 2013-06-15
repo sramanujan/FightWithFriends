@@ -1,30 +1,49 @@
 <html>
-<head> 
-    <script src="assets/js/jquery.js"></script>
-    <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
-    <script src="Client/player.js"></script>
-    <script src="Common/map.js"></script>
-    <script src="Client/graphics.js"></script>
-    <script src="assets/js/jquery.ba-resize.min.js"></script>
-    <title> Fight With Friends! </title> 
-    <!-- Le styles -->
-    <link href="assets/css/bootstrap.css" rel="stylesheet">
-    <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
-    <link href="assets/css/main.css" rel="stylesheet">
+    <head> 
+        <script src="assets/js/jquery.js"></script>
+        <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
+        <script src="Client/player.js"></script>
+        <script src="Common/map.js"></script>
+        <script src="Client/graphics.js"></script>
+        <script src="assets/js/jquery.ba-resize.min.js"></script>
+        <title> Fight With Friends! </title> 
+        <!-- Le styles -->
+        <link href="assets/css/bootstrap.css" rel="stylesheet">
+        <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
+        <link href="assets/css/main.css" rel="stylesheet">
 
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-    <script src="assets/js/html5shiv.js"></script>
-    <![endif]-->
+        <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+        <!--[if lt IE 9]>
+        <script src="assets/js/html5shiv.js"></script>
+        <![endif]-->
 
-    <!-- Fav and touch icons -->
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/ico/apple-touch-icon-144-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/ico/apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
-    <link rel="shortcut icon" href="assets/ico/favicon.png">
-</head>
-    <body >
+        <!-- Fav and touch icons -->
+        <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/ico/apple-touch-icon-144-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/ico/apple-touch-icon-114-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
+        <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
+        <link rel="shortcut icon" href="assets/ico/favicon.png">
+        <script>
+            if (navigator.userAgent.match(/iPad/)) {
+                GLOBAL_PLATFORM = "ipad";
+                SOCKETIO_HOST = '10.102.90.84';
+                //document.addEventListener("deviceready", onDeviceReady, false);
+            } else if (navigator.userAgent.match(/Android/)) {
+                GLOBAL_PLATFORM = "android";
+                SOCKETIO_HOST = '10.102.90.84';
+                //document.addEventListener("deviceready", onDeviceReady, false);
+            } else {
+                GLOBAL_PLATFORM = "web";
+                SOCKETIO_HOST = window.location.hostname;
+                //onDeviceReady();
+            }
+
+            function onDeviceReady() {
+                //navigator.notification.alert("Phonegap is working...");
+            }
+        </script>
+    </head>
+    <body>
         <div id="start_screen">
             <div class="jumbotron">
                 <h1>FIGHT WITH FRIENDS!!</h1>
@@ -142,6 +161,7 @@
                 var jsonData = JSON.stringify(data);
                 tower_data = filterData(data, "tower");
                 unit_data = filterData(data,"unit");
+                projectile_data = filterData(data, "projectile");
                 towers_loaded = true;
                 units_loaded = true;
                 loadAssetData();
@@ -163,6 +183,7 @@
             var itemAssetsLoaded = 0;
             var item_assets_loaded = false;
             function loadAssetData() {
+                /*
                 for(var key in item_data) {
                     var imgsrc = item_data[key].image;
                     itemImages[key] = new Image();
@@ -172,15 +193,17 @@
                     };
                     itemImages[key].src = imgsrc;
                 }
+                */
 
                 for(var key in item_data) {
-                    var imgsrc = item_data[key].projectileImage;
+                    var imgsrc = item_data[key].image;
+                    //var imgsrc = item_data[key].projectileImage;
                     var img = new Image();
                     img.key = key;
                     itemAssetsToLoad++;
                     img.onload = function(){
                         itemAssetsLoaded ++;
-                        unitProjectileImages[this.key] = this;
+                        itemImages[this.key] = this;
                         if(itemAssetsLoaded == itemAssetsToLoad) {
                             item_assets_loaded = true;
                             tower_assets_loaded = true;
@@ -191,75 +214,20 @@
                     };
                     img.src = imgsrc;
                 }
+                
             }
 
-            function loadUnitAssetData() {
-                for(var key in unit_data) {
-                    var imgsrc = unit_data[key].image;
-                    unitImages[key] = new Image();
-                    unitAssetsToLoad++;
-                    unitImages[key].onload = function(){
-                        unitAssetsLoaded ++;
-                    };
-                    unitImages[key].src = imgsrc;
-                }
-
-                for(var key in unit_data) {
-                    var imgsrc = unit_data[key].projectileImage;
-                    var img = new Image();
-                    img.key = key;
-                    unitAssetsToLoad++;
-                    img.onload = function(){
-                        unitAssetsLoaded ++;
-                        unitProjectileImages[this.key] = this;
-                        if(unitAssetsLoaded == unitAssetsToLoad) {
-                            unit_assets_loaded = true;
-                            checkIfLoadComplete();
-                        }
-                    };
-                    img.src = imgsrc;
-                }
-            }
-
-            function loadTowerAssetData() {
-                for(var key in tower_data) {
-                    var imgsrc = tower_data[key].image;
-                    towerImages[key] = new Image();
-                    towerAssetsToLoad++;
-                    towerImages[key].onload = function(){
-                        towerAssetsLoaded ++;
-                    };
-                    towerImages[key].src = imgsrc;
-                }
-
-                for(var key in tower_data) {
-                    var imgsrc = tower_data[key].projectileImage;
-                    var img = new Image();
-                    img.key = key;
-                    towerAssetsToLoad++;
-                    img.onload = function(){
-                        towerAssetsLoaded++;
-                        towerProjectileImages[this.key] = this;
-                        if(towerAssetsLoaded == towerAssetsToLoad) {
-                            tower_assets_loaded = true;
-                            checkIfLoadComplete();
-                        }
-                    };
-                    img.src = imgsrc;
-                }
-            }
 
             function loadGlobalAssetData() {
                 global_assets_loaded = true;
             }
 
             if(typeof io == "undefined") {
-                $.getScript('http://' + window.location.hostname + ':8028/socket.io/socket.io.js', function() {
+                $.getScript('http://' + SOCKETIO_HOST + ':8028/socket.io/socket.io.js', function() {
                     socket_io_loaded = true;
                     checkIfLoadComplete();
                 });
             }
-
 
             function checkIfLoadComplete() {
                 //$("#progress_bar").width(Math.floor(100 * load_status / load_total ).toString() + "%");
@@ -316,9 +284,10 @@
 			var batchedStates 	= new Array();
 
             function loadCompleted() {
-                socket = io.connect('http://' + window.location.hostname + ':8028', { 'connect timeout': 10000 });
+                socket = io.connect('http://' + SOCKETIO_HOST + ':8028', { 'connect timeout': 10000 });
                 $("#start_screen").hide();
                 $("#gamediv").show();
+                initGraphics();
                 makeEventListeners();
             }
 			
@@ -623,14 +592,20 @@
 			</div>
         </div>
         <script>
+            
+            function initGraphics() {
+                //$('#canvas1').width($('#main_canvas').width().toString());
+                //$('#canvas1').height($('#main_canvas').height().toString());
+                //GlobalGraphics.init('canvas1');
+                GlobalGraphics.resize();
+            }
+
+            GlobalGraphics.init('canvas1');
+
+
             function runUpdateLoop() {
-                /*
-                for (var key in playersOnBoard) {
-                    playersOnBoard[key].update();
-                }
-                */
                 for(var i = 0 ;i <numEntities ; i++) {
-                    entities[i].updateMapResource();
+                    entities[i].updateDisplay();
                 }
                 for(var j = 0 ;j <projectiles.length ; j++) {
                     if(projectiles[j].update(new Date().getTime()) == false) {
@@ -701,8 +676,6 @@
                 isInDesignMode = true;
                 return false;
             });
-			
-            GlobalGraphics.init('canvas1');
 
             function populateTowers(listOfTowers) {
 				console.log("populateTowers");
