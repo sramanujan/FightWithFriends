@@ -65,10 +65,10 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
             this.currentTilePosition.y += ratio * remY;
         }
 
-		//console.log("Plan to reach ("+this.targetPosition.x+","+this.targetPosition.y+",) now at ("+this.currentPosition.x+","+this.currentPosition.y+")");
-		//this.currentPosition.x = Math.min(this.currentPosition.x,0.95);
-		//this.currentPosition.y = Math.min(this.currentPosition.y,0.95);
         this.lastMoved = time;	
+        if(this.currentTilePosition.x == 15 && this.currentTilePosition.y == 8) {
+            return true;
+        }
   	};
 
  	this.parseInput =  function(functionName, params) {

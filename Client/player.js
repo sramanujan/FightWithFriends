@@ -97,6 +97,9 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
    
         this.healthBar.updateHealth(this.health);
         this.lastMoved = time;
+        if(this.currentTilePosition.x == 15 && this.currentTilePosition.y == 8) {
+            return true;
+        }
   	};
 
     this.updateDisplay = function() {

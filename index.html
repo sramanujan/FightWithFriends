@@ -113,7 +113,9 @@
 
             function entityUpdate() {
                 for(var i = 0 ;i <numEntities ; i++) {
-                        entities[i].update();
+                        if(entities[i].update() == true) {
+                            indicateBattleOverAndReset();
+                        }
                         if(entities[i].state == "alive") {
                             entities[i].resolveBattle(entities);
                         }
@@ -460,9 +462,14 @@
                             //console.log(JSON.stringify(entities[socket[data_namespace].currentRoom][index].targetPosition));
                         }
                     }
+                });
 
-
-
+                socket.on('victory', function(victorId) {
+                    if(victorId == me.id) {
+                        console.log("I HAVE WON!!!!!!!!!!!!!!!!!! END OF STORY!!!");
+                    } else {
+                        console.log("I HAVE LOST!! OMG!!! I LOST!!!");
+                    }
                 });
             }
 
@@ -702,6 +709,7 @@
 						$("#final-message-lost").hide();
 						battleMode = false;
 						toggleBattleMode();
+                        history.go(-1);
 					}, 5000);
 
 				}
@@ -711,6 +719,7 @@
 						$("#final-message-won").hide();
 						// if iam attacking then leave room get home
 						returnToBase(myRoom);
+                        history.go(-1);
 					}, 5000);
 				}
             }

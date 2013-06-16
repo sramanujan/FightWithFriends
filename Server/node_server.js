@@ -1,6 +1,5 @@
 var SERVER = true;
 require('./db.js');
-// db={enabled:false};
 require('./classes/player.js');
 //require('../lib/prototype.js');
 var fs = require('fs');
@@ -30,7 +29,11 @@ function updateEntities() {
         //console.log("Update here");
         for(var key in entities) {
             for(var index in entities[key]) {
-                entities[key][index].update();
+                if(entities[key][index].update() == true) {
+                    //stop all other updates! Game is over!!
+                    //io.sockets.in(entities[key][index].ownerId).emit('victory', entities[key][index].ownerId);
+                    clearInterval(timer);
+                }
                 if(entities[key][index].state == "alive") {
                     entities[key][index].resolveBattle(entities[key]);
                 }
@@ -130,7 +133,7 @@ io.sockets.on('connection', function (socket) {
             });
         } else {
             console.log("COUCHBASE GLOBAL BUCKET NOT AVAILABLE!!");
-			socket.sendUserDetails( { id: data.id, username: data.username, level: 1, kingdom: { theme: {background: "assets/img/background_map_3.png"}}});
+			socket.sendUserDetails( { id: data.id, username: data.username, level: 1, kingdom: { theme: {background: "assets/img/background_map_5.png"}}});
         }
     });
 	
