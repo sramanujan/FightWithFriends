@@ -52,7 +52,7 @@
         "height": 48,
         "speed": 1,
         "frames": 1,
-        "sound": "assets/sound/big_fire_sound.mp3",
+        "sound": "big_fire_sound",
         "type": "projectile"
     },
     "P002": {
@@ -61,7 +61,7 @@
         "height": 14,
         "speed": 1,
         "frames": 1,
-        "sound": "assets/sound/bullet_sound.mp3",
+        "sound": "bullet_sound",
         "type": "projectile"
     }
 }
