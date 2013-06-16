@@ -221,7 +221,7 @@ Projectile = function(code, sourceEntity, targetEntity) {
     };
     this.drawableObject = new DrawableObject('projectile', this.code, startPosition, this.data.width, this.data.height, this.data.frames -1, this);
     this.drawableObject.startAnimation();
-    GlobalAudio.play(this.data.sound);
+    if(GLOBAL_PLATFORM == "web") GlobalAudio.play(this.data.sound);
     this.targetTilePosition = {
         x: targetEntity.currentTilePosition.x,
         y: targetEntity.currentTilePosition.y

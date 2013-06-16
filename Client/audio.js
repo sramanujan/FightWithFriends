@@ -24,11 +24,17 @@ audio_files = [
     source: "assets/sound/victory_sound.mp3"
 }
 ];
-
+                // if(typeof Media == "undefined") {
+                //     console.log("Media is still undefined....");
+                // } else {
+                //     var media = new Media("file:///android_asset/www/assets/sound/battle_music.mp3");
+                //     media.play();    
+                // }
 
 GlobalAudio = {};
 GlobalAudio.addNewAudio = function(audioData) {
     var audio = document.createElement("audio");
+    //audio.src = (GLOBAL_PLATFORM == "android" ? "file:///android_asset/www/audio" : "") + Data.source;
     audio.src = audioData.source;
     GlobalAudio.list[audioData.name] = audio;
 };
@@ -50,16 +56,24 @@ GlobalAudio.stopAll = GlobalAudio.resetAll = function() {
     }
 };
 GlobalAudio.play = function(name) {
-    GlobalAudio.list[name].currentTime = 0;
-    GlobalAudio.list[name].play();
+    if(GlobalAudio.list[name]) {
+        GlobalAudio.list[name].currentTime = 0;
+        GlobalAudio.list[name].play();        
+    }
 }
 GlobalAudio.resume = function(name) {
-    GlobalAudio.list[name].play();
+    if(GlobalAudio.list[name]) {
+        GlobalAudio.list[name].play();
+    }
 }
 GlobalAudio.pause = function(name) {
-    GlobalAudio.list[name].pause();
+    if(GlobalAudio.list[name]) {
+        GlobalAudio.list[name].pause();
+    }
 }
 GlobalAudio.stop = function(name) {
-    GlobalAudio.list[name].pause();
-    GlobalAudio.list[name].currentTime = 0;
+    if(GlobalAudio.list[name]) {
+        GlobalAudio.list[name].pause();
+        GlobalAudio.list[name].currentTime = 0;
+    }
 }

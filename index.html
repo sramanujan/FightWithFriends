@@ -2,6 +2,7 @@
     <head> 
         <script src="assets/js/jquery.js"></script>
         <script src="assets/js/canvasengine-1.2.6.all.min.js"></script>
+        <!--<script src="assets/js/cordova.js"></script>-->
         <script src="Client/player.js"></script>
         <script src="Common/map.js"></script>
         <script src="Client/graphics.js"></script>
@@ -25,21 +26,24 @@
         <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
         <link rel="shortcut icon" href="assets/ico/favicon.png">
         <script>
+            var device_ready = false;
             if (navigator.userAgent.match(/iPad/)) {
                 GLOBAL_PLATFORM = "ipad";
-                SOCKETIO_HOST = '10.102.90.84';
-                //document.addEventListener("deviceready", onDeviceReady, false);
+                SOCKETIO_HOST = '192.168.1.5';
+                document.addEventListener("deviceready", onDeviceReady, false);
             } else if (navigator.userAgent.match(/Android/)) {
                 GLOBAL_PLATFORM = "android";
-                SOCKETIO_HOST = '10.102.90.84';
-                //document.addEventListener("deviceready", onDeviceReady, false);
+                SOCKETIO_HOST = '192.168.1.5';
+                document.addEventListener("deviceready", onDeviceReady, false);
             } else {
-                GLOBAL_PLATFORM = "web";
+                GLOBAL_PLATFORM = "webb";
                 SOCKETIO_HOST = window.location.hostname;
-                //onDeviceReady();
+                onDeviceReady();
             }
 
+            device_ready = true;
             function onDeviceReady() {
+                //device_ready = true;
                 //navigator.notification.alert("Phonegap is working...");
             }
         </script>
@@ -137,8 +141,6 @@
                 checkIfLoadComplete();
                 return false;
             });
-
-            GlobalAudio.init();
 
             $.getJSON('settings/global-sounds.json', function(data) {
                 global_data = data;
@@ -253,7 +255,7 @@
                     progress_status++;
                     socket_completed = true;
                 }
-                if(login_entered && !login_completed) {
+                if(login_entered && !login_completed && device_ready) {
                     $("#progress_bar" + progress_status.toString()).width("25%");
                     $("#progress_bar" + progress_status.toString()).html("Completed Login!");
                     progress_status++;
@@ -292,6 +294,7 @@
                 $("#start_screen").hide();
                 $("#gamediv").show();
                 initGraphics();
+                if(GLOBAL_PLATFORM == "web") GlobalAudio.init();
                 makeEventListeners();
             }
 			
@@ -325,7 +328,7 @@
                     }
                     myRoom = currentRoom = data.room;
                     enableButtons();
-                    GlobalAudio.play("own_kingdom_music");
+                    if(GLOBAL_PLATFORM == "web") GlobalAudio.play("own_kingdom_music");
                 });
 
                 socket.on('ijoined', function(data) {
@@ -363,8 +366,8 @@
 					}
                     enableButtons();
                     GlobalGraphics.resumeRendering();
-                    GlobalAudio.stopAll();
-                    GlobalAudio.play("battle_music");
+                    if(GLOBAL_PLATFORM == "web") GlobalAudio.stopAll();
+                    if(GLOBAL_PLATFORM == "web") GlobalAudio.play("battle_music");
                 });
 
                 socket.on('roomUpdate', function (data) {
@@ -708,8 +711,8 @@
             function indicateBattleOverAndReset() {
                 //TODO: Check if attacker or defender, reset them to their kingdoms, play music, remove filter etc.
 				if (whoami == categories.Defender) {
-                    GlobalAudio.stopAll();
-                    GlobalAudio.play("defeat_sound");
+                    if(GLOBAL_PLATFORM == "web") GlobalAudio.stopAll();
+                    if(GLOBAL_PLATFORM == "web") GlobalAudio.play("defeat_sound");
 					$("#final-message-lost").show();
 					setTimeout(function() {
 						$("#final-message-lost").hide();
@@ -721,8 +724,8 @@
 				}
 				else {
 					$("#final-message-won").show();
-                    GlobalAudio.stopAll();
-                    GlobalAudio.play("victory_sound");
+                    if(GLOBAL_PLATFORM == "web") GlobalAudio.stopAll();
+                    if(GLOBAL_PLATFORM == "web") GlobalAudio.play("victory_sound");
 					setTimeout(function() {
 						$("#final-message-won").hide();
 						// if iam attacking then leave room get home
