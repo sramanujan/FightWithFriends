@@ -24,6 +24,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 	this.isAIControlled = isAIControlled;
 	this.isDefender = isDefender;
 	this.index = index;
+  this.dragged = false;
     this.lastMoved = new Date().getTime();
     this.state = "alive";
     this.isMoving = true;
@@ -41,6 +42,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 	}
     this.mouseUp = function(position) {
         this.targetTilePosition = MAP_CONFIG.convertAbsoluteToTile(position);
+        this.dragged = true;
         this.updateRotations();
         globalInputs[numInputs] = {
             action: "updateTargetPosition", 
@@ -70,12 +72,16 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
         if(this.targetTilePosition.x == this.currentTilePosition.x && this.targetTilePosition.y == this.currentTilePosition.y && isAIControlled) {
             this.targetTilePosition.x = 14;
             this.targetTilePosition.y = 7;
+            this.dragged = false;
             this.updateRotations();
 		}
 		if(!this.isAIControlled) {
 			this.currentTilePosition = this.targetTilePosition;
 		}
 		else {
+            if(this.fixed == true && this.dragged == false) {
+              return false;
+            }
             var remX = this.targetTilePosition.x - this.currentTilePosition.x;
             var remY = this.targetTilePosition.y - this.currentTilePosition.y;
 
@@ -161,13 +167,20 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   		}
   		if(nearestOpponent != null) {
   			if(minDistance <= this.range) {
+          this.fixed = true;
   				nearestOpponent.health -= 10;
                 this.fireProjectile(nearestOpponent);
   				if(nearestOpponent.health <= 0) {
+            this.fixed = false;
   					nearestOpponent.state = "dead";
   				}
   			}
+        else {
+            this.fixed = false;
+            this.enemy = null;
+        }
   		} else {
+            this.fixed = false;
             this.enemy = null;
         }
   	}
