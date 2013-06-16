@@ -20,22 +20,20 @@ DrawableBar = function(size, color) {
     }
 }
 
-DrawableObject = function(type, code, position, width, height, parent) {
+DrawableObject = function(type, code, position, width, height, frames, parent) {
     this.code = code;
-    var finalWidth;
-    var finalHeight;
     switch(type) {
         case 'tower':
-            finalHeight = globalTowerHeight;
-            finalWidth = globalTowerWidth;
+            this.finalHeight = globalTowerHeight;
+            this.finalWidth = globalTowerWidth;
         break;
         case 'unit':
-            finalHeight = globalUnitHeight;
-            finalWidth = globalUnitWidth;
+            this.finalHeight = globalUnitHeight;
+            this.finalWidth = globalUnitWidth;
         break;
         case 'projectile':
-            finalHeight = globalProjectileHeight;
-            finalWidth = globalProjectileWidth;            
+            this.finalHeight = globalProjectileHeight;
+            this.finalWidth = globalProjectileWidth;            
         break;
     }
 
@@ -45,8 +43,18 @@ DrawableObject = function(type, code, position, width, height, parent) {
         this.parent = null;
     }
 
-    this.imageObj =  mainScene.createElement(finalWidth, finalHeight);
-    this.imageObj.drawImage(itemImages[this.code], 0, 0, width, height, 0, 0, finalWidth, finalHeight);
+    this.framesPerSec = 24; //TODO: Hardcoding for now...
+    this.frameWidth = width;
+    this.frameHeight = height;
+    this.totalFrames = frames;
+    this.totalFramesX = (itemImages[this.code].width / width);
+    this.totalFramesY = (itemImages[this.code].height / height);
+    this.currentFrameX = 0;
+    this.currentFrameY = 0;
+    this.animTimer = null;
+
+    this.imageObj =  mainScene.createElement(this.finalWidth, this.finalHeight);
+    this.imageObj.drawImage(itemImages[this.code], this.currentFrameX * this.frameWidth, this.currentFrameY * this.frameHeight, this.frameWidth, this.frameHeight, 0, 0, this.finalWidth, this.finalHeight);    
     this.imageObj.setOriginPoint("middle");
     this.imageObj.x = position.x;
     this.imageObj.y = position.y;
@@ -103,6 +111,33 @@ DrawableObject = function(type, code, position, width, height, parent) {
     }
     this.setRotation = function(value) {
         this.imageObj.rotation = value;
+    }
+    this.startAnimation = function(value) {
+        if(!this.animTimer) {
+            var thisObj = this;
+            this.animTimer = setInterval(function() {
+                thisObj.updateAnimation();
+            }, 1000/this.framesPerSec);
+        }
+    }
+    this.stopAnimation = function(value) {
+        if(this.animTimer) {
+            clearInterval(this.animTimer);
+        }
+        this.animTimer = null;
+    }
+    this.updateAnimation = function() {
+        this.currentFrameX++;
+        if(this.currentFrameX >= this.totalFramesX) {
+            this.currentFrameY = (this.currentFrameY + 1) % this.totalFramesY;
+            this.currentFrameX = 0;
+        }
+        if(this.currentFrameY * this.totalFramesX + this.currentFrameX >= this.totalFrames) {
+            this.currentFrameX = 0;
+            this.currentFrameY = 0;
+        }
+        this.imageObj.clearRect(0, 0, this.finalWidth, this.finalHeight);
+        this.imageObj.drawImage(itemImages[this.code], this.currentFrameX * this.frameWidth, this.currentFrameY * this.frameHeight, this.frameWidth, this.frameHeight, 0, 0, this.finalWidth, this.finalHeight);
     }
 }
 

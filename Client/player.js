@@ -26,8 +26,9 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 	this.index = index;
     this.lastMoved = new Date().getTime();
     this.state = "alive";
+    this.isMoving = true;
 	
-    this.drawableObject = new DrawableObject(this.data.type, this.code, {x: 0, y: 0}, this.data.width, this.data.height, this);
+    this.drawableObject = new DrawableObject(this.data.type, this.code, {x: 0, y: 0}, this.data.width, this.data.height, this.data.frames -1, this);
 
 	if(this.ownerId == me.id) {
         this.drawableObject.addTouchAndClickListener(function(e) {
@@ -102,12 +103,18 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 
     this.updateDisplay = function() {
         if(this.state == "dead") {
+            this.drawableObject.stopAnimation();
             this.drawableObject.remove();
             return false;
         }
         this.currentAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.currentTilePosition);
         this.drawableObject.setPosition(this.currentAbsolutePosition);
         this.drawableObject.setRotation(this.rotation);
+        if(!this.isMoving && this.isAIControlled) {
+            this.drawableObject.stopAnimation();
+        } else {
+            this.drawableObject.startAnimation();
+        }
     }
     this.updateRotations = function() {
         var targetAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.targetTilePosition);
@@ -206,7 +213,8 @@ Player = function(name, id, numPlayersOnBoard) {
 Projectile = function(code, sourceEntity, targetEntity) {
     this.code = code;
     this.data = item_data[code];
-    this.drawableObject = new DrawableObject('projectile', this.code, sourceEntity.currentAbsolutePosition, this.data.width, this.data.height, this);
+    this.drawableObject = new DrawableObject('projectile', this.code, sourceEntity.currentAbsolutePosition, this.data.width, this.data.height, this.data.frames -1, this);
+    this.drawableObject.startAnimation();
     this.targetTilePosition = {
         x: targetEntity.currentTilePosition.x,
         y: targetEntity.currentTilePosition.y
@@ -229,6 +237,7 @@ Projectile = function(code, sourceEntity, targetEntity) {
 
 			if(totalDist < 0.75) {
 				this.hasHit = true;
+                this.drawableObject.stopAnimation();
                 this.drawableObject.remove();
                 this.lastMoved = time;
 				return false;

@@ -1,14 +1,14 @@
 {
     "001": {
         "name": "EsuohThgil Ytima",
-        "image": "assets/img/BROKEN-Tower_Anim_Low_Res.png",
+        "image": "assets/img/Tower_Anim_Low_Res.png",
         "width": 250,
         "height": 211,
         "health":2500,
         "projectile": "P001",
         "range": 3,
         "hitsPerSecond": 1,
-        "frames": 24,
+        "frames": 31,
         "requirements": {
             "level": 1
         },
@@ -24,7 +24,7 @@
         "projectile": "P002",
         "range": 3,
         "hitsPerSecond": 1,
-        "frames": 24,
+        "frames": 1,
         "requirements": {
             "level": 1
         },
@@ -32,7 +32,7 @@
     },
     "003": {
         "name": "X-Galactic Warrior",
-        "image": "assets/img/BROKEN-Alien_Anim_01.png",
+        "image": "assets/img/Alien_Anim_01.png",
         "width": 257,
         "height": 212,
         "health":4000,
@@ -40,7 +40,7 @@
         "projectile": "P002",
         "range": 3,
         "hitsPerSecond": 1,
-        "frames": 24,
+        "frames": 25,
         "requirements": {
             "level": 1
         },
@@ -51,6 +51,7 @@
         "width": 60,
         "height": 48,
         "speed": 1,
+        "frames": 1,
         "sound": "assets/sound/big_fire_sound.mp3",
         "type": "projectile"
     },
@@ -59,8 +60,8 @@
         "width": 40,
         "height": 14,
         "speed": 1,
+        "frames": 1,
         "sound": "assets/sound/bullet_sound.mp3",
         "type": "projectile"
     }
-
 }
