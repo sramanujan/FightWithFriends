@@ -1,7 +1,7 @@
 TILE_BREADTH = 100;
 TILE_LENGTH = 100;
-NUM_TILES_LENGTH = 18;
-NUM_TILES_BREADTH = 9;
+NUM_TILES_LENGTH = 20;
+NUM_TILES_BREADTH = 10;
 TILE_MAP = new Array();
 for( var i = 0; i < NUM_TILES_LENGTH; i++) {
     TILE_MAP.push(new Array());

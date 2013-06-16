@@ -40,8 +40,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 		this.drawableObject.setOpacity (this.drawableObject.getOpacity() < 1 ? 1 : 0.5 );
 	}
     this.mouseUp = function(position) {
-        this.targetTilePosition = MAP_CONFIG.convertAbsoluteToTile(position);
-        this.updateRotations();
+        this.updateTargetTile(MAP_CONFIG.convertAbsoluteToTile(position));
         globalInputs[numInputs] = {
             action: "updateTargetPosition", 
             params: {
@@ -67,9 +66,8 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
     this.update =function() {
         var time = new Date().getTime();
 		//If unit has reached its target position, update target to goal
-        if(this.targetTilePosition.x == this.currentTilePosition.x && this.targetTilePosition.y == this.currentTilePosition.y && isAIControlled) {
-            this.targetTilePosition.x = 14;
-            this.targetTilePosition.y = 7;
+        if(this.targetTilePosition.x == this.currentTilePosition.x && this.targetTilePosition.y == this.currentTilePosition.y && this.isAIControlled) {
+            this.isMoving = false;
             this.updateRotations();
 		}
 		if(!this.isAIControlled) {
@@ -131,6 +129,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
     this.updateTargetTile = function(position) {
         this.targetTilePosition = position;
         this.updateRotations();
+        this.isMoving = true;
     };
 
   	this.updatePosition =  function(position) {
@@ -160,7 +159,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   			}
   		}
   		if(nearestOpponent != null) {
-  			if(minDistance <= this.range) {
+  			if(minDistance <= this.range && !(this.isMoving && this.isAIControlled)) {
   				nearestOpponent.health -= 10;
                 this.fireProjectile(nearestOpponent);
   				if(nearestOpponent.health <= 0) {
@@ -213,7 +212,11 @@ Player = function(name, id, numPlayersOnBoard) {
 Projectile = function(code, sourceEntity, targetEntity) {
     this.code = code;
     this.data = item_data[code];
-    this.drawableObject = new DrawableObject('projectile', this.code, sourceEntity.currentAbsolutePosition, this.data.width, this.data.height, this.data.frames -1, this);
+    var startPosition = {
+        x: sourceEntity.currentAbsolutePosition.x + (item_data[sourceEntity.code].type == "unit" ? globalUnitWidth/2 : globalTowerWidth/2),
+        y: sourceEntity.currentAbsolutePosition.y + (item_data[sourceEntity.code].type == "unit" ? globalUnitHeight/2 : globalTowerHeight/2)
+    };
+    this.drawableObject = new DrawableObject('projectile', this.code, startPosition, this.data.width, this.data.height, this.data.frames -1, this);
     this.drawableObject.startAnimation();
     this.targetTilePosition = {
         x: targetEntity.currentTilePosition.x,

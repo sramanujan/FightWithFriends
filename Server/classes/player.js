@@ -26,6 +26,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 	this.index = index;
 	this.state = "alive";
     this.lastMoved = new Date().getTime();
+    this.isMoving = true;
 
   	this.update =function() {
         var time = new Date().getTime();
@@ -36,18 +37,13 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
 		}
 
 		//If unit has reached its target position, update target to goal
-        if(this.targetTilePosition.x == this.currentTilePosition.x && this.targetTilePosition.y == this.currentTilePosition.y && isAIControlled) {
-        //if((Math.abs(this.targetPosition.x - this.currentPosition.x) < 0.01 )&& (Math.abs(this.targetPosition.y - this.currentPosition.y)< 0.01) && isAIControlled) {
-            //this.targetPosition.x = 0.75;
-            //this.targetPosition.y = 0.75;
-            this.targetTilePosition.x = 14;
-            this.targetTilePosition.y = 7;
+        if(this.targetTilePosition.x == this.currentTilePosition.x && this.targetTilePosition.y == this.currentTilePosition.y && this.isAIControlled) {
+            this.isMoving = false;
         }
         if(!this.isAIControlled) {
             this.currentTilePosition = this.targetTilePosition;
         }
         else {
-            //var targetAbsolutePosition = MAP_CONFIG.convertTileToAbsolute(this.targetTilePosition);
             var remX = this.targetTilePosition.x - this.currentTilePosition.x;
             var remY = this.targetTilePosition.y - this.currentTilePosition.y;
 
@@ -83,6 +79,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   	};
   	this.updateTarget = function(position) {
   		this.targetTilePosition = position;
+        this.isMoving = true;
   	};
   	this.updatePosition =  function(position) {
   		this.currentTilePosition = position;
@@ -111,7 +108,7 @@ Entity = function(code, data, ownerId, isAIControlled, isDefender, index) {
   			var remY = entity.currentTilePosition.y - this.currentTilePosition.y;
   			var dest = Math.sqrt(Math.pow(remX, 2) + Math.pow(remY, 2));
   			//console.log("Total distance diff = "+dest);
-  			if(dest < minDistance) {
+  			if(dest < minDistance && !(this.isMoving && this.isAIControlled)) {
   				minDistance = dest;
   				nearestOpponent = entity;
   			}
